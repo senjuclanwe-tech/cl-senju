@@ -541,6 +541,13 @@
             box-shadow: 0 0 8px rgba(194, 155, 56, 0.3);
         }
 
+        .form-group input[readonly] {
+            background-color: #150b06;
+            color: var(--senju-gold);
+            cursor: not-allowed;
+            border-color: rgba(194, 155, 56, 0.2);
+        }
+
         .form-group textarea {
             resize: vertical;
             height: 100px;
@@ -731,7 +738,7 @@
 
                 <div class="form-group">
                     <label for="nomeDiscord">Nome no Discord:</label>
-                    <input type="text" id="nomeDiscord" required placeholder="Ex: hayai#0001">
+                    <input type="text" id="nomeDiscord" readonly required placeholder="Conecte-se com o Discord...">
                 </div>
 
                 <div class="form-group">
@@ -1081,6 +1088,7 @@
         
         function tentarAbrirRelatorio() {
             const userId = localStorage.getItem('discord_user_id');
+            const username = localStorage.getItem('discord_username');
 
             if (!userId) {
                 alert('Você precisa entrar com a sua conta do Discord no topo da página antes de enviar um relatório!');
@@ -1088,13 +1096,23 @@
             }
 
             const membros = obterMembros();
-            const eMembroCadastrado = membros.some(m => m.discordId === userId);
+            const membroEncontrado = membros.find(m => m.discordId === userId);
             const adminsAtuais = obterAdminsAutorizados();
             const eAdmin = adminsAtuais.includes(userId);
 
-            if (!eMembroCadastrado && !eAdmin) {
+            if (!membroEncontrado && !eAdmin) {
                 alert('Acesso negado! Apenas membros registrados no alistamento do clã podem enviar relatórios de missão.');
                 return;
+            }
+
+            // Preenche automaticamente o Discord logado
+            document.getElementById('nomeDiscord').value = username;
+
+            // Se o membro estiver cadastrado, preenche automaticamente o nome no jogo dele
+            if (membroEncontrado) {
+                document.getElementById('nomeJogo').value = membroEncontrado.nomeJogo;
+            } else {
+                document.getElementById('nomeJogo').value = "";
             }
 
             modalRelatorio.style.display = 'flex';
