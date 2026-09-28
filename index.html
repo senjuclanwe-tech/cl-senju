@@ -285,10 +285,19 @@
             margin-bottom: 8px;
         }
 
+        .member-card .cargo-especial {
+            color: var(--senju-red);
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+
         .member-card .graduacao {
             color: var(--senju-gold);
             font-weight: 700;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             background-color: rgba(194, 155, 56, 0.1);
@@ -297,18 +306,22 @@
             display: inline-block;
         }
 
-        .btn-excluir-membro {
+        .admin-buttons-card {
             position: absolute;
             top: 10px;
-            right: 12px;
-            background-color: rgba(217, 20, 20, 0.2);
-            border: 1px solid var(--senju-red);
-            color: var(--senju-red);
-            width: 28px;
-            height: 28px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+        }
+
+        .btn-card-action {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(194, 155, 56, 0.4);
+            color: var(--text-muted);
+            width: 26px;
+            height: 26px;
             border-radius: 50%;
-            font-size: 1rem;
-            font-weight: bold;
+            font-size: 0.8rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -316,10 +329,15 @@
             transition: all 0.2s;
         }
 
+        .btn-card-action:hover {
+            background: var(--senju-gold);
+            color: #0f0805;
+        }
+
         .btn-excluir-membro:hover {
-            background-color: var(--senju-red);
-            color: white;
-            transform: scale(1.1);
+            background-color: var(--senju-red) !important;
+            color: white !important;
+            border-color: var(--senju-red);
         }
 
         /* ÁLBUM / GALERIA DE MÍDIA */
@@ -517,6 +535,31 @@
         .form-group textarea {
             resize: vertical;
             height: 100px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: rgba(88, 101, 242, 0.1);
+            border: 1px solid rgba(88, 101, 242, 0.4);
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #5865F2;
+        }
+
+        .checkbox-group label {
+            margin-bottom: 0 !important;
+            color: var(--text-main) !important;
+            cursor: pointer;
+            font-weight: 600;
         }
 
         .modal-footer {
@@ -739,21 +782,23 @@
         </div>
     </div>
 
-    <!-- MODAL / POP-UP PARA CADASTRAR MEMBRO (RESTRITO) -->
+    <!-- MODAL / POP-UP PARA CADASTRAR/EDITAR MEMBRO (RESTRITO) -->
     <div class="modal-overlay" id="modalMembro">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Cadastrar Membro no Clã</h2>
+                <h2 id="tituloModalMembro">Cadastrar Membro no Clã</h2>
                 <button class="close-btn" onclick="fecharModalMembro()">&times;</button>
             </div>
             <form id="formMembro" onsubmit="salvarMembro(event)">
+                <input type="hidden" id="indexMembroEdicao" value="">
+
                 <div class="form-group">
                     <label for="nomeJogoMembro">Nome no Jogo:</label>
                     <input type="text" id="nomeJogoMembro" required placeholder="Ex: Senju Hitori">
                 </div>
 
                 <div class="form-group">
-                    <label for="idMembroDiscord">ID do Discord (Numérico - Oculto do público):</label>
+                    <label for="idMembroDiscord">ID do Discord (Numérico):</label>
                     <input type="text" id="idMembroDiscord" required placeholder="Ex: 375808506374258699">
                 </div>
 
@@ -764,14 +809,28 @@
                         <option value="Gennin">Gennin</option>
                         <option value="Chunnin">Chunnin</option>
                         <option value="Jounin">Jounin</option>
-                        <option value="Admin">Admin (Oculto na listagem pública)</option>
-                        <option value="Liderança">Liderança / Comando</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="cargoEspecialMembro">Cargo Especial (Opcional):</label>
+                    <select id="cargoEspecialMembro">
+                        <option value="">Nenhum (Membro Comum)</option>
+                        <option value="Líder">Líder</option>
+                        <option value="Braço Direito">Braço Direito</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="checkAdminMembro">
+                        <label for="checkAdminMembro">Conceder Privilégios de Administrador</label>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalMembro()">Cancelar</button>
-                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;">Cadastrar Membro</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;" id="btnSalvarMembroTexto">Cadastrar Membro</button>
                 </div>
             </form>
         </div>
@@ -787,8 +846,8 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // SEU ID DE ADMINISTRADOR OFICIAL
-        const ADMINS_AUTORIZADOS = [
+        // SEU ID DE ADMINISTRADOR FIXO PRINCIPAL
+        const ADMINS_FIXOS = [
             "375808506374258699"
         ];
 
@@ -832,6 +891,18 @@
             carregarMembros();
         };
 
+        // FUNÇÃO QUE UNE OS ADMINS FIXOS E OS CADASTRADOS VIA CHECKBOX
+        function obterAdminsAutorizados() {
+            let admins = [...ADMINS_FIXOS];
+            const membros = obterMembros();
+            membros.forEach(m => {
+                if (m.eAdmin && m.discordId && !admins.includes(m.discordId)) {
+                    admins.push(m.discordId);
+                }
+            });
+            return admins;
+        }
+
         function verificarPermissaoAdmin() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
@@ -846,7 +917,8 @@
                 statusUsuario.innerHTML = `<b>${username}</b>`;
                 btnLogout.style.display = 'inline-block';
 
-                if (ADMINS_AUTORIZADOS.includes(userId)) {
+                const adminsAtuais = obterAdminsAutorizados();
+                if (adminsAtuais.includes(userId)) {
                     btnAdmin.style.display = 'inline-block';
                     btnAdicionarMembro.style.display = 'inline-block';
                 }
@@ -861,8 +933,7 @@
                 return JSON.parse(membrosSalvos);
             }
             return [
-                { nomeJogo: "Tobirama Senju", discordId: "375808506374258699", graduacao: "Liderança" },
-                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Braço Direito" }
+                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Jounin", cargoEspecial: "Braço Direito", eAdmin: false }
             ];
         }
 
@@ -876,55 +947,98 @@
             container.innerHTML = '';
 
             const userId = localStorage.getItem('discord_user_id');
-            const eAdmin = userId && ADMINS_AUTORIZADOS.includes(userId);
+            const adminsAtuais = obterAdminsAutorizados();
+            const eAdminLogado = userId && adminsAtuais.includes(userId);
 
             membros.forEach((m, index) => {
-                // SE O CARGO FOR ADMIN, ELE FICA OCULTO DA LISTAGEM PÚBLICA DE MEMBROS
-                if (m.graduacao === "Admin") {
-                    return; 
-                }
-
                 const card = document.createElement('div');
                 card.className = 'member-card';
                 
-                let botaoExcluirHtml = '';
-                if (eAdmin) {
-                    botaoExcluirHtml = `<button class="btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro e revogar acesso">&times;</button>`;
+                let botoesAdminHtml = '';
+                if (eAdminLogado) {
+                    botoesAdminHtml = `
+                        <div class="admin-buttons-card">
+                            <button class="btn-card-action" onclick="abrirModalEditarMembro(${index})" title="Editar Membro">✏️</button>
+                            <button class="btn-card-action btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro">&times;</button>
+                        </div>
+                    `;
                 }
 
+                let cargoEspecialHtml = m.cargoEspecial ? `<div class="cargo-especial">${m.cargoEspecial}</div>` : '';
+
                 card.innerHTML = `
-                    ${botaoExcluirHtml}
+                    ${botoesAdminHtml}
                     <h4>${m.nomeJogo}</h4>
+                    ${cargoEspecialHtml}
                     <div class="graduacao">${m.graduacao}</div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        // Funções do Modal de Membro
+        // Funções do Modal de Membro (Adicionar / Editar)
         const modalMembro = document.getElementById('modalMembro');
-        function abrirModalMembro() { modalMembro.style.display = 'flex'; }
-        function fecharModalMembro() { modalMembro.style.display = 'none'; document.getElementById('formMembro').reset(); }
+        
+        function abrirModalMembro() {
+            document.getElementById('tituloModalMembro').innerText = "Cadastrar Membro no Clã";
+            document.getElementById('btnSalvarMembroTexto').innerText = "Cadastrar Membro";
+            document.getElementById('formMembro').reset();
+            document.getElementById('indexMembroEdicao').value = "";
+            modalMembro.style.display = 'flex';
+        }
+
+        function abrirModalEditarMembro(index) {
+            const membros = obterMembros();
+            const m = membros[index];
+
+            document.getElementById('tituloModalMembro').innerText = "Editar Membro do Clã";
+            document.getElementById('btnSalvarMembroTexto').innerText = "Salvar Alterações";
+            
+            document.getElementById('indexMembroEdicao').value = index;
+            document.getElementById('nomeJogoMembro').value = m.nomeJogo;
+            document.getElementById('idMembroDiscord').value = m.discordId;
+            document.getElementById('graduacaoMembro').value = m.graduacao;
+            document.getElementById('cargoEspecialMembro').value = m.cargoEspecial || "";
+            document.getElementById('checkAdminMembro').checked = !!m.eAdmin;
+
+            modalMembro.style.display = 'flex';
+        }
+
+        function fecharModalMembro() { 
+            modalMembro.style.display = 'none'; 
+            document.getElementById('formMembro').reset(); 
+        }
 
         function salvarMembro(event) {
             event.preventDefault();
+            const indexEdicao = document.getElementById('indexMembroEdicao').value;
             const nomeJogo = document.getElementById('nomeJogoMembro').value.trim();
             const discordId = document.getElementById('idMembroDiscord').value.trim();
             const graduacao = document.getElementById('graduacaoMembro').value;
+            const cargoEspecial = document.getElementById('cargoEspecialMembro').value;
+            const eAdmin = document.getElementById('checkAdminMembro').checked;
 
             const membros = obterMembros();
             
-            const existe = membros.some(m => m.discordId === discordId);
-            if (existe) {
+            // Verifica duplicata de ID do Discord (ignorando o próprio usuário se estiver editando)
+            const existeOutro = membros.some((m, idx) => m.discordId === discordId && idx !== parseInt(indexEdicao));
+            if (existeOutro) {
                 alert('Este ID do Discord já está cadastrado para outro membro!');
                 return;
             }
 
-            membros.push({ nomeJogo, discordId, graduacao });
+            if (indexEdicao === "") {
+                // Adicionando novo
+                membros.push({ nomeJogo, discordId, graduacao, cargoEspecial, eAdmin });
+                alert(`Membro ${nomeJogo} cadastrado com sucesso!`);
+            } else {
+                // Editando existente
+                membros[indexEdicao] = { nomeJogo, discordId, graduacao, cargoEspecial, eAdmin };
+                alert(`Membro ${nomeJogo} atualizado com sucesso!`);
+            }
+
             salvarMembrosStorage(membros);
             carregarMembros();
-
-            alert(`Membro ${nomeJogo} (${graduacao}) cadastrado com sucesso!`);
             fecharModalMembro();
         }
 
@@ -953,7 +1067,8 @@
 
             const membros = obterMembros();
             const eMembroCadastrado = membros.some(m => m.discordId === userId);
-            const eAdmin = ADMINS_AUTORIZADOS.includes(userId);
+            const adminsAtuais = obterAdminsAutorizados();
+            const eAdmin = adminsAtuais.includes(userId);
 
             if (!eMembroCadastrado && !eAdmin) {
                 alert('Acesso negado! Apenas membros registrados no alistamento do clã podem enviar relatórios de missão.');
