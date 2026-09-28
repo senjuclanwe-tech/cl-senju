@@ -942,7 +942,7 @@
             }
         }
 
-        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO ---
+        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO (COM ORDENAÇÃO POR HIERARQUIA) ---
         async function carregarMembros() {
             const container = document.getElementById('lista-membros');
             container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando membros...</p>';
@@ -954,6 +954,22 @@
                 container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro cadastrado ainda.</p>';
                 return;
             }
+
+            // Pesos para ordenação da hierarquia (Cargos Especiais e Graduações)
+            const pesoCargo = { "Líder": 1, "Braço Direito": 2 };
+            const pesoGraduacao = { "Jounin": 1, "Chunnin": 2, "Gennin": 3, "Estudante": 4 };
+
+            membros.sort((a, b) => {
+                const pA = pesoCargo[a.cargo_especial] || 99;
+                const pB = pesoCargo[b.cargo_especial] || 99;
+                if (pA !== pB) return pA - pB;
+
+                const gA = pesoGraduacao[a.graduacao] || 99;
+                const gB = pesoGraduacao[b.graduacao] || 99;
+                if (gA !== gB) return gA - gB;
+
+                return a.nome_jogo.localeCompare(b.nome_jogo);
+            });
 
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
