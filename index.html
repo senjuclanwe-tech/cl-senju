@@ -305,6 +305,7 @@
             align-items: center;
             gap: 15px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .btn-admin {
@@ -338,6 +339,24 @@
 
         .btn-discord-login:hover {
             background-color: #4752C4;
+        }
+
+        .btn-logout {
+            background-color: #d91414;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+            display: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: #b01010;
         }
 
         .user-status {
@@ -531,7 +550,10 @@
         
         <!-- Área de Login/Admin baseada no Discord OAuth2 -->
         <div class="admin-controls">
-            <span id="status-usuario" class="user-status"></span>
+            <div>
+                <span id="status-usuario" class="user-status"></span>
+                <button id="btn-logout" class="btn-logout" onclick="deslogarDiscord()">Sair</button>
+            </div>
             <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar com Discord (Liderança)</button>
             <button id="btn-painel-admin" class="btn-admin" onclick="abrirModalAdmin()">+ Adicionar Mídia</button>
         </div>
@@ -654,9 +676,9 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // NOVO ID PESSOAL INSERIDO:
+        // SEUS IDs AUTORIZADOS (Seu ID atual inserido):
         const ADMINS_AUTORIZADOS = [
-            "384808394701275147"    // Seu novo ID numérico do Discord
+            "384808394701275147"    // ID do Administrador
         ];
 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -666,13 +688,18 @@
             window.location.href = discordOAuthUrl;
         }
 
+        function deslogarDiscord() {
+            localStorage.removeItem('discord_user_id');
+            localStorage.removeItem('discord_username');
+            window.location.href = REDIRECT_URI;
+        }
+
         // Verifica se o usuário acabou de voltar do login do Discord
         window.onload = function() {
             const fragment = new URLSearchParams(window.location.hash.slice(1));
             const accessToken = fragment.get('access_token');
 
             if (accessToken) {
-                // Pega os dados do usuário autenticado no Discord
                 fetch('https://discord.com/api/users/@me', {
                     headers: { authorization: `Bearer ${accessToken}` }
                 })
@@ -681,11 +708,9 @@
                     const userId = data.id;
                     const username = data.username;
 
-                    // Salva na sessão do navegador
                     localStorage.setItem('discord_user_id', userId);
                     localStorage.setItem('discord_username', username);
 
-                    // Limpa a URL para sumir o token
                     window.history.replaceState({}, document.title, REDIRECT_URI);
                     verificarPermissaoAdmin();
                 })
@@ -700,17 +725,18 @@
             const username = localStorage.getItem('discord_username');
             const btnLogin = document.getElementById('btn-login');
             const btnAdmin = document.getElementById('btn-painel-admin');
+            const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
             if (userId) {
                 btnLogin.style.display = 'none';
                 statusUsuario.innerHTML = `Logado como: <b>${username}</b>`;
+                btnLogout.style.display = 'inline-block';
 
-                // Verifica se o ID está na lista de líderes autorizados
                 if (ADMINS_AUTORIZADOS.includes(userId)) {
                     btnAdmin.style.display = 'inline-block';
                 } else {
-                    statusUsuario.innerHTML += ` (Apenas membros comuns)`;
+                    statusUsuario.innerHTML += ` (Membro Comum)`;
                 }
             }
         }
@@ -756,11 +782,43 @@
             document.getElementById('formRelatorio').reset();
         }
 
+        // ADICIONAR MÍDIA AUTOMATICAMENTE NA ABA CORRETA
         function adicionarMidia(event) {
             event.preventDefault();
             const tipo = document.getElementById('tipoMidia').value;
             const titulo = document.getElementById('tituloMidia').value;
-            alert(`Mídia "${titulo}" (${tipo}) adicionada com sucesso ao álbum do clã!`);
+            const url = document.getElementById('urlMidia').value;
+            const username = localStorage.getItem('discord_username') || 'Liderança';
+
+            const mediaCard = document.createElement('div');
+            mediaCard.className = 'media-card';
+
+            if (tipo === 'foto') {
+                mediaCard.innerHTML = `
+                    <div class="media-preview">
+                        <img src="${url}" alt="${titulo}" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
+                    </div>
+                    <div class="media-info">
+                        <h4>${titulo}</h4>
+                        <p>Enviado por: ${username}</p>
+                    </div>
+                `;
+                document.getElementById('secao-fotos').prepend(mediaCard);
+            } else {
+                // Caso seja vídeo (suporta link embed ou direto)
+                mediaCard.innerHTML = `
+                    <div class="media-preview">
+                        <iframe src="${url}" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="media-info">
+                        <h4>${titulo}</h4>
+                        <p>Enviado por: ${username}</p>
+                    </div>
+                `;
+                document.getElementById('secao-videos').prepend(mediaCard);
+            }
+
+            alert(`Mídia "${titulo}" publicada com sucesso no álbum!`);
             fecharModalAdmin();
             document.getElementById('formAdmin').reset();
         }
