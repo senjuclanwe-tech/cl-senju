@@ -219,6 +219,70 @@
             color: var(--text-muted);
         }
 
+        /* LISTA DE MEMBROS */
+        .members-header-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 25px;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .member-card {
+            background-color: rgba(26, 14, 8, 0.85);
+            border: 1px solid rgba(194, 155, 56, 0.3);
+            border-radius: 8px;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .member-card:hover {
+            border-color: var(--senju-gold);
+            transform: translateY(-4px);
+        }
+
+        .member-card h4 {
+            font-family: 'Cinzel', serif;
+            color: var(--text-main);
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+        }
+
+        .member-card .graduacao {
+            color: var(--senju-gold);
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            background-color: rgba(194, 155, 56, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+
+        .btn-excluir-membro {
+            position: absolute;
+            top: 10px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: var(--senju-red);
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: none;
+            transition: transform 0.2s;
+        }
+
+        .btn-excluir-membro:hover {
+            transform: scale(1.2);
+        }
+
         /* ÁLBUM / GALERIA DE MÍDIA */
         .gallery-nav {
             display: flex;
@@ -298,7 +362,7 @@
             font-size: 0.85rem;
         }
 
-        /* PAINEL ADMIN / ADICIONAR MÍDIA (RESTRITO) */
+        /* PAINEL ADMIN / BOTÕES */
         .admin-controls {
             display: flex;
             justify-content: flex-end;
@@ -509,8 +573,9 @@
             <ul>
                 <li><a href="#inicio">Início</a></li>
                 <li><a href="#sobre">Liderança</a></li>
+                <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
-                <li><a onclick="abrirModalRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
+                <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
         </nav>
     </header>
@@ -524,7 +589,7 @@
     <section id="inicio" class="hero">
         <h1>Onde a Folha Dança, há o <span>Fogo</span></h1>
         <p>A raiz que sustenta Konoha sob a liderança implacável e estratégica do Nidaime. Força, tática e união.</p>
-        <button onclick="abrirModalRelatorio()" class="btn">Enviar Relatório de Missão</button>
+        <button onclick="tentarAbrirRelatorio()" class="btn">Enviar Relatório de Missão</button>
     </section>
 
     <!-- LIDERANÇA -->
@@ -544,6 +609,20 @@
         </div>
     </div>
 
+    <!-- SEÇÃO DE MEMBROS -->
+    <div class="container" id="membros">
+        <h2 class="section-title">Membros do Clã</h2>
+        
+        <div class="members-header-controls">
+            <button id="btn-adicionar-membro" class="btn-admin" style="display: none;" onclick="abrirModalMembro()">+ Adicionar Membro</button>
+        </div>
+
+        <!-- Grade onde os membros aparecem publicamente (sem mostrar o ID) -->
+        <div id="lista-membros" class="members-grid">
+            <!-- Renderizado dinamicamente via Script -->
+        </div>
+    </div>
+
     <!-- ÁLBUM DE FOTOS E VÍDEOS -->
     <div class="container" id="galeria">
         <h2 class="section-title">Álbuns do Clã</h2>
@@ -554,7 +633,7 @@
                 <span id="status-usuario" class="user-status"></span>
                 <button id="btn-logout" class="btn-logout" onclick="deslogarDiscord()">Sair</button>
             </div>
-            <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar com Discord (Liderança)</button>
+            <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar com Discord</button>
             <button id="btn-painel-admin" class="btn-admin" onclick="abrirModalAdmin()">+ Adicionar Mídia</button>
         </div>
 
@@ -666,6 +745,43 @@
         </div>
     </div>
 
+    <!-- MODAL / POP-UP PARA CADASTRAR MEMBRO (RESTRITO) -->
+    <div class="modal-overlay" id="modalMembro">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Cadastrar Membro no Clã</h2>
+                <button class="close-btn" onclick="fecharModalMembro()">&times;</button>
+            </div>
+            <form id="formMembro" onsubmit="salvarMembro(event)">
+                <div class="form-group">
+                    <label for="nomeJogoMembro">Nome no Jogo:</label>
+                    <input type="text" id="nomeJogoMembro" required placeholder="Ex: Senju Hitori">
+                </div>
+
+                <div class="form-group">
+                    <label for="idMembroDiscord">ID do Discord (Numérico - Oculto do público):</label>
+                    <input type="text" id="idMembroDiscord" required placeholder="Ex: 384808394701275147">
+                </div>
+
+                <div class="form-group">
+                    <label for="graduacaoMembro">Graduação:</label>
+                    <select id="graduacaoMembro" required>
+                        <option value="Estudante">Estudante</option>
+                        <option value="Gennin">Gennin</option>
+                        <option value="Chunnin">Chunnin</option>
+                        <option value="Jounin">Jounin</option>
+                        <option value="Liderança">Liderança / Comando</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalMembro()">Cancelar</button>
+                    <button type="submit" class="btn">Cadastrar Membro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer>
         <p>&copy; 2026 Clã Senju. Todos os direitos reservados. Sob o comando de Tobirama e do braço direito Hayai.</p>
@@ -676,10 +792,9 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // DEIXADO VAZIO PARA TESTAR O BLOQUEIO DE MEMBRO COMUM:
-        // (Para se liberar depois, coloque seu ID dentro das aspas: "384808394701275147")
+        // SEU ID DE ADMINISTRADOR (Coloque seu ID real aqui para liberar o painel de adm)
         const ADMINS_AUTORIZADOS = [
-            // "384808394701275147" 
+            "384808394701275147"    // Seu ID de Líder
         ];
 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -695,7 +810,6 @@
             window.location.href = REDIRECT_URI;
         }
 
-        // Verifica se o usuário acabou de voltar do login do Discord
         window.onload = function() {
             const fragment = new URLSearchParams(window.location.hash.slice(1));
             const accessToken = fragment.get('access_token');
@@ -719,6 +833,8 @@
             } else {
                 verificarPermissaoAdmin();
             }
+
+            carregarMembros();
         };
 
         function verificarPermissaoAdmin() {
@@ -726,6 +842,7 @@
             const username = localStorage.getItem('discord_username');
             const btnLogin = document.getElementById('btn-login');
             const btnAdmin = document.getElementById('btn-painel-admin');
+            const btnAdicionarMembro = document.getElementById('btn-adicionar-membro');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -736,18 +853,122 @@
 
                 if (ADMINS_AUTORIZADOS.includes(userId)) {
                     btnAdmin.style.display = 'inline-block';
+                    btnAdicionarMembro.style.display = 'inline-block';
                 } else {
                     statusUsuario.innerHTML += ` (Membro Comum)`;
                 }
             }
+            carregarMembros(); // Recarrega para mostrar ou esconder o botão de excluir dependendo se é admin
         }
 
-        // Funções do Modal de Relatório
+        // --- SISTEMA DE GERENCIAMENTO DE MEMBROS ---
+        function obterMembros() {
+            const membrosSalvos = localStorage.getItem('clã_senju_membros');
+            if (membrosSalvos) {
+                return JSON.parse(membrosSalvos);
+            }
+            // Membros iniciais padrão
+            return [
+                { nomeJogo: "Tobirama Senju", discordId: "384808394701275147", graduacao: "Liderança" },
+                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Jounin" }
+            ];
+        }
+
+        function salvarMembrosStorage(membros) {
+            localStorage.setItem('clã_senju_membros', JSON.stringify(membros));
+        }
+
+        function carregarMembros() {
+            const membros = obterMembros();
+            const container = document.getElementById('lista-membros');
+            container.innerHTML = '';
+
+            const userId = localStorage.getItem('discord_user_id');
+            const eAdmin = userId && ADMINS_AUTORIZADOS.includes(userId);
+
+            membros.forEach((m, index) => {
+                const card = document.createElement('div');
+                card.className = 'member-card';
+                
+                // Botão de excluir só aparece se for admin logado
+                let botaoExcluirHtml = '';
+                if (eAdmin) {
+                    botaoExcluirHtml = `<button class="btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro">&times;</button>`;
+                }
+
+                card.innerHTML = `
+                    ${botaoExcluirHtml}
+                    <h4>${m.nomeJogo}</h4>
+                    <div class="graduacao">${m.graduacao}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Funções do Modal de Membro
+        const modalMembro = document.getElementById('modalMembro');
+        function abrirModalMembro() { modalMembro.style.display = 'flex'; }
+        function fecharModalMembro() { modalMembro.style.display = 'none'; document.getElementById('formMembro').reset(); }
+
+        function salvarMembro(event) {
+            event.preventDefault();
+            const nomeJogo = document.getElementById('nomeJogoMembro').value.trim();
+            const discordId = document.getElementById('idMembroDiscord').value.trim();
+            const graduacao = document.getElementById('graduacaoMembro').value;
+
+            const membros = obterMembros();
+            
+            // Verifica se o ID já existe
+            const existe = membros.some(m => m.discordId === discordId);
+            if (existe) {
+                alert('Este ID do Discord já está cadastrado para outro membro!');
+                return;
+            }
+
+            membros.push({ nomeJogo, discordId, graduacao });
+            salvarMembrosStorage(membros);
+            carregarMembros();
+
+            alert(`Membro ${nomeJogo} (${graduacao}) cadastrado com sucesso!`);
+            fecharModalMembro();
+        }
+
+        function excluirMembro(index) {
+            if (confirm('Tem certeza que deseja remover este membro do clã?')) {
+                const membros = obterMembros();
+                const removido = membros.splice(index, 1);
+                salvarMembrosStorage(membros);
+                carregarMembros();
+                alert(`Membro removido com sucesso!`);
+            }
+        }
+
+        // --- VALIDAÇÃO DO RELATÓRIO (APENAS MEMBROS CADASTRADOS) ---
         const modalRelatorio = document.getElementById('modalRelatorio');
-        function abrirModalRelatorio() { modalRelatorio.style.display = 'flex'; }
+        
+        function tentarAbrirRelatorio() {
+            const userId = localStorage.getItem('discord_user_id');
+
+            if (!userId) {
+                alert('Você precisa entrar com a sua conta do Discord no topo da página antes de enviar um relatório!');
+                return;
+            }
+
+            const membros = obterMembros();
+            const eMembroCadastrado = membros.some(m => m.discordId === userId);
+            const eAdmin = ADMINS_AUTORIZADOS.includes(userId);
+
+            if (!eMembroCadastrado && !eAdmin) {
+                alert('Acesso negado! Apenas membros registrados no alistamento do clã podem enviar relatórios de missão.');
+                return;
+            }
+
+            modalRelatorio.style.display = 'flex';
+        }
+
         function fecharModalRelatorio() { modalRelatorio.style.display = 'none'; }
 
-        // Funções do Painel Admin
+        // Funções do Painel Admin (Mídia)
         const modalAdmin = document.getElementById('modalAdmin');
         function abrirModalAdmin() { modalAdmin.style.display = 'flex'; }
         function fecharModalAdmin() { modalAdmin.style.display = 'none'; }
@@ -755,6 +976,7 @@
         window.onclick = function(event) {
             if (event.target == modalRelatorio) fecharModalRelatorio();
             if (event.target == modalAdmin) fecharModalAdmin();
+            if (event.target == modalMembro) fecharModalMembro();
         }
 
         // Alternar abas da Galeria
