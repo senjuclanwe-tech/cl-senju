@@ -408,12 +408,14 @@
             color: var(--text-muted);
             font-size: 0.9rem;
             border-bottom: 1px solid rgba(194, 155, 56, 0.2);
+            cursor: pointer;
         }
 
         .media-preview img, .media-preview iframe {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            cursor: pointer;
         }
 
         .media-info {
@@ -448,14 +450,14 @@
             font-size: 0.9rem;
             font-weight: 600;
             transition: background-color 0.2s;
-            display: none; /* Controlado via JS se for adm */
+            display: none;
         }
 
         .btn-admin:hover {
             background-color: #4752C4;
         }
 
-        /* MODAL / POP-UP */
+        /* MODAL / POP-UP GERAL E ZOOM DE IMAGEM */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -481,6 +483,37 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
             max-height: 90vh;
             overflow-y: auto;
+        }
+
+        /* MODAL ESPECÍFICO PARA ZOOM DE FOTO */
+        .modal-zoom-content {
+            background: transparent;
+            border: none;
+            max-width: 90vw;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .modal-zoom-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border: 2px solid var(--senju-gold);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+        }
+
+        .modal-zoom-title {
+            color: var(--text-main);
+            font-family: 'Cinzel', serif;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
         .modal-header {
@@ -713,7 +746,16 @@
 
         <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
-            <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando vídeos...</p>
+            <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>
+        </div>
+    </div>
+
+    <!-- MODAL DE ZOOM DE IMAGEM -->
+    <div class="modal-overlay" id="modalZoom" onclick="fecharModalZoom()">
+        <div class="modal-zoom-content" onclick="event.stopPropagation()">
+            <button class="close-btn" style="align-self: flex-end; margin-bottom: 10px;" onclick="fecharModalZoom()">&times;</button>
+            <img id="imagemZoom" src="" alt="Zoom da Foto">
+            <div id="tituloZoom" class="modal-zoom-title"></div>
         </div>
     </div>
 
@@ -904,7 +946,6 @@
                 }
             }
 
-            // Verifica permissão de adm primeiro e depois carrega os elementos na tela
             await verificarPermissaoAdmin();
             carregarMembros();
             carregarMidias();
@@ -986,7 +1027,6 @@
                 card.className = 'member-card';
                 
                 let botoesAdminHtml = '';
-                // SÓ EXIBE OS BOTÕES DE EDITAR/EXCLUIR SE FOR ADMIN LOGADO
                 if (eAdminLogado) {
                     botoesAdminHtml = `
                         <div class="admin-buttons-card">
@@ -1143,7 +1183,6 @@
                 mediaCard.className = 'media-card';
 
                 let botoesAdminHtml = '';
-                // SÓ EXIBE O BOTÃO DE EXCLUIR MÍDIA SE FOR ADMIN LOGADO
                 if (eAdminLogado) {
                     botoesAdminHtml = `
                         <div class="admin-buttons-card">
@@ -1154,9 +1193,10 @@
 
                 if (m.tipo === 'foto') {
                     qtdFotos++;
+                    // Adicionado evento onclick para abrir o zoom da imagem
                     mediaCard.innerHTML = `
                         ${botoesAdminHtml}
-                        <div class="media-preview">
+                        <div class="media-preview" onclick="abrirModalZoom('${m.url}', '${m.titulo.replace(/'/g, "\\'")}')">
                             <img src="${m.url}" alt="${m.titulo}" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
                         </div>
                         <div class="media-info">
@@ -1232,6 +1272,17 @@
                 carregarMidias();
                 alert(`Mídia removida com sucesso!`);
             }
+        }
+
+        // --- CONTROLE DOS MODAIS DE ZOOM E OUTROS ---
+        function abrirModalZoom(url, titulo) {
+            document.getElementById('imagemZoom').src = url;
+            document.getElementById('tituloZoom').innerText = titulo;
+            document.getElementById('modalZoom').style.display = 'flex';
+        }
+
+        function fecharModalZoom() {
+            document.getElementById('modalZoom').style.display = 'none';
         }
 
         // --- ENVIO DE RELATÓRIO VIA WEBHOOK ---
