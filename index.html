@@ -740,8 +740,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="fotosRelatorio">Fotos (Pode selecionar várias):</label>
-                    <input type="file" id="fotosRelatorio" accept="image/*" multiple>
+                    <label for="fotosRelatorio">Fotos (Opcional - Link de imagem):</label>
+                    <input type="url" id="fotosRelatorio" placeholder="https://...">
                 </div>
 
                 <div class="form-group">
@@ -863,8 +863,9 @@
 
     <!-- SCRIPTS -->
     <script>
-        // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
+        // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 E WEBHOOK =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e";
 
         // SEU ID DE ADMINISTRADOR FIXO PRINCIPAL
         const ADMINS_FIXOS = [
@@ -1044,7 +1045,6 @@
 
             const membros = obterMembros();
             
-            // Verifica duplicata de ID do Discord (ignorando o próprio usuário se estiver editando)
             const existeOutro = membros.some((m, idx) => m.discordId === discordId && idx !== parseInt(indexEdicao));
             if (existeOutro) {
                 alert('Este ID do Discord já está cadastrado para outro membro!');
@@ -1052,11 +1052,9 @@
             }
 
             if (indexEdicao === "") {
-                // Adicionando novo
                 membros.push({ nomeJogo, discordId, graduacao, cargoEspecial, trabalho, eAdmin });
                 alert(`Membro ${nomeJogo} cadastrado com sucesso!`);
             } else {
-                // Editando existente
                 membros[indexEdicao] = { nomeJogo, discordId, graduacao, cargoEspecial, trabalho, eAdmin };
                 alert(`Membro ${nomeJogo} atualizado com sucesso!`);
             }
@@ -1078,7 +1076,7 @@
             }
         }
 
-        // --- VALIDAÇÃO DO RELATÓRIO ---
+        // --- VALIDAÇÃO E ENVIO DO RELATÓRIO VIA WEBHOOK ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         function tentarAbrirRelatorio() {
@@ -1103,6 +1101,52 @@
         }
 
         function fecharModalRelatorio() { modalRelatorio.style.display = 'none'; }
+
+        function enviarRelatorio(event) {
+            event.preventDefault();
+            const nomeJogo = document.getElementById('nomeJogo').value.trim();
+            const nomeDiscord = document.getElementById('nomeDiscord').value.trim();
+            const textoRelatorio = document.getElementById('textoRelatorio').value.trim();
+            const fotoUrl = document.getElementById('fotosRelatorio').value.trim();
+            const linkVideo = document.getElementById('linkVideo').value.trim();
+
+            let conteudoMensagem = `📜 **NOVO RELATÓRIO DE MISSÃO - CLÃ SENJU** 📜\n\n`;
+            conteudoMensagem += `👤 **Nome no Jogo:** ${nomeJogo}\n`;
+            conteudoMensagem += `💬 **Discord:** ${nomeDiscord}\n\n`;
+            conteudoMensagem += `📝 **Relatório:**\n> ${textoRelatorio.replace(/\n/g, '\n> ')}\n`;
+
+            if (fotoUrl) {
+                conteudoMensagem += `\n📷 **Foto/Print:** ${fotoUrl}`;
+            }
+            if (linkVideo) {
+                conteudoMensagem += `\n🎥 **Vídeo:** ${linkVideo}`;
+            }
+
+            const payload = {
+                content: conteudoMensagem
+            };
+
+            fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert(`Relatório enviado com sucesso para o canal do Discord, ${nomeJogo}!`);
+                    fecharModalRelatorio();
+                    document.getElementById('formRelatorio').reset();
+                } else {
+                    alert('Erro ao enviar relatório pelo webhook. Verifique o link.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro de conexão ao tentar enviar o relatório.');
+            });
+        }
 
         // Funções do Painel Admin (Mídia)
         const modalAdmin = document.getElementById('modalAdmin');
@@ -1130,14 +1174,6 @@
                 secaoFotos.style.display = 'none';
                 secaoVideos.style.display = 'grid';
             }
-        }
-
-        function enviarRelatorio(event) {
-            event.preventDefault();
-            const nomeJogo = document.getElementById('nomeJogo').value;
-            alert(`Relatório enviado com sucesso, ${nomeJogo}! O Comando irá analisar.`);
-            fecharModalRelatorio();
-            document.getElementById('formRelatorio').reset();
         }
 
         function adicionarMidia(event) {
