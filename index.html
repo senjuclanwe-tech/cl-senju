@@ -33,7 +33,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 8%;
+            padding: 15px 5%;
             background-color: rgba(26, 14, 8, 0.95);
             border-bottom: 2px solid var(--senju-gold);
             position: fixed;
@@ -44,7 +44,7 @@
 
         .logo {
             font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 800;
             color: var(--text-main);
             letter-spacing: 2px;
@@ -58,7 +58,7 @@
         nav ul {
             display: flex;
             list-style: none;
-            gap: 25px;
+            gap: 20px;
             align-items: center;
         }
 
@@ -66,6 +66,7 @@
             text-decoration: none;
             color: var(--text-muted);
             font-weight: 600;
+            font-size: 0.95rem;
             transition: color 0.3s;
             cursor: pointer;
         }
@@ -77,9 +78,10 @@
         .btn-nav-relatorio {
             background-color: var(--senju-gold);
             color: #0f0805 !important;
-            padding: 8px 16px;
+            padding: 6px 14px;
             border-radius: 4px;
             font-weight: 700;
+            font-size: 0.9rem;
             transition: transform 0.2s, background-color 0.2s;
         }
 
@@ -88,11 +90,60 @@
             transform: translateY(-2px);
         }
 
+        /* LOGIN DISCRETO NO TOPO */
+        .auth-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-discord-login {
+            background-color: #5865F2;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-discord-login:hover {
+            background-color: #4752C4;
+        }
+
+        .btn-logout {
+            background-color: #d91414;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: none;
+            transition: background-color 0.2s;
+        }
+
+        .btn-logout:hover {
+            background-color: #b01010;
+        }
+
+        .user-status {
+            color: var(--senju-gold);
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
         /* BANNER DO SÍMBOLO */
         .banner-topo {
             width: 100%;
-            max-width: 600px;
-            margin: 120px auto 20px auto;
+            max-width: 500px;
+            margin: 110px auto 10px auto;
             padding: 20px;
             display: flex;
             justify-content: center;
@@ -110,7 +161,7 @@
 
         /* HERO / CHAMADA */
         .hero {
-            padding: 40px 20px 60px 20px;
+            padding: 20px 20px 40px 20px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -121,7 +172,7 @@
 
         .hero h1 {
             font-family: 'Cinzel', serif;
-            font-size: 3rem;
+            font-size: 2.8rem;
             margin-bottom: 15px;
             letter-spacing: 3px;
             color: var(--text-main);
@@ -133,36 +184,16 @@
         }
 
         .hero p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--text-muted);
             max-width: 600px;
-            margin-bottom: 30px;
-        }
-
-        .btn {
-            background-color: var(--senju-red);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            letter-spacing: 1px;
-            box-shadow: 0 0 20px rgba(217, 20, 20, 0.5);
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            border: none;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 0 30px rgba(217, 20, 20, 0.8);
         }
 
         /* SECTIONS / CARDS */
         .container {
             max-width: 1100px;
             margin: 0 auto;
-            padding: 60px 20px;
+            padding: 50px 20px;
         }
 
         .section-title {
@@ -370,21 +401,17 @@
             font-size: 0.85rem;
         }
 
-        /* PAINEL ADMIN / BOTÕES */
-        .admin-controls {
+        .admin-controls-media {
             display: flex;
             justify-content: flex-end;
-            align-items: center;
-            gap: 15px;
             margin-bottom: 20px;
-            flex-wrap: wrap;
         }
 
         .btn-admin {
             background-color: #5865F2;
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 6px;
             cursor: pointer;
             font-size: 0.9rem;
@@ -395,46 +422,6 @@
 
         .btn-admin:hover {
             background-color: #4752C4;
-        }
-
-        .btn-discord-login {
-            background-color: #5865F2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 600;
-            transition: background-color 0.2s;
-        }
-
-        .btn-discord-login:hover {
-            background-color: #4752C4;
-        }
-
-        .btn-logout {
-            background-color: #d91414;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-left: 10px;
-            display: none;
-            transition: background-color 0.2s;
-        }
-
-        .btn-logout:hover {
-            background-color: #b01010;
-        }
-
-        .user-status {
-            color: var(--senju-gold);
-            font-size: 0.9rem;
-            font-weight: 600;
         }
 
         /* MODAL / POP-UP */
@@ -566,15 +553,15 @@
         }
 
         @media (max-width: 768px) {
-            .hero h1 { font-size: 2.2rem; }
-            nav ul { gap: 15px; }
+            .hero h1 { font-size: 2rem; }
+            nav ul { gap: 12px; }
             nav a:not(.btn-nav-relatorio) { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- MENU -->
+    <!-- MENU / HEADER -->
     <header>
         <div class="logo">CLÃ <span>SENJU</span></div>
         <nav>
@@ -586,6 +573,12 @@
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
         </nav>
+        <!-- Login Discreto no Canto Superior -->
+        <div class="auth-container">
+            <span id="status-usuario" class="user-status"></span>
+            <button id="btn-logout" class="btn-logout" onclick="deslogarDiscord()">Sair</button>
+            <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar Discord</button>
+        </div>
     </header>
 
     <!-- BANNER DO SÍMBOLO -->
@@ -597,7 +590,6 @@
     <section id="inicio" class="hero">
         <h1>Onde a Folha Dança, há o <span>Fogo</span></h1>
         <p>A raiz que sustenta Konoha sob a liderança implacável e estratégica do Nidaime. Força, tática e união.</p>
-        <button onclick="tentarAbrirRelatorio()" class="btn">Enviar Relatório de Missão</button>
     </section>
 
     <!-- LIDERANÇA -->
@@ -625,7 +617,7 @@
             <button id="btn-adicionar-membro" class="btn-admin" style="display: none;" onclick="abrirModalMembro()">+ Adicionar Membro</button>
         </div>
 
-        <!-- Grade onde os membros aparecem publicamente (sem mostrar o ID) -->
+        <!-- Grade de Membros -->
         <div id="lista-membros" class="members-grid">
             <!-- Renderizado dinamicamente via Script -->
         </div>
@@ -635,13 +627,7 @@
     <div class="container" id="galeria">
         <h2 class="section-title">Álbuns do Clã</h2>
         
-        <!-- Área de Login/Admin baseada no Discord OAuth2 -->
-        <div class="admin-controls">
-            <div>
-                <span id="status-usuario" class="user-status"></span>
-                <button id="btn-logout" class="btn-logout" onclick="deslogarDiscord()">Sair</button>
-            </div>
-            <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar com Discord</button>
+        <div class="admin-controls-media">
             <button id="btn-painel-admin" class="btn-admin" onclick="abrirModalAdmin()">+ Adicionar Mídia</button>
         </div>
 
@@ -713,7 +699,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalRelatorio()">Cancelar</button>
-                    <button type="submit" class="btn">Enviar Relatório</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;">Enviar Relatório</button>
                 </div>
             </form>
         </div>
@@ -747,7 +733,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalAdmin()">Cancelar</button>
-                    <button type="submit" class="btn">Publicar no Álbum</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;">Publicar no Álbum</button>
                 </div>
             </form>
         </div>
@@ -768,7 +754,7 @@
 
                 <div class="form-group">
                     <label for="idMembroDiscord">ID do Discord (Numérico - Oculto do público):</label>
-                    <input type="text" id="idMembroDiscord" required placeholder="Ex: 384808394701275147">
+                    <input type="text" id="idMembroDiscord" required placeholder="Ex: 375808506374258699">
                 </div>
 
                 <div class="form-group">
@@ -778,13 +764,14 @@
                         <option value="Gennin">Gennin</option>
                         <option value="Chunnin">Chunnin</option>
                         <option value="Jounin">Jounin</option>
+                        <option value="Admin">Admin (Oculto na listagem pública)</option>
                         <option value="Liderança">Liderança / Comando</option>
                     </select>
                 </div>
 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalMembro()">Cancelar</button>
-                    <button type="submit" class="btn">Cadastrar Membro</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;">Cadastrar Membro</button>
                 </div>
             </form>
         </div>
@@ -800,9 +787,9 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // SEU ID DE ADMINISTRADOR
+        // SEU ID DE ADMINISTRADOR OFICIAL
         const ADMINS_AUTORIZADOS = [
-            "375808506374258699"    // Substitua pelo seu ID real se necessário
+            "375808506374258699"
         ];
 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -856,14 +843,12 @@
 
             if (userId) {
                 btnLogin.style.display = 'none';
-                statusUsuario.innerHTML = `Logado como: <b>${username}</b>`;
+                statusUsuario.innerHTML = `<b>${username}</b>`;
                 btnLogout.style.display = 'inline-block';
 
                 if (ADMINS_AUTORIZADOS.includes(userId)) {
                     btnAdmin.style.display = 'inline-block';
                     btnAdicionarMembro.style.display = 'inline-block';
-                } else {
-                    statusUsuario.innerHTML += ` (Membro Comum)`;
                 }
             }
             carregarMembros(); 
@@ -876,7 +861,7 @@
                 return JSON.parse(membrosSalvos);
             }
             return [
-                { nomeJogo: "Tobirama Senju", discordId: "384808394701275147", graduacao: "Liderança" },
+                { nomeJogo: "Tobirama Senju", discordId: "375808506374258699", graduacao: "Liderança" },
                 { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Braço Direito" }
             ];
         }
@@ -894,6 +879,11 @@
             const eAdmin = userId && ADMINS_AUTORIZADOS.includes(userId);
 
             membros.forEach((m, index) => {
+                // SE O CARGO FOR ADMIN, ELE FICA OCULTO DA LISTAGEM PÚBLICA DE MEMBROS
+                if (m.graduacao === "Admin") {
+                    return; 
+                }
+
                 const card = document.createElement('div');
                 card.className = 'member-card';
                 
@@ -938,7 +928,6 @@
             fecharModalMembro();
         }
 
-        // EXCLUI O MEMBRO E REMOVE O ID DO LOCALSTORAGE (REVOGA O ACESSO AO RELATÓRIO)
         function excluirMembro(index) {
             const membros = obterMembros();
             const membroRemovido = membros[index];
