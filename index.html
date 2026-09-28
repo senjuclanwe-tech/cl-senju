@@ -270,17 +270,25 @@
             position: absolute;
             top: 10px;
             right: 12px;
-            background: none;
-            border: none;
+            background-color: rgba(217, 20, 20, 0.2);
+            border: 1px solid var(--senju-red);
             color: var(--senju-red);
-            font-size: 1.1rem;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 1rem;
+            font-weight: bold;
             cursor: pointer;
-            display: none;
-            transition: transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
         }
 
         .btn-excluir-membro:hover {
-            transform: scale(1.2);
+            background-color: var(--senju-red);
+            color: white;
+            transform: scale(1.1);
         }
 
         /* ÁLBUM / GALERIA DE MÍDIA */
@@ -792,9 +800,9 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // SEU ID DE ADMINISTRADOR (Substitua abaixo pelo seu ID numérico real do Discord)
+        // SEU ID DE ADMINISTRADOR
         const ADMINS_AUTORIZADOS = [
-            "375808506374258699"    // Insira seu ID de admin correto aqui entre as aspas
+            "384808394701275147"    // Substitua pelo seu ID real se necessário
         ];
 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -867,7 +875,6 @@
             if (membrosSalvos) {
                 return JSON.parse(membrosSalvos);
             }
-            // Membros iniciais padrão com Hayai atualizado para Braço Direito
             return [
                 { nomeJogo: "Tobirama Senju", discordId: "384808394701275147", graduacao: "Liderança" },
                 { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Braço Direito" }
@@ -892,7 +899,7 @@
                 
                 let botaoExcluirHtml = '';
                 if (eAdmin) {
-                    botaoExcluirHtml = `<button class="btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro">&times;</button>`;
+                    botaoExcluirHtml = `<button class="btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro e revogar acesso">&times;</button>`;
                 }
 
                 card.innerHTML = `
@@ -931,13 +938,16 @@
             fecharModalMembro();
         }
 
+        // EXCLUI O MEMBRO E REMOVE O ID DO LOCALSTORAGE (REVOGA O ACESSO AO RELATÓRIO)
         function excluirMembro(index) {
-            if (confirm('Tem certeza que deseja remover este membro do clã?')) {
-                const membros = obterMembros();
+            const membros = obterMembros();
+            const membroRemovido = membros[index];
+
+            if (confirm(`Tem certeza que deseja remover ${membroRemovido.nomeJogo} do clã? O ID do Discord dele será apagado e ele perderá o acesso aos relatórios.`)) {
                 membros.splice(index, 1);
                 salvarMembrosStorage(membros);
                 carregarMembros();
-                alert(`Membro removido com sucesso!`);
+                alert(`Membro removido e ID revogado com sucesso!`);
             }
         }
 
