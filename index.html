@@ -676,9 +676,10 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // SEUS IDs AUTORIZADOS (Seu ID atual inserido):
+        // DEIXADO VAZIO PARA TESTAR O BLOQUEIO DE MEMBRO COMUM:
+        // (Para se liberar depois, coloque seu ID dentro das aspas: "384808394701275147")
         const ADMINS_AUTORIZADOS = [
-            "384808394701275147"    // ID do Administrador
+            // "384808394701275147" 
         ];
 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -805,7 +806,6 @@
                 `;
                 document.getElementById('secao-fotos').prepend(mediaCard);
             } else {
-                // Caso seja vídeo (suporta link embed ou direto)
                 mediaCard.innerHTML = `
                     <div class="media-preview">
                         <iframe src="${url}" frameborder="0" allowfullscreen></iframe>
