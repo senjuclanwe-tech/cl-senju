@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clã Senju | A Vontade do Fogo</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=MedievalSharp&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <!-- SDK do Supabase para banco de dados na nuvem -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
@@ -472,6 +472,73 @@
             background-color: #4752C4;
         }
 
+        /* ESTILO DA HISTÓRIA ÉPICA (NOVO RODAPÉ) */
+        .historia-wrapper {
+            background: rgba(20, 10, 5, 0.85);
+            border-top: 3px solid var(--senju-gold);
+            border-bottom: 3px solid var(--senju-gold);
+            padding: 60px 20px;
+            margin-top: 40px;
+        }
+
+        .historia-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .historia-bloco {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            background: rgba(26, 14, 8, 0.9);
+            border: 1px solid rgba(194, 155, 56, 0.4);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+            transition: border-color 0.3s;
+        }
+
+        .historia-bloco:hover {
+            border-color: var(--senju-gold);
+        }
+
+        .historia-imagem {
+            flex: 0 0 280px;
+            height: 180px;
+            border: 2px solid var(--senju-gold);
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: #0f0805;
+            cursor: pointer;
+        }
+
+        .historia-imagem img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(20%) contrast(110%);
+            transition: transform 0.3s;
+        }
+
+        .historia-imagem img:hover {
+            transform: scale(1.05);
+        }
+
+        .historia-texto h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--senju-gold);
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .historia-texto p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            text-align: justify;
+        }
+
         /* MODAL / POP-UP GERAL E ZOOM DE IMAGEM */
         .modal-overlay {
             display: none;
@@ -690,6 +757,13 @@
             .hero h1 { font-size: 2rem; }
             nav ul { gap: 12px; }
             nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa) { display: none; }
+            .historia-bloco {
+                flex-direction: column;
+            }
+            .historia-imagem {
+                width: 100%;
+                flex: none;
+            }
         }
     </style>
 </head>
@@ -704,6 +778,7 @@
                 <li><a href="#sobre">Liderança</a></li>
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
+                <li><a href="#historia">História</a></li>
                 <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
@@ -780,6 +855,70 @@
         <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>
+        </div>
+    </div>
+
+    <!-- SEÇÃO DE HISTÓRIA ÉPICA (NO RODAPÉ COM AS 5 IMAGENS À ESQUERDA) -->
+    <div class="historia-wrapper" id="historia">
+        <div class="container" style="padding-top: 0; padding-bottom: 0;">
+            <h2 class="section-title">A História do Clã Senju</h2>
+        </div>
+        
+        <div class="historia-container">
+            <!-- Bloco 1 -->
+            <div class="historia-bloco">
+                <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/t4xmQ6xw/Gemini-Generated-Image-nk6go1nk6go1nk6g.jpg', 'A Era dos Conflitos Sangrentos')">
+                    <img src="https://i.postimg.cc/t4xmQ6xw/Gemini-Generated-Image-nk6go1nk6go1nk6g.jpg" alt="A Era dos Conflitos Sangrentos" loading="lazy">
+                </div>
+                <div class="historia-texto">
+                    <h3>A Era dos Conflitos Sangrentos</h3>
+                    <p>Antes da criação das vilas ocultas, o mundo shinobi era devastado por guerras infindáveis. O Clã Senju (conhecido como "O Clã das Mil Habilidades") era considerado o clã mais forte e temido do mundo, rivalizando diretamente apenas com o poderoso Clã Uchiha. As batalhas duravam gerações e vitimavam até mesmo crianças inocentes da família.</p>
+                </div>
+            </div>
+
+            <!-- Bloco 2 -->
+            <div class="historia-bloco">
+                <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/L83Q8pxY/historia2.jpg', 'O Sonho de Paz')">
+                    <img src="https://i.postimg.cc/L83Q8pxY/historia2.jpg" alt="O Sonho de Paz" loading="lazy">
+                </div>
+                <div class="historia-texto">
+                    <h3>O Sonho de Paz e a Aliança</h3>
+                    <p>Marcado pelas perdas de seus irmãos na guerra, Hashirama Senju sonhava com uma era de paz onde crianças não precisassem mais lutar. Após anos de confrontos, Hashirama e Madara Uchiha finalmente selaram uma trégua histórica, unindo as duas maiores forças da época.</p>
+                </div>
+            </div>
+
+            <!-- Bloco 3 -->
+            <div class="historia-bloco">
+                <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/prQzJ2hC/historia3.jpg', 'A Fundação de Konoha')">
+                    <img src="https://i.postimg.cc/prQzJ2hC/historia3.jpg" alt="A Fundação de Konoha" loading="lazy">
+                </div>
+                <div class="historia-texto">
+                    <h3>A Fundação de Konohagakure</h3>
+                    <p>Em parceria com os Uchiha, o Clã Senju fundou a primeira grande vila ninja organizada da história: Konohagakure (A Vila Oculta da Folha). Esse modelo revolucionário de união inspirou todas as outras nações do mundo shinobi a criarem suas próprias vilas.</p>
+                </div>
+            </div>
+
+            <!-- Bloco 4 -->
+            <div class="historia-bloco">
+                <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/3xxm2QKd/historia4.jpg', 'A Vontade do Fogo')">
+                    <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade do Fogo" loading="lazy">
+                </div>
+                <div class="historia-texto">
+                    <h3>A Vontade do Fogo e os Hokages</h3>
+                    <p>Sob a liderança de Hashirama (o Primeiro Hokage) e posteriormente de seu irmão Tobirama Senju (o Segundo Hokage), o clã estabeleceu a filosofia da Vontade do Fogo — o princípio de que todos os habitantes da vila devem proteger uns aos outros como uma verdadeira família.</p>
+                </div>
+            </div>
+
+            <!-- Bloco 5 -->
+            <div class="historia-bloco">
+                <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/vmGjrB4n/historia5.jpg', 'O Impacto Eterno')">
+                    <img src="https://i.postimg.cc/vmGjrB4n/historia5.jpg" alt="O Impacto Eterno" loading="lazy">
+                </div>
+                <div class="historia-texto">
+                    <h3>O Impacto Eterno</h3>
+                    <p>Embora o sobrenome Senju tenha se diluído com o tempo e os membros tenham seguido caminhos próprios, a força de sua herança genética, seus jutsus lendários e seus ideais continuaram moldando e sustentando o destino de Konoha através das gerações.</p>
+                </div>
+            </div>
         </div>
     </div>
 
