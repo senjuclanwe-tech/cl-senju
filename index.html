@@ -686,7 +686,7 @@
 
         <!-- Grade de Membros -->
         <div id="lista-membros" class="members-grid">
-            <!-- Carregado do Supabase -->
+            <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando membros...</p>
         </div>
     </div>
 
@@ -706,12 +706,12 @@
 
         <!-- Seção de Fotos -->
         <div id="secao-fotos" class="gallery-grid">
-            <!-- Carregado do Supabase -->
+            <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando fotos...</p>
         </div>
 
         <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
-            <!-- Carregado do Supabase -->
+            <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando vídeos...</p>
         </div>
     </div>
 
@@ -902,20 +902,25 @@
                 }
             }
 
-            await carregarMembros();
-            await carregarMidias();
+            // Executa em paralelo para carregar instantaneamente
+            carregarMembros();
+            carregarMidias();
             verificarPermissaoAdmin();
         };
 
         async function obterAdminsAutorizados() {
             let admins = [...ADMINS_FIXOS];
-            const { data: membros } = await supabaseClient.from('membros').select('*');
-            if (membros) {
-                membros.forEach(m => {
-                    if (m.e_admin && m.discord_id && !admins.includes(m.discord_id)) {
-                        admins.push(m.discord_id);
-                    }
-                });
+            try {
+                const { data: membros } = await supabaseClient.from('membros').select('discord_id, e_admin');
+                if (membros) {
+                    membros.forEach(m => {
+                        if (m.e_admin && m.discord_id && !admins.includes(m.discord_id)) {
+                            admins.push(m.discord_id);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error("Erro ao buscar admins:", e);
             }
             return admins;
         }
@@ -930,25 +935,24 @@
             const statusUsuario = document.getElementById('status-usuario');
 
             if (userId) {
-                btnLogin.style.display = 'none';
-                statusUsuario.innerHTML = `<b>${username}</b>`;
-                btnLogout.style.display = 'inline-block';
+                if(btnLogin) btnLogin.style.display = 'none';
+                if(statusUsuario) statusUsuario.innerHTML = `<b>${username}</b>`;
+                if(btnLogout) logoutBtnDisplay = btnLogout.style.display = 'inline-block';
 
                 const adminsAtuais = await obterAdminsAutorizados();
                 if (adminsAtuais.includes(userId)) {
-                    btnAdmin.style.display = 'inline-block';
-                    btnAdicionarMembro.style.display = 'inline-block';
+                    if(btnAdmin) btnAdmin.style.display = 'inline-block';
+                    if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
                 }
             }
         }
 
-        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO (COM ORDENAÇÃO) ---
+        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO (OTIMIZADO) ---
         async function carregarMembros() {
             const container = document.getElementById('lista-membros');
-            container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando membros...</p>';
+            if(!container) return;
 
             const { data: membros, error } = await supabaseClient.from('membros').select('*');
-            container.innerHTML = '';
 
             if (error || !membros || membros.length === 0) {
                 container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro cadastrado ainda.</p>';
@@ -974,6 +978,7 @@
             const adminsAtuais = await obterAdminsAutorizados();
             const eAdminLogado = userId && adminsAtuais.includes(userId);
 
+            container.innerHTML = '';
             membros.forEach((m) => {
                 const card = document.createElement('div');
                 card.className = 'member-card';
@@ -1078,10 +1083,11 @@
             }
         }
 
-        // --- CARREGAR E ADICIONAR MÍDIAS DO ÁLBUM ---
+        // --- CARREGAR E ADICIONAR MÍDIAS DO ÁLBUM (OTIMIZADO) ---
         async function carregarMidias() {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
+            if(!secaoFotos || !secaoVideos) return;
             
             const { data: midias } = await supabaseClient.from('midias').select('*').order('id', { ascending: false });
             
@@ -1101,7 +1107,7 @@
                 if (m.tipo === 'foto') {
                     mediaCard.innerHTML = `
                         <div class="media-preview">
-                            <img src="${m.url}" alt="${m.titulo}" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
+                            <img src="${m.url}" alt="${m.titulo}" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
                         </div>
                         <div class="media-info">
                             <h4>${m.titulo}</h4>
@@ -1112,7 +1118,7 @@
                 } else {
                     mediaCard.innerHTML = `
                         <div class="media-preview">
-                            <iframe src="${m.url}" frameborder="0" allowfullscreen></iframe>
+                            <iframe src="${m.url}" frameborder="0" allowfullscreen loading="lazy"></iframe>
                         </div>
                         <div class="media-info">
                             <h4>${m.titulo}</h4>
@@ -1143,7 +1149,7 @@
             carregarMidias();
         }
 
-        // --- ENVIO DE RELATÓRIO VIA WEBHOOK (COM SUPORTE A MÚLTIPLAS FOTOS) ---
+        // --- ENVIO DE RELATÓRIO VIA WEBHOOK ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         async function tentarAbrirRelatorio() {
@@ -1197,7 +1203,6 @@
             const formData = new FormData();
             formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
 
-            // Adiciona todas as fotos selecionadas ao FormData de forma dinâmica
             if (arquivoInput.files && arquivoInput.files.length > 0) {
                 for (let i = 0; i < arquivoInput.files.length; i++) {
                     formData.append(`files[${i}]`, arquivoInput.files[i]);
