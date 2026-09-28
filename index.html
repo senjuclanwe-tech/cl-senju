@@ -609,6 +609,12 @@
             color: var(--text-muted);
             border-top: 1px solid var(--senju-gold);
             font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        footer span {
+            color: var(--senju-gold);
+            font-weight: 600;
         }
 
         @media (max-width: 768px) {
@@ -747,8 +753,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="fotosRelatorio">Fotos (Opcional - Link de imagem):</label>
-                    <input type="url" id="fotosRelatorio" placeholder="https://...">
+                    <label for="fotosRelatorio">Foto / Print da Missão:</label>
+                    <input type="file" id="fotosRelatorio" accept="image/*">
                 </div>
 
                 <div class="form-group">
@@ -866,6 +872,7 @@
     <!-- FOOTER -->
     <footer>
         <p>&copy; 2026 Clã Senju. Todos os direitos reservados. Sob o comando de Tobirama e do braço direito Hayai.</p>
+        <p>Site desenvolvido por <span>Losheard/Hitori</span>.</p>
     </footer>
 
     <!-- SCRIPTS -->
@@ -1083,7 +1090,7 @@
             }
         }
 
-        // --- VALIDAÇÃO E ENVIO DO RELATÓRIO VIA WEBHOOK ---
+        // --- VALIDAÇÃO E ENVIO DO RELATÓRIO VIA WEBHOOK COM MULTIPART (IMAGEM DIRETA) ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         function tentarAbrirRelatorio() {
@@ -1125,7 +1132,7 @@
             const nomeJogo = document.getElementById('nomeJogo').value.trim();
             const nomeDiscord = document.getElementById('nomeDiscord').value.trim();
             const textoRelatorio = document.getElementById('textoRelatorio').value.trim();
-            const fotoUrl = document.getElementById('fotosRelatorio').value.trim();
+            const arquivoInput = document.getElementById('fotosRelatorio');
             const linkVideo = document.getElementById('linkVideo').value.trim();
 
             let conteudoMensagem = `📜 **NOVO RELATÓRIO DE MISSÃO - CLÃ SENJU** 📜\n\n`;
@@ -1133,23 +1140,20 @@
             conteudoMensagem += `💬 **Discord:** ${nomeDiscord}\n\n`;
             conteudoMensagem += `📝 **Relatório:**\n> ${textoRelatorio.replace(/\n/g, '\n> ')}\n`;
 
-            if (fotoUrl) {
-                conteudoMensagem += `\n📷 **Foto/Print:** ${fotoUrl}`;
-            }
             if (linkVideo) {
                 conteudoMensagem += `\n🎥 **Vídeo:** ${linkVideo}`;
             }
 
-            const payload = {
-                content: conteudoMensagem
-            };
+            const formData = new FormData();
+            formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
+
+            if (arquivoInput.files && arquivoInput.files[0]) {
+                formData.append('file', arquivoInput.files[0]);
+            }
 
             fetch(DISCORD_WEBHOOK_URL, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                body: formData
             })
             .then(response => {
                 if (response.ok) {
@@ -1157,7 +1161,7 @@
                     fecharModalRelatorio();
                     document.getElementById('formRelatorio').reset();
                 } else {
-                    alert('Erro ao enviar relatório pelo webhook. Verifique o link.');
+                    alert('Erro ao enviar relatório pelo webhook. Tente novamente.');
                 }
             })
             .catch(error => {
