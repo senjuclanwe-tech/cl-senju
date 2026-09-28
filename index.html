@@ -92,6 +92,21 @@
             transform: translateY(-2px);
         }
 
+        .btn-nav-recompensa {
+            background-color: #2e8b57;
+            color: #fff !important;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .btn-nav-recompensa:hover {
+            background-color: #3cb371;
+            transform: translateY(-2px);
+        }
+
         /* LOGIN DISCRETO NO TOPO */
         .auth-container {
             display: flex;
@@ -485,6 +500,23 @@
             overflow-y: auto;
         }
 
+        /* TEXTO DE ORIENTAÇÃO DAS RECOMPENSAS */
+        .recompensas-info-box {
+            background: rgba(194, 155, 56, 0.08);
+            border: 1px dashed var(--senju-gold);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+
+        .recompensas-info-box b {
+            color: var(--senju-gold);
+        }
+
         /* MODAL ESPECÍFICO PARA ZOOM DE FOTO */
         .modal-zoom-content {
             background: transparent;
@@ -657,7 +689,7 @@
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
             nav ul { gap: 12px; }
-            nav a:not(.btn-nav-relatorio) { display: none; }
+            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa) { display: none; }
         }
     </style>
 </head>
@@ -672,6 +704,7 @@
                 <li><a href="#sobre">Liderança</a></li>
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
+                <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
         </nav>
@@ -756,6 +789,69 @@
             <button class="close-btn" style="align-self: flex-end; margin-bottom: 10px;" onclick="fecharModalZoom()">&times;</button>
             <img id="imagemZoom" src="" alt="Zoom da Foto">
             <div id="tituloZoom" class="modal-zoom-title"></div>
+        </div>
+    </div>
+
+    <!-- MODAL / POP-UP DE CENTRAL DE RECOMPENSAS -->
+    <div class="modal-overlay" id="modalRecompensa">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Central de Recompensas (Ryos)</h2>
+                <button class="close-btn" onclick="fecharModalRecompensa()">&times;</button>
+            </div>
+            
+            <div class="recompensas-info-box">A partir de agora, suas missões também poderão render RYOS! 
+
+━━━━━━━━━━━━━━━━━━━━ 
+<b>MISSÕES DE KAGE</b>
+5 MISSÕES DE KAGE CONCLUÍDAS 
+RECOMPENSA: 1.000 RYOS 
+
+<b>COMO COMPROVAR?</b>
+Para cada missão realizada, ANTES DE FINALIZÁ-LA, você deverá: 
+• Tirar um print com o círculo vermelho da missão visível. 
+• Manter o comando "/timestamp" ativo e aparecendo na tela. 
+• Guarde os prints das 5 missões realizadas. 
+• Após completar as 5 missões, envie as comprovações na Central de Recompensas para solicitar seus 1.000 Ryos. 
+
+<b>ATENÇÃO</b>
+Prints sem o círculo vermelho da missão ou sem o "/timestamp" poderão não ser considerados como comprovação.
+━━━━━━━━━━━━━━━━━━━━ 
+<b>5 MISSÕES = 1.000 RYOS</b> 
+Faça suas missões. Registre seu progresso. Resgate sua recompensa. 
+<b>CLÃ SENJU</b> — O esforço de cada membro fortalece todo o clã.</div>
+
+            <form id="formRecompensa" onsubmit="enviarRecompensa(event)">
+                <div class="form-group">
+                    <label for="nomeJogoRecompensa">Nome no Jogo:</label>
+                    <input type="text" id="nomeJogoRecompensa" required placeholder="Ex: Tobirama_Senju">
+                </div>
+
+                <div class="form-group">
+                    <label for="nomeDiscordRecompensa">Nome no Discord:</label>
+                    <input type="text" id="nomeDiscordRecompensa" readonly required placeholder="Conecte-se com o Discord...">
+                </div>
+
+                <div class="form-group">
+                    <label for="textoRecompensa">Detalhes / Observações das Missões:</label>
+                    <textarea id="textoRecompensa" required placeholder="Descreva os detalhes das 5 missões concluídas..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="fotosRecompensa">Prints das 5 Missões (Selecione todos os prints segurando Ctrl):</label>
+                    <input type="file" id="fotosRecompensa" accept="image/*" multiple required>
+                </div>
+
+                <div class="form-group">
+                    <label for="linkVideoRecompensa">Link de Vídeo (Opcional - Prova em vídeo):</label>
+                    <input type="url" id="linkVideoRecompensa" placeholder="https://youtube.com/...">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalRecompensa()">Cancelar</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px; background-color: #2e8b57;">Solicitar Recompensa</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1193,7 +1289,6 @@
 
                 if (m.tipo === 'foto') {
                     qtdFotos++;
-                    // Adicionado evento onclick para abrir o zoom da imagem
                     mediaCard.innerHTML = `
                         ${botoesAdminHtml}
                         <div class="media-preview" onclick="abrirModalZoom('${m.url}', '${m.titulo.replace(/'/g, "\\'")}')">
@@ -1274,7 +1369,7 @@
             }
         }
 
-        // --- CONTROLE DOS MODAIS DE ZOOM E OUTROS ---
+        // --- CONTROLE DOS MODAIS DE ZOOM ---
         function abrirModalZoom(url, titulo) {
             document.getElementById('imagemZoom').src = url;
             document.getElementById('tituloZoom').innerText = titulo;
@@ -1283,6 +1378,85 @@
 
         function fecharModalZoom() {
             document.getElementById('modalZoom').style.display = 'none';
+        }
+
+        // --- CENTRAL DE RECOMPENSAS ---
+        const modalRecompensa = document.getElementById('modalRecompensa');
+
+        async function tentarAbrirRecompensa() {
+            const userId = localStorage.getItem('discord_user_id');
+            const username = localStorage.getItem('discord_username');
+
+            if (!userId) {
+                alert('Você precisa entrar com a sua conta do Discord no topo da página antes de solicitar recompensas!');
+                return;
+            }
+
+            const { data: membros } = await supabaseClient.from('membros').select('*');
+            const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
+            const adminsAtuais = await obterAdminsAutorizados();
+            const eAdmin = adminsAtuais.includes(userId);
+
+            if (!membroEncontrado && !eAdmin) {
+                alert('Acesso negado! Apenas membros registrados no alistamento do clã podem solicitar recompensas.');
+                return;
+            }
+
+            document.getElementById('nomeDiscordRecompensa').value = username;
+            if (membroEncontrado) {
+                document.getElementById('nomeJogoRecompensa').value = membroEncontrado.nome_jogo;
+            } else {
+                document.getElementById('nomeJogoRecompensa').value = "";
+            }
+
+            modalRecompensa.style.display = 'flex';
+        }
+
+        function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
+
+        function enviarRecompensa(event) {
+            event.preventDefault();
+            const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
+            const nomeDiscord = document.getElementById('nomeDiscordRecompensa').value.trim();
+            const texto = document.getElementById('textoRecompensa').value.trim();
+            const arquivoInput = document.getElementById('fotosRecompensa');
+            const linkVideo = document.getElementById('linkVideoRecompensa').value.trim();
+
+            let conteudoMensagem = `💰 **SOLICITAÇÃO DE RECOMPENSA (1.000 RYOS)** 💰\n\n`;
+            conteudoMensagem += `👤 **Nome no Jogo:** ${nomeJogo}\n`;
+            conteudoMensagem += `💬 **Discord:** ${nomeDiscord}\n\n`;
+            conteudoMensagem += `📝 **Detalhes:**\n> ${texto.replace(/\n/g, '\n> ')}\n`;
+
+            if (linkVideo) {
+                conteudoMensagem += `\n🎥 **Vídeo de Prova:** ${linkVideo}`;
+            }
+
+            const formData = new FormData();
+            formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
+
+            if (arquivoInput.files && arquivoInput.files.length > 0) {
+                for (let i = 0; i < arquivoInput.files.length; i++) {
+                    formData.append(`files[${i}]`, arquivoInput.files[i]);
+                }
+            }
+
+            fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert(`Solicitação de recompensa enviada com sucesso para o Discord, ${nomeJogo}! O comando irá analisar.`);
+                    fecharModalRecompensa();
+                    document.getElementById('formRecompensa').reset();
+                } else {
+                    alert('Erro ao enviar solicitação pelo webhook. Tente novamente.');
+                }
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro de conexão ao tentar enviar a solicitação.');
+            });
         }
 
         // --- ENVIO DE RELATÓRIO VIA WEBHOOK ---
@@ -1382,6 +1556,7 @@
             if (event.target == modalRelatorio) fecharModalRelatorio();
             if (event.target == modalAdmin) fecharModalAdmin();
             if (event.target == modalMembro) fecharModalMembro();
+            if (event.target == modalRecompensa) fecharModalRecompensa();
         }
 
         function mudarAba(tipo, event) {
