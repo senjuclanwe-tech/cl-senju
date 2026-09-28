@@ -323,14 +323,15 @@
             right: 10px;
             display: flex;
             gap: 5px;
+            z-index: 10;
         }
 
         .btn-card-action {
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.6);
             border: 1px solid rgba(194, 155, 56, 0.4);
             color: var(--text-muted);
-            width: 26px;
-            height: 26px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             font-size: 0.8rem;
             cursor: pointer;
@@ -345,7 +346,7 @@
             color: #0f0805;
         }
 
-        .btn-excluir-membro:hover {
+        .btn-excluir-membro:hover, .btn-excluir-midia:hover {
             background-color: var(--senju-red) !important;
             color: white !important;
             border-color: var(--senju-red);
@@ -388,6 +389,7 @@
             border: 1px solid rgba(194, 155, 56, 0.3);
             border-radius: 8px;
             overflow: hidden;
+            position: relative;
             transition: transform 0.3s, border-color 0.3s;
         }
 
@@ -446,7 +448,7 @@
             font-size: 0.9rem;
             font-weight: 600;
             transition: background-color 0.2s;
-            display: none;
+            display: none; /* Controlado via JS se for adm */
         }
 
         .btn-admin:hover {
@@ -681,7 +683,7 @@
         <h2 class="section-title">Membros do Clã</h2>
         
         <div class="members-header-controls">
-            <button id="btn-adicionar-membro" class="btn-admin" style="display: none;" onclick="abrirModalMembro()">+ Adicionar Membro</button>
+            <button id="btn-adicionar-membro" class="btn-admin" onclick="abrirModalMembro()">+ Adicionar Membro</button>
         </div>
 
         <!-- Grade de Membros -->
@@ -902,10 +904,10 @@
                 }
             }
 
-            // Executa em paralelo para carregar instantaneamente
+            // Verifica permissão de adm primeiro e depois carrega os elementos na tela
+            await verificarPermissaoAdmin();
             carregarMembros();
             carregarMidias();
-            verificarPermissaoAdmin();
         };
 
         async function obterAdminsAutorizados() {
@@ -937,7 +939,7 @@
             if (userId) {
                 if(btnLogin) btnLogin.style.display = 'none';
                 if(statusUsuario) statusUsuario.innerHTML = `<b>${username}</b>`;
-                if(btnLogout) logoutBtnDisplay = btnLogout.style.display = 'inline-block';
+                if(btnLogout) btnLogout.style.display = 'inline-block';
 
                 const adminsAtuais = await obterAdminsAutorizados();
                 if (adminsAtuais.includes(userId)) {
@@ -947,7 +949,7 @@
             }
         }
 
-        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO (OTIMIZADO) ---
+        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO ---
         async function carregarMembros() {
             const container = document.getElementById('lista-membros');
             if(!container) return;
@@ -984,6 +986,7 @@
                 card.className = 'member-card';
                 
                 let botoesAdminHtml = '';
+                // SÓ EXIBE OS BOTÕES DE EDITAR/EXCLUIR SE FOR ADMIN LOGADO
                 if (eAdminLogado) {
                     botoesAdminHtml = `
                         <div class="admin-buttons-card">
@@ -1009,7 +1012,14 @@
 
         const modalMembro = document.getElementById('modalMembro');
         
-        function abrirModalMembro() {
+        async function abrirModalMembro() {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+
             document.getElementById('tituloModalMembro').innerText = "Cadastrar Membro no Clã";
             document.getElementById('btnSalvarMembroTexto').innerText = "Cadastrar Membro";
             document.getElementById('formMembro').reset();
@@ -1018,6 +1028,13 @@
         }
 
         async function abrirModalEditarMembro(id) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+
             const { data: membro } = await supabaseClient.from('membros').select('*').eq('id', id).single();
             if (!membro) return;
 
@@ -1042,6 +1059,13 @@
 
         async function salvarMembro(event) {
             event.preventDefault();
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+
             const idEdicao = document.getElementById('idMembroEdicao').value;
             const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
             const discord_id = document.getElementById('idMembroDiscord').value.trim();
@@ -1072,6 +1096,13 @@
         }
 
         async function excluirMembro(id) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+
             if (confirm(`Tem certeza que deseja remover este membro do clã?`)) {
                 const { error } = await supabaseClient.from('membros').delete().eq('id', id);
                 if (error) {
@@ -1083,7 +1114,7 @@
             }
         }
 
-        // --- CARREGAR E ADICIONAR MÍDIAS DO ÁLBUM (OTIMIZADO) ---
+        // --- CARREGAR E GERENCIAR MÍDIAS DO ÁLBUM ---
         async function carregarMidias() {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
@@ -1095,17 +1126,36 @@
             secaoVideos.innerHTML = '';
 
             if (!midias || midias.length === 0) {
-                secaoFotos.innerHTML = `<div class="media-card"><div class="media-preview"><img src="https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png" alt="Exemplo"></div><div class="media-info"><h4>Domínio de Território</h4><p>Enviado por: Tobirama</p></div></div>`;
-                secaoVideos.innerHTML = `<div class="media-card"><div class="media-preview"><span>Nenhum vídeo cadastrado</span></div><div class="media-info"><h4>Exemplo</h4><p>Enviado por: Hayai</p></div></div>`;
+                secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
+                secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
                 return;
             }
+
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            const eAdminLogado = userId && adminsAtuais.includes(userId);
+
+            let qtdFotos = 0;
+            let qtdVideos = 0;
 
             midias.forEach(m => {
                 const mediaCard = document.createElement('div');
                 mediaCard.className = 'media-card';
 
+                let botoesAdminHtml = '';
+                // SÓ EXIBE O BOTÃO DE EXCLUIR MÍDIA SE FOR ADMIN LOGADO
+                if (eAdminLogado) {
+                    botoesAdminHtml = `
+                        <div class="admin-buttons-card">
+                            <button class="btn-card-action btn-excluir-midia" onclick="excluirMidia(${m.id})" title="Excluir Mídia">&times;</button>
+                        </div>
+                    `;
+                }
+
                 if (m.tipo === 'foto') {
+                    qtdFotos++;
                     mediaCard.innerHTML = `
+                        ${botoesAdminHtml}
                         <div class="media-preview">
                             <img src="${m.url}" alt="${m.titulo}" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
                         </div>
@@ -1116,7 +1166,9 @@
                     `;
                     secaoFotos.appendChild(mediaCard);
                 } else {
+                    qtdVideos++;
                     mediaCard.innerHTML = `
+                        ${botoesAdminHtml}
                         <div class="media-preview">
                             <iframe src="${m.url}" frameborder="0" allowfullscreen loading="lazy"></iframe>
                         </div>
@@ -1128,10 +1180,24 @@
                     secaoVideos.appendChild(mediaCard);
                 }
             });
+
+            if (qtdFotos === 0) {
+                secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
+            }
+            if (qtdVideos === 0) {
+                secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
+            }
         }
 
         async function adicionarMidia(event) {
             event.preventDefault();
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+
             const tipo = document.getElementById('tipoMidia').value;
             const titulo = document.getElementById('tituloMidia').value;
             const url = document.getElementById('urlMidia').value;
@@ -1147,6 +1213,25 @@
             fecharModalAdmin();
             document.getElementById('formAdmin').reset();
             carregarMidias();
+        }
+
+        async function excluirMidia(id) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+
+            if (confirm(`Tem certeza que deseja remover esta mídia do álbum?`)) {
+                const { error } = await supabaseClient.from('midias').delete().eq('id', id);
+                if (error) {
+                    alert('Erro ao excluir mídia: ' + error.message);
+                    return;
+                }
+                carregarMidias();
+                alert(`Mídia removida com sucesso!`);
+            }
         }
 
         // --- ENVIO DE RELATÓRIO VIA WEBHOOK ---
@@ -1229,7 +1314,17 @@
         }
 
         const modalAdmin = document.getElementById('modalAdmin');
-        function abrirModalAdmin() { modalAdmin.style.display = 'flex'; }
+        
+        async function abrirModalAdmin() { 
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado!');
+                return;
+            }
+            modalAdmin.style.display = 'flex'; 
+        }
+
         function fecharModalAdmin() { modalAdmin.style.display = 'none'; }
 
         window.onclick = function(event) {
