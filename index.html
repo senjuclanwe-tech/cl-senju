@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clã Senju | A Vontade do Fogo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --senju-gold: #c29b38;       /* Amarelo queimado/dourado antigo */
+            --senju-red: #d91414;
+            --text-main: #f8f9fa;
+            --text-muted: #d0c8d9;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #2b170d 0%, #1a0e08 50%, #0f0805 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* HEADER / MENU */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 8%;
+            background-color: rgba(26, 14, 8, 0.95);
+            border-bottom: 2px solid var(--senju-gold);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: 2px;
+        }
+
+        .logo span {
+            color: var(--senju-red);
+            text-shadow: 0 0 10px rgba(217, 20, 20, 0.5);
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 600;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        nav a:hover {
+            color: var(--senju-red);
+        }
+
+        .btn-nav-relatorio {
+            background-color: var(--senju-gold);
+            color: #0f0805 !important;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 700;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .btn-nav-relatorio:hover {
+            background-color: #d4ac42;
+            transform: translateY(-2px);
+        }
+
+        /* BANNER DO SÍMBOLO */
+        .banner-topo {
+            width: 100%;
+            max-width: 600px;
+            margin: 120px auto 20px auto;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: transparent;
+        }
+
+        .banner-topo img {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.6));
+        }
+
+        /* HERO / CHAMADA */
+        .hero {
+            padding: 40px 20px 60px 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            background: transparent;
+        }
+
+        .hero h1 {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            margin-bottom: 15px;
+            letter-spacing: 3px;
+            color: var(--text-main);
+        }
+
+        .hero h1 span {
+            color: var(--senju-red);
+            text-shadow: 0 0 15px rgba(217, 20, 20, 0.6);
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            background-color: var(--senju-red);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(217, 20, 20, 0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(217, 20, 20, 0.8);
+        }
+
+        /* SECTIONS / CARDS */
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.2rem;
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            display: block;
+            width: 60px;
+            height: 3px;
+            background-color: var(--senju-gold);
+            margin: 10px auto 0;
+            box-shadow: 0 0 10px rgba(194, 155, 56, 0.4);
+        }
+
+        /* LIDERANÇA */
+        .leadership-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .leader-card {
+            background-color: rgba(26, 14, 8, 0.9);
+            border: 2px solid var(--senju-gold);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .leader-card h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--senju-gold);
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .leader-card .cargo {
+            color: var(--senju-red);
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        .leader-card p {
+            color: var(--text-muted);
+        }
+
+        /* ÁLBUM / GALERIA DE MÍDIA */
+        .gallery-nav {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .tab-btn {
+            background-color: rgba(26, 14, 8, 0.9);
+            border: 1px solid rgba(194, 155, 56, 0.4);
+            color: var(--text-muted);
+            padding: 10px 25px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background-color: var(--senju-gold);
+            color: #0f0805;
+            border-color: var(--senju-gold);
+            box-shadow: 0 0 15px rgba(194, 155, 56, 0.3);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .media-card {
+            background-color: rgba(26, 14, 8, 0.85);
+            border: 1px solid rgba(194, 155, 56, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .media-card:hover {
+            border-color: var(--senju-gold);
+            transform: translateY(-5px);
+        }
+
+        .media-preview {
+            width: 100%;
+            height: 200px;
+            background-color: #0f0805;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-bottom: 1px solid rgba(194, 155, 56, 0.2);
+        }
+
+        .media-preview img, .media-preview iframe {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .media-info {
+            padding: 20px;
+        }
+
+        .media-info h4 {
+            font-family: 'Cinzel', serif;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .media-info p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* PAINEL ADMIN / ADICIONAR MÍDIA (RESTRITO) */
+        .admin-controls {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-admin {
+            background-color: #5865F2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            display: none;
+        }
+
+        .btn-admin:hover {
+            background-color: #4752C4;
+        }
+
+        .btn-discord-login {
+            background-color: #5865F2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+
+        .btn-discord-login:hover {
+            background-color: #4752C4;
+        }
+
+        .user-status {
+            color: var(--senju-gold);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        /* MODAL / POP-UP */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 5, 3, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #1a0e08;
+            border: 2px solid var(--senju-gold);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(194, 155, 56, 0.3);
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--text-main);
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-btn:hover {
+            color: var(--senju-red);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .form-group input, 
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f0805;
+            border: 1px solid rgba(194, 155, 56, 0.4);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus, 
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--senju-gold);
+            box-shadow: 0 0 8px rgba(194, 155, 56, 0.3);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            height: 100px;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .btn-cancelar {
+            background-color: transparent;
+            border: 1px solid var(--text-muted);
+            color: var(--text-muted);
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-cancelar:hover {
+            border-color: var(--text-main);
+            color: var(--text-main);
+        }
+
+        /* FOOTER */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background-color: rgba(15, 8, 5, 0.95);
+            color: var(--text-muted);
+            border-top: 1px solid var(--senju-gold);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            nav ul { gap: 15px; }
+            nav a:not(.btn-nav-relatorio) { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MENU -->
+    <header>
+        <div class="logo">CLÃ <span>SENJU</span></div>
+        <nav>
+            <ul>
+                <li><a href="#inicio">Início</a></li>
+                <li><a href="#sobre">Liderança</a></li>
+                <li><a href="#galeria">Álbuns</a></li>
+                <li><a onclick="abrirModalRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- BANNER DO SÍMBOLO -->
+    <div class="banner-topo">
+        <img src="https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png" alt="Símbolo Clã Senju">
+    </div>
+
+    <!-- HERO SECTION -->
+    <section id="inicio" class="hero">
+        <h1>Onde a Folha Dança, há o <span>Fogo</span></h1>
+        <p>A raiz que sustenta Konoha sob a liderança implacável e estratégica do Nidaime. Força, tática e união.</p>
+        <button onclick="abrirModalRelatorio()" class="btn">Enviar Relatório de Missão</button>
+    </section>
+
+    <!-- LIDERANÇA -->
+    <div class="container" id="sobre">
+        <h2 class="section-title">Comando do Clã</h2>
+        <div class="leadership-grid">
+            <div class="leader-card">
+                <h3>Tobirama Senju</h3>
+                <div class="cargo">Líder do Clã (Nidaime)</div>
+                <p>Mestre das artes estratégicas, criador de jutsus lendários e pulso firme na condução do clã rumo à supremacia.</p>
+            </div>
+            <div class="leader-card">
+                <h3>Hayai</h3>
+                <div class="cargo">O Braço Direito</div>
+                <p>O braço direito do comando, responsável por manter a ordem nas operações, estratégia em campo e suporte total aos membros.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁLBUM DE FOTOS E VÍDEOS -->
+    <div class="container" id="galeria">
+        <h2 class="section-title">Álbuns do Clã</h2>
+        
+        <!-- Área de Login/Admin baseada no Discord OAuth2 -->
+        <div class="admin-controls">
+            <span id="status-usuario" class="user-status"></span>
+            <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar com Discord (Liderança)</button>
+            <button id="btn-painel-admin" class="btn-admin" onclick="abrirModalAdmin()">+ Adicionar Mídia</button>
+        </div>
+
+        <!-- Abas de Navegação (Fotos / Vídeos) -->
+        <div class="gallery-nav">
+            <button class="tab-btn active" onclick="mudarAba('fotos', event)">📸 Fotos das Missões</button>
+            <button class="tab-btn" onclick="mudarAba('videos', event)">🎥 Vídeos e Confrontos</button>
+        </div>
+
+        <!-- Seção de Fotos -->
+        <div id="secao-fotos" class="gallery-grid">
+            <div class="media-card">
+                <div class="media-preview">
+                    <img src="https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png" alt="Print Exemplo">
+                </div>
+                <div class="media-info">
+                    <h4>Domínio de Território</h4>
+                    <p>Enviado por: Tobirama</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Seção de Vídeos (Oculta por padrão) -->
+        <div id="secao-videos" class="gallery-grid" style="display: none;">
+            <div class="media-card">
+                <div class="media-preview">
+                    <span>Exemplo de Clipe de Guerra</span>
+                </div>
+                <div class="media-info">
+                    <h4>Defesa da Base</h4>
+                    <p>Enviado por: Hayai</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL / POP-UP DE RELATÓRIO -->
+    <div class="modal-overlay" id="modalRelatorio">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Enviar Relatório de Missão</h2>
+                <button class="close-btn" onclick="fecharModalRelatorio()">&times;</button>
+            </div>
+            <form id="formRelatorio" onsubmit="enviarRelatorio(event)">
+                <div class="form-group">
+                    <label for="nomeJogo">Nome no Jogo:</label>
+                    <input type="text" id="nomeJogo" required placeholder="Ex: Tobirama_Senju">
+                </div>
+
+                <div class="form-group">
+                    <label for="nomeDiscord">Nome no Discord:</label>
+                    <input type="text" id="nomeDiscord" required placeholder="Ex: hayai#0001">
+                </div>
+
+                <div class="form-group">
+                    <label for="textoRelatorio">Escrever sobre o Relatório:</label>
+                    <textarea id="textoRelatorio" required placeholder="Descreva os detalhes da missão, alvos abatidos, recursos coletados..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="fotosRelatorio">Fotos (Pode selecionar várias):</label>
+                    <input type="file" id="fotosRelatorio" accept="image/*" multiple>
+                </div>
+
+                <div class="form-group">
+                    <label for="linkVideo">Link de Vídeo (Opcional - YouTube, Clipe, etc.):</label>
+                    <input type="url" id="linkVideo" placeholder="https://youtube.com/...">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalRelatorio()">Cancelar</button>
+                    <button type="submit" class="btn">Enviar Relatório</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL / PAINEL RESTRITO PARA ADICIONAR MÍDIA -->
+    <div class="modal-overlay" id="modalAdmin">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Painel do Comando (Adicionar Mídia)</h2>
+                <button class="close-btn" onclick="fecharModalAdmin()">&times;</button>
+            </div>
+            <form id="formAdmin" onsubmit="adicionarMidia(event)">
+                <div class="form-group">
+                    <label for="tipoMidia">Tipo de Mídia:</label>
+                    <select id="tipoMidia">
+                        <option value="foto">Foto</option>
+                        <option value="video">Vídeo</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tituloMidia">Título da Mídia:</label>
+                    <input type="text" id="tituloMidia" required placeholder="Ex: Vitória na Batalha Final">
+                </div>
+
+                <div class="form-group">
+                    <label for="urlMidia">Link da Imagem ou Vídeo (URL Direta):</label>
+                    <input type="url" id="urlMidia" required placeholder="https://...">
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" onclick="fecharModalAdmin()">Cancelar</button>
+                    <button type="submit" class="btn">Publicar no Álbum</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>&copy; 2026 Clã Senju. Todos os direitos reservados. Sob o comando de Tobirama e do braço direito Hayai.</p>
+    </footer>
+
+    <!-- SCRIPTS -->
+    <script>
+        // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
+        const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
+
+        // SEU ID PESSOAL INSERIDO CORRETAMENTE:
+        const ADMINS_AUTORIZADOS = [
+            "375808506374258699"    // Seu ID numérico do Discord
+        ];
+
+        const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+        function logarComDiscord() {
+            const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
+            window.location.href = discordOAuthUrl;
+        }
+
+        // Verifica se o usuário acabou de voltar do login do Discord
+        window.onload = function() {
+            const fragment = new URLSearchParams(window.location.hash.slice(1));
+            const accessToken = fragment.get('access_token');
+
+            if (accessToken) {
+                // Pega os dados do usuário autenticado no Discord
+                fetch('https://discord.com/api/users/@me', {
+                    headers: { authorization: `Bearer ${accessToken}` }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    const userId = data.id;
+                    const username = data.username;
+
+                    // Salva na sessão do navegador
+                    localStorage.setItem('discord_user_id', userId);
+                    localStorage.setItem('discord_username', username);
+
+                    // Limpa a URL para sumir o token
+                    window.history.replaceState({}, document.title, REDIRECT_URI);
+                    verificarPermissaoAdmin();
+                })
+                .catch(err => console.error(err));
+            } else {
+                verificarPermissaoAdmin();
+            }
+        };
+
+        function verificarPermissaoAdmin() {
+            const userId = localStorage.getItem('discord_user_id');
+            const username = localStorage.getItem('discord_username');
+            const btnLogin = document.getElementById('btn-login');
+            const btnAdmin = document.getElementById('btn-painel-admin');
+            const statusUsuario = document.getElementById('status-usuario');
+
+            if (userId) {
+                btnLogin.style.display = 'none';
+                statusUsuario.innerHTML = `Logado como: <b>${username}</b>`;
+
+                // Verifica se o ID está na lista de líderes autorizados
+                if (ADMINS_AUTORIZADOS.includes(userId)) {
+                    btnAdmin.style.display = 'inline-block';
+                } else {
+                    statusUsuario.innerHTML += ` (Apenas membros comuns)`;
+                }
+            }
+        }
+
+        // Funções do Modal de Relatório
+        const modalRelatorio = document.getElementById('modalRelatorio');
+        function abrirModalRelatorio() { modalRelatorio.style.display = 'flex'; }
+        function fecharModalRelatorio() { modalRelatorio.style.display = 'none'; }
+
+        // Funções do Painel Admin
+        const modalAdmin = document.getElementById('modalAdmin');
+        function abrirModalAdmin() { modalAdmin.style.display = 'flex'; }
+        function fecharModalAdmin() { modalAdmin.style.display = 'none'; }
+
+        window.onclick = function(event) {
+            if (event.target == modalRelatorio) fecharModalRelatorio();
+            if (event.target == modalAdmin) fecharModalAdmin();
+        }
+
+        // Alternar abas da Galeria
+        function mudarAba(tipo, event) {
+            const secaoFotos = document.getElementById('secao-fotos');
+            const secaoVideos = document.getElementById('secao-videos');
+            const botoes = document.querySelectorAll('.tab-btn');
+
+            botoes.forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            if (tipo === 'fotos') {
+                secaoFotos.style.display = 'grid';
+                secaoVideos.style.display = 'none';
+            } else {
+                secaoFotos.style.display = 'none';
+                secaoVideos.style.display = 'grid';
+            }
+        }
+
+        function enviarRelatorio(event) {
+            event.preventDefault();
+            const nomeJogo = document.getElementById('nomeJogo').value;
+            alert(`Relatório enviado com sucesso, ${nomeJogo}! O Comando irá analisar.`);
+            fecharModalRelatorio();
+            document.getElementById('formRelatorio').reset();
+        }
+
+        function adicionarMidia(event) {
+            event.preventDefault();
+            const tipo = document.getElementById('tipoMidia').value;
+            const titulo = document.getElementById('tituloMidia').value;
+            alert(`Mídia "${titulo}" (${tipo}) adicionada com sucesso ao álbum do clã!`);
+            fecharModalAdmin();
+            document.getElementById('formAdmin').reset();
+        }
+    </script>
+</body>
+</html>
