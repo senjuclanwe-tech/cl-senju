@@ -291,7 +291,16 @@
             font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
+        }
+
+        .member-card .trabalho-tag {
+            color: #5865F2;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
         }
 
         .member-card .graduacao {
@@ -822,6 +831,17 @@
                 </div>
 
                 <div class="form-group">
+                    <label for="trabalhoMembro">Trabalho / Profissão:</label>
+                    <select id="trabalhoMembro">
+                        <option value="">Nenhum / Sem Profissão</option>
+                        <option value="Policial">Policial</option>
+                        <option value="Professor(a)">Professor(a)</option>
+                        <option value="Médico(a)">Médico(a)</option>
+                        <option value="Anbu">Anbu</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
                     <div class="checkbox-group">
                         <input type="checkbox" id="checkAdminMembro">
                         <label for="checkAdminMembro">Conceder Privilégios de Administrador</label>
@@ -933,7 +953,7 @@
                 return JSON.parse(membrosSalvos);
             }
             return [
-                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Jounin", cargoEspecial: "Braço Direito", eAdmin: false }
+                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Jounin", cargoEspecial: "Braço Direito", trabalho: "Anbu", eAdmin: false }
             ];
         }
 
@@ -965,11 +985,13 @@
                 }
 
                 let cargoEspecialHtml = m.cargoEspecial ? `<div class="cargo-especial">${m.cargoEspecial}</div>` : '';
+                let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">Trabalho: ${m.trabalho}</div>` : '';
 
                 card.innerHTML = `
                     ${botoesAdminHtml}
                     <h4>${m.nomeJogo}</h4>
                     ${cargoEspecialHtml}
+                    ${trabalhoHtml}
                     <div class="graduacao">${m.graduacao}</div>
                 `;
                 container.appendChild(card);
@@ -999,6 +1021,7 @@
             document.getElementById('idMembroDiscord').value = m.discordId;
             document.getElementById('graduacaoMembro').value = m.graduacao;
             document.getElementById('cargoEspecialMembro').value = m.cargoEspecial || "";
+            document.getElementById('trabalhoMembro').value = m.trabalho || "";
             document.getElementById('checkAdminMembro').checked = !!m.eAdmin;
 
             modalMembro.style.display = 'flex';
@@ -1016,6 +1039,7 @@
             const discordId = document.getElementById('idMembroDiscord').value.trim();
             const graduacao = document.getElementById('graduacaoMembro').value;
             const cargoEspecial = document.getElementById('cargoEspecialMembro').value;
+            const trabalho = document.getElementById('trabalhoMembro').value;
             const eAdmin = document.getElementById('checkAdminMembro').checked;
 
             const membros = obterMembros();
@@ -1029,11 +1053,11 @@
 
             if (indexEdicao === "") {
                 // Adicionando novo
-                membros.push({ nomeJogo, discordId, graduacao, cargoEspecial, eAdmin });
+                membros.push({ nomeJogo, discordId, graduacao, cargoEspecial, trabalho, eAdmin });
                 alert(`Membro ${nomeJogo} cadastrado com sucesso!`);
             } else {
                 // Editando existente
-                membros[indexEdicao] = { nomeJogo, discordId, graduacao, cargoEspecial, eAdmin };
+                membros[indexEdicao] = { nomeJogo, discordId, graduacao, cargoEspecial, trabalho, eAdmin };
                 alert(`Membro ${nomeJogo} atualizado com sucesso!`);
             }
 
