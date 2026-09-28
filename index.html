@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clã Senju | A Vontade do Fogo</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <!-- SDK do Supabase para banco de dados na nuvem -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --senju-gold: #c29b38;       /* Amarelo queimado/dourado antigo */
@@ -684,7 +686,7 @@
 
         <!-- Grade de Membros -->
         <div id="lista-membros" class="members-grid">
-            <!-- Renderizado dinamicamente via Script -->
+            <!-- Carregado do Supabase -->
         </div>
     </div>
 
@@ -704,28 +706,12 @@
 
         <!-- Seção de Fotos -->
         <div id="secao-fotos" class="gallery-grid">
-            <div class="media-card">
-                <div class="media-preview">
-                    <img src="https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png" alt="Print Exemplo">
-                </div>
-                <div class="media-info">
-                    <h4>Domínio de Território</h4>
-                    <p>Enviado por: Tobirama</p>
-                </div>
-            </div>
+            <!-- Carregado do Supabase -->
         </div>
 
-        <!-- Seção de Vídeos (Oculta por padrão) -->
+        <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
-            <div class="media-card">
-                <div class="media-preview">
-                    <span>Exemplo de Clipe de Guerra</span>
-                </div>
-                <div class="media-info">
-                    <h4>Defesa da Base</h4>
-                    <p>Enviado por: Hayai</p>
-                </div>
-            </div>
+            <!-- Carregado do Supabase -->
         </div>
     </div>
 
@@ -812,7 +798,7 @@
                 <button class="close-btn" onclick="fecharModalMembro()">&times;</button>
             </div>
             <form id="formMembro" onsubmit="salvarMembro(event)">
-                <input type="hidden" id="indexMembroEdicao" value="">
+                <input type="hidden" id="idMembroEdicao" value="">
 
                 <div class="form-group">
                     <label for="nomeJogoMembro">Nome no Jogo:</label>
@@ -877,15 +863,14 @@
 
     <!-- SCRIPTS -->
     <script>
-        // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 E WEBHOOK =======
-        const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
+        // ======= CONFIGURAÇÃO SUPABASE E DISCORD =======
+        const SUPABASE_URL = "https://lloekbdprngyhoqtrykv.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxsb2VrYmRwcm5neWhvcXRyeWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTg5MDUsImV4cCI6MjEwNjE5NDkwNX0.ZMddhSZ1Al8Mc0bqErgmv7WBd6omFAhkA8d1b2818Bo";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const CLIENT_ID = "1554155836585021510";
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e";
-
-        // SEU ID DE ADMINISTRADOR FIXO PRINCIPAL
-        const ADMINS_FIXOS = [
-            "375808506374258699"
-        ];
-
+        const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
         function logarComDiscord() {
@@ -899,46 +884,43 @@
             window.location.href = REDIRECT_URI;
         }
 
-        window.onload = function() {
+        window.onload = async function() {
             const fragment = new URLSearchParams(window.location.hash.slice(1));
             const accessToken = fragment.get('access_token');
 
             if (accessToken) {
-                fetch('https://discord.com/api/users/@me', {
-                    headers: { authorization: `Bearer ${accessToken}` }
-                })
-                .then(res => res.json())
-                .then(data => {
-                    const userId = data.id;
-                    const username = data.username;
-
-                    localStorage.setItem('discord_user_id', userId);
-                    localStorage.setItem('discord_username', username);
-
+                try {
+                    const res = await fetch('https://discord.com/api/users/@me', {
+                        headers: { authorization: `Bearer ${accessToken}` }
+                    });
+                    const data = await res.json();
+                    localStorage.setItem('discord_user_id', data.id);
+                    localStorage.setItem('discord_username', data.username);
                     window.history.replaceState({}, document.title, REDIRECT_URI);
-                    verificarPermissaoAdmin();
-                })
-                .catch(err => console.error(err));
-            } else {
-                verificarPermissaoAdmin();
+                } catch (err) {
+                    console.error(err);
+                }
             }
 
-            carregarMembros();
+            await carregarMembros();
+            await carregarMidias();
+            verificarPermissaoAdmin();
         };
 
-        // FUNÇÃO QUE UNE OS ADMINS FIXOS E OS CADASTRADOS VIA CHECKBOX
-        function obterAdminsAutorizados() {
+        async function obterAdminsAutorizados() {
             let admins = [...ADMINS_FIXOS];
-            const membros = obterMembros();
-            membros.forEach(m => {
-                if (m.eAdmin && m.discordId && !admins.includes(m.discordId)) {
-                    admins.push(m.discordId);
-                }
-            });
+            const { data: membros } = await supabaseClient.from('membros').select('*');
+            if (membros) {
+                membros.forEach(m => {
+                    if (m.e_admin && m.discord_id && !admins.includes(m.discord_id)) {
+                        admins.push(m.discord_id);
+                    }
+                });
+            }
             return admins;
         }
 
-        function verificarPermissaoAdmin() {
+        async function verificarPermissaoAdmin() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
             const btnLogin = document.getElementById('btn-login');
@@ -952,40 +934,32 @@
                 statusUsuario.innerHTML = `<b>${username}</b>`;
                 btnLogout.style.display = 'inline-block';
 
-                const adminsAtuais = obterAdminsAutorizados();
+                const adminsAtuais = await obterAdminsAutorizados();
                 if (adminsAtuais.includes(userId)) {
                     btnAdmin.style.display = 'inline-block';
                     btnAdicionarMembro.style.display = 'inline-block';
                 }
             }
-            carregarMembros(); 
         }
 
-        // --- SISTEMA DE GERENCIAMENTO DE MEMBROS ---
-        function obterMembros() {
-            const membrosSalvos = localStorage.getItem('clã_senju_membros');
-            if (membrosSalvos) {
-                return JSON.parse(membrosSalvos);
-            }
-            return [
-                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Jounin", cargoEspecial: "Braço Direito", trabalho: "Anbu", eAdmin: false }
-            ];
-        }
-
-        function salvarMembrosStorage(membros) {
-            localStorage.setItem('clã_senju_membros', JSON.stringify(membros));
-        }
-
-        function carregarMembros() {
-            const membros = obterMembros();
+        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO ---
+        async function carregarMembros() {
             const container = document.getElementById('lista-membros');
+            container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando membros...</p>';
+
+            const { data: membros, error } = await supabaseClient.from('membros').select('*');
             container.innerHTML = '';
 
+            if (error || !membros || membros.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro cadastrado ainda.</p>';
+                return;
+            }
+
             const userId = localStorage.getItem('discord_user_id');
-            const adminsAtuais = obterAdminsAutorizados();
+            const adminsAtuais = await obterAdminsAutorizados();
             const eAdminLogado = userId && adminsAtuais.includes(userId);
 
-            membros.forEach((m, index) => {
+            membros.forEach((m) => {
                 const card = document.createElement('div');
                 card.className = 'member-card';
                 
@@ -993,18 +967,18 @@
                 if (eAdminLogado) {
                     botoesAdminHtml = `
                         <div class="admin-buttons-card">
-                            <button class="btn-card-action" onclick="abrirModalEditarMembro(${index})" title="Editar Membro">✏️</button>
-                            <button class="btn-card-action btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro">&times;</button>
+                            <button class="btn-card-action" onclick="abrirModalEditarMembro(${m.id})" title="Editar Membro">✏️</button>
+                            <button class="btn-card-action btn-excluir-membro" onclick="excluirMembro(${m.id})" title="Excluir Membro">&times;</button>
                         </div>
                     `;
                 }
 
-                let cargoEspecialHtml = m.cargoEspecial ? `<div class="cargo-especial">${m.cargoEspecial}</div>` : '';
+                let cargoEspecialHtml = m.cargo_especial ? `<div class="cargo-especial">${m.cargo_especial}</div>` : '';
                 let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">Trabalho: ${m.trabalho}</div>` : '';
 
                 card.innerHTML = `
                     ${botoesAdminHtml}
-                    <h4>${m.nomeJogo}</h4>
+                    <h4>${m.nome_jogo}</h4>
                     ${cargoEspecialHtml}
                     ${trabalhoHtml}
                     <div class="graduacao">${m.graduacao}</div>
@@ -1013,31 +987,30 @@
             });
         }
 
-        // Funções do Modal de Membro (Adicionar / Editar)
         const modalMembro = document.getElementById('modalMembro');
         
         function abrirModalMembro() {
             document.getElementById('tituloModalMembro').innerText = "Cadastrar Membro no Clã";
             document.getElementById('btnSalvarMembroTexto').innerText = "Cadastrar Membro";
             document.getElementById('formMembro').reset();
-            document.getElementById('indexMembroEdicao').value = "";
+            document.getElementById('idMembroEdicao').value = "";
             modalMembro.style.display = 'flex';
         }
 
-        function abrirModalEditarMembro(index) {
-            const membros = obterMembros();
-            const m = membros[index];
+        async function abrirModalEditarMembro(id) {
+            const { data: membro } = await supabaseClient.from('membros').select('*').eq('id', id).single();
+            if (!membro) return;
 
             document.getElementById('tituloModalMembro').innerText = "Editar Membro do Clã";
             document.getElementById('btnSalvarMembroTexto').innerText = "Salvar Alterações";
             
-            document.getElementById('indexMembroEdicao').value = index;
-            document.getElementById('nomeJogoMembro').value = m.nomeJogo;
-            document.getElementById('idMembroDiscord').value = m.discordId;
-            document.getElementById('graduacaoMembro').value = m.graduacao;
-            document.getElementById('cargoEspecialMembro').value = m.cargoEspecial || "";
-            document.getElementById('trabalhoMembro').value = m.trabalho || "";
-            document.getElementById('checkAdminMembro').checked = !!m.eAdmin;
+            document.getElementById('idMembroEdicao').value = membro.id;
+            document.getElementById('nomeJogoMembro').value = membro.nome_jogo;
+            document.getElementById('idMembroDiscord').value = membro.discord_id;
+            document.getElementById('graduacaoMembro').value = membro.graduacao;
+            document.getElementById('cargoEspecialMembro').value = membro.cargo_especial || "";
+            document.getElementById('trabalhoMembro').value = membro.trabalho || "";
+            document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
 
             modalMembro.style.display = 'flex';
         }
@@ -1047,53 +1020,118 @@
             document.getElementById('formMembro').reset(); 
         }
 
-        function salvarMembro(event) {
+        async function salvarMembro(event) {
             event.preventDefault();
-            const indexEdicao = document.getElementById('indexMembroEdicao').value;
-            const nomeJogo = document.getElementById('nomeJogoMembro').value.trim();
-            const discordId = document.getElementById('idMembroDiscord').value.trim();
+            const idEdicao = document.getElementById('idMembroEdicao').value;
+            const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
+            const discord_id = document.getElementById('idMembroDiscord').value.trim();
             const graduacao = document.getElementById('graduacaoMembro').value;
-            const cargoEspecial = document.getElementById('cargoEspecialMembro').value;
+            const cargo_especial = document.getElementById('cargoEspecialMembro').value;
             const trabalho = document.getElementById('trabalhoMembro').value;
-            const eAdmin = document.getElementById('checkAdminMembro').checked;
+            const e_admin = document.getElementById('checkAdminMembro').checked;
 
-            const membros = obterMembros();
+            if (idEdicao === "") {
+                const { error } = await supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }]);
+                if (error) {
+                    alert('Erro ao cadastrar membro: ' + error.message);
+                    return;
+                }
+                alert(`Membro ${nome_jogo} cadastrado na nuvem com sucesso!`);
+            } else {
+                const { error } = await supabaseClient.from('membros').update({ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }).eq('id', idEdicao);
+                if (error) {
+                    alert('Erro ao atualizar membro: ' + error.message);
+                    return;
+                }
+                alert(`Membro ${nome_jogo} atualizado com sucesso!`);
+            }
+
+            carregarMembros();
+            fecharModalMembro();
+            verificarPermissaoAdmin();
+        }
+
+        async function excluirMembro(id) {
+            if (confirm(`Tem certeza que deseja remover este membro do clã?`)) {
+                const { error } = await supabaseClient.from('membros').delete().eq('id', id);
+                if (error) {
+                    alert('Erro ao excluir: ' + error.message);
+                    return;
+                }
+                carregarMembros();
+                alert(`Membro removido com sucesso!`);
+            }
+        }
+
+        // --- CARREGAR E ADICIONAR MÍDIAS DO ÁLBUM ---
+        async function carregarMidias() {
+            const secaoFotos = document.getElementById('secao-fotos');
+            const secaoVideos = document.getElementById('secao-videos');
             
-            const existeOutro = membros.some((m, idx) => m.discordId === discordId && idx !== parseInt(indexEdicao));
-            if (existeOutro) {
-                alert('Este ID do Discord já está cadastrado para outro membro!');
+            const { data: midias } = await supabaseClient.from('midias').select('*').order('id', { ascending: false });
+            
+            secaoFotos.innerHTML = '';
+            secaoVideos.innerHTML = '';
+
+            if (!midias || midias.length === 0) {
+                secaoFotos.innerHTML = `<div class="media-card"><div class="media-preview"><img src="https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png" alt="Exemplo"></div><div class="media-info"><h4>Domínio de Território</h4><p>Enviado por: Tobirama</p></div></div>`;
+                secaoVideos.innerHTML = `<div class="media-card"><div class="media-preview"><span>Nenhum vídeo cadastrado</span></div><div class="media-info"><h4>Exemplo</h4><p>Enviado por: Hayai</p></div></div>`;
                 return;
             }
 
-            if (indexEdicao === "") {
-                membros.push({ nomeJogo, discordId, graduacao, cargoEspecial, trabalho, eAdmin });
-                alert(`Membro ${nomeJogo} cadastrado com sucesso!`);
-            } else {
-                membros[indexEdicao] = { nomeJogo, discordId, graduacao, cargoEspecial, trabalho, eAdmin };
-                alert(`Membro ${nomeJogo} atualizado com sucesso!`);
-            }
+            midias.forEach(m => {
+                const mediaCard = document.createElement('div');
+                mediaCard.className = 'media-card';
 
-            salvarMembrosStorage(membros);
-            carregarMembros();
-            fecharModalMembro();
+                if (m.tipo === 'foto') {
+                    mediaCard.innerHTML = `
+                        <div class="media-preview">
+                            <img src="${m.url}" alt="${m.titulo}" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
+                        </div>
+                        <div class="media-info">
+                            <h4>${m.titulo}</h4>
+                            <p>Enviado por: ${m.autor}</p>
+                        </div>
+                    `;
+                    secaoFotos.appendChild(mediaCard);
+                } else {
+                    mediaCard.innerHTML = `
+                        <div class="media-preview">
+                            <iframe src="${m.url}" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        <div class="media-info">
+                            <h4>${m.titulo}</h4>
+                            <p>Enviado por: ${m.autor}</p>
+                        </div>
+                    `;
+                    secaoVideos.appendChild(mediaCard);
+                }
+            });
         }
 
-        function excluirMembro(index) {
-            const membros = obterMembros();
-            const membroRemovido = membros[index];
+        async function adicionarMidia(event) {
+            event.preventDefault();
+            const tipo = document.getElementById('tipoMidia').value;
+            const titulo = document.getElementById('tituloMidia').value;
+            const url = document.getElementById('urlMidia').value;
+            const autor = localStorage.getItem('discord_username') || 'Liderança';
 
-            if (confirm(`Tem certeza que deseja remover ${membroRemovido.nomeJogo} do clã? O ID do Discord dele será apagado e ele perderá o acesso aos relatórios.`)) {
-                membros.splice(index, 1);
-                salvarMembrosStorage(membros);
-                carregarMembros();
-                alert(`Membro removido e ID revogado com sucesso!`);
+            const { error } = await supabaseClient.from('midias').insert([{ tipo, titulo, url, autor }]);
+            if (error) {
+                alert('Erro ao publicar mídia: ' + error.message);
+                return;
             }
+
+            alert(`Mídia "${titulo}" publicada na nuvem com sucesso!`);
+            fecharModalAdmin();
+            document.getElementById('formAdmin').reset();
+            carregarMidias();
         }
 
-        // --- VALIDAÇÃO E ENVIO DO RELATÓRIO VIA WEBHOOK COM MULTIPART (MÚLTIPLAS IMAGENS) ---
+        // --- ENVIO DE RELATÓRIO VIA WEBHOOK ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
-        function tentarAbrirRelatorio() {
+        async function tentarAbrirRelatorio() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
 
@@ -1102,9 +1140,9 @@
                 return;
             }
 
-            const membros = obterMembros();
-            const membroEncontrado = membros.find(m => m.discordId === userId);
-            const adminsAtuais = obterAdminsAutorizados();
+            const { data: membros } = await supabaseClient.from('membros').select('*');
+            const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
+            const adminsAtuais = await obterAdminsAutorizados();
             const eAdmin = adminsAtuais.includes(userId);
 
             if (!membroEncontrado && !eAdmin) {
@@ -1112,12 +1150,9 @@
                 return;
             }
 
-            // Preenche automaticamente o Discord logado
             document.getElementById('nomeDiscord').value = username;
-
-            // Se o membro estiver cadastrado, preenche automaticamente o nome no jogo dele
             if (membroEncontrado) {
-                document.getElementById('nomeJogo').value = membroEncontrado.nomeJogo;
+                document.getElementById('nomeJogo').value = membroEncontrado.nome_jogo;
             } else {
                 document.getElementById('nomeJogo').value = "";
             }
@@ -1147,7 +1182,6 @@
             const formData = new FormData();
             formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
 
-            // Adiciona todas as fotos selecionadas ao FormData (suporta múltiplas)
             if (arquivoInput.files && arquivoInput.files.length > 0) {
                 for (let i = 0; i < arquivoInput.files.length; i++) {
                     formData.append('files[' + i + ']', arquivoInput.files[i]);
@@ -1173,7 +1207,6 @@
             });
         }
 
-        // Funções do Painel Admin (Mídia)
         const modalAdmin = document.getElementById('modalAdmin');
         function abrirModalAdmin() { modalAdmin.style.display = 'flex'; }
         function fecharModalAdmin() { modalAdmin.style.display = 'none'; }
@@ -1199,45 +1232,6 @@
                 secaoFotos.style.display = 'none';
                 secaoVideos.style.display = 'grid';
             }
-        }
-
-        function adicionarMidia(event) {
-            event.preventDefault();
-            const tipo = document.getElementById('tipoMidia').value;
-            const titulo = document.getElementById('tituloMidia').value;
-            const url = document.getElementById('urlMidia').value;
-            const username = localStorage.getItem('discord_username') || 'Liderança';
-
-            const mediaCard = document.createElement('div');
-            mediaCard.className = 'media-card';
-
-            if (tipo === 'foto') {
-                mediaCard.innerHTML = `
-                    <div class="media-preview">
-                        <img src="${url}" alt="${titulo}" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
-                    </div>
-                    <div class="media-info">
-                        <h4>${titulo}</h4>
-                        <p>Enviado por: ${username}</p>
-                    </div>
-                `;
-                document.getElementById('secao-fotos').prepend(mediaCard);
-            } else {
-                mediaCard.innerHTML = `
-                    <div class="media-preview">
-                        <iframe src="${url}" frameborder="0" allowfullscreen></iframe>
-                    </div>
-                    <div class="media-info">
-                        <h4>${titulo}</h4>
-                        <p>Enviado por: ${username}</p>
-                    </div>
-                `;
-                document.getElementById('secao-videos').prepend(mediaCard);
-            }
-
-            alert(`Mídia "${titulo}" publicada com sucesso no álbum!`);
-            fecharModalAdmin();
-            document.getElementById('formAdmin').reset();
         }
     </script>
 </body>
