@@ -603,7 +603,7 @@
             </div>
             <div class="leader-card">
                 <h3>Hayai</h3>
-                <div class="cargo">O Braço Direito</div>
+                <div class="cargo">Braço Direito</div>
                 <p>O braço direito do comando, responsável por manter a ordem nas operações, estratégia em campo e suporte total aos membros.</p>
             </div>
         </div>
@@ -792,9 +792,9 @@
         // ======= CONFIGURAÇÃO DO DISCORD OAUTH2 =======
         const CLIENT_ID = "1554155836585021510"; // Client ID do Aplicativo
 
-        // SEU ID DE ADMINISTRADOR (Coloque seu ID real aqui para liberar o painel de adm)
+        // SEU ID DE ADMINISTRADOR (Substitua abaixo pelo seu ID numérico real do Discord)
         const ADMINS_AUTORIZADOS = [
-            "384808394701275147"    // Seu ID de Líder
+            "375808506374258699"    // Insira seu ID de admin correto aqui entre as aspas
         ];
 
         const REDIRECT_URI = window.location.origin + window.location.pathname;
@@ -858,7 +858,7 @@
                     statusUsuario.innerHTML += ` (Membro Comum)`;
                 }
             }
-            carregarMembros(); // Recarrega para mostrar ou esconder o botão de excluir dependendo se é admin
+            carregarMembros(); 
         }
 
         // --- SISTEMA DE GERENCIAMENTO DE MEMBROS ---
@@ -867,10 +867,10 @@
             if (membrosSalvos) {
                 return JSON.parse(membrosSalvos);
             }
-            // Membros iniciais padrão
+            // Membros iniciais padrão com Hayai atualizado para Braço Direito
             return [
                 { nomeJogo: "Tobirama Senju", discordId: "384808394701275147", graduacao: "Liderança" },
-                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Jounin" }
+                { nomeJogo: "Hayai", discordId: "000000000000000000", graduacao: "Braço Direito" }
             ];
         }
 
@@ -890,7 +890,6 @@
                 const card = document.createElement('div');
                 card.className = 'member-card';
                 
-                // Botão de excluir só aparece se for admin logado
                 let botaoExcluirHtml = '';
                 if (eAdmin) {
                     botaoExcluirHtml = `<button class="btn-excluir-membro" onclick="excluirMembro(${index})" title="Excluir Membro">&times;</button>`;
@@ -918,7 +917,6 @@
 
             const membros = obterMembros();
             
-            // Verifica se o ID já existe
             const existe = membros.some(m => m.discordId === discordId);
             if (existe) {
                 alert('Este ID do Discord já está cadastrado para outro membro!');
@@ -936,14 +934,14 @@
         function excluirMembro(index) {
             if (confirm('Tem certeza que deseja remover este membro do clã?')) {
                 const membros = obterMembros();
-                const removido = membros.splice(index, 1);
+                membros.splice(index, 1);
                 salvarMembrosStorage(membros);
                 carregarMembros();
                 alert(`Membro removido com sucesso!`);
             }
         }
 
-        // --- VALIDAÇÃO DO RELATÓRIO (APENAS MEMBROS CADASTRADOS) ---
+        // --- VALIDAÇÃO DO RELATÓRIO ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         function tentarAbrirRelatorio() {
@@ -979,7 +977,6 @@
             if (event.target == modalMembro) fecharModalMembro();
         }
 
-        // Alternar abas da Galeria
         function mudarAba(tipo, event) {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
@@ -1005,7 +1002,6 @@
             document.getElementById('formRelatorio').reset();
         }
 
-        // ADICIONAR MÍDIA AUTOMATICAMENTE NA ABA CORRETA
         function adicionarMidia(event) {
             event.preventDefault();
             const tipo = document.getElementById('tipoMidia').value;
