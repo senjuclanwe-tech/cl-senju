@@ -753,8 +753,8 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="fotosRelatorio">Foto / Print da Missão:</label>
-                    <input type="file" id="fotosRelatorio" accept="image/*">
+                    <label for="fotosRelatorio">Fotos / Prints da Missão (Pode selecionar várias):</label>
+                    <input type="file" id="fotosRelatorio" accept="image/*" multiple>
                 </div>
 
                 <div class="form-group">
@@ -1090,7 +1090,7 @@
             }
         }
 
-        // --- VALIDAÇÃO E ENVIO DO RELATÓRIO VIA WEBHOOK COM MULTIPART (IMAGEM DIRETA) ---
+        // --- VALIDAÇÃO E ENVIO DO RELATÓRIO VIA WEBHOOK COM MULTIPART (MÚLTIPLAS IMAGENS) ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         function tentarAbrirRelatorio() {
@@ -1147,8 +1147,11 @@
             const formData = new FormData();
             formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
 
-            if (arquivoInput.files && arquivoInput.files[0]) {
-                formData.append('file', arquivoInput.files[0]);
+            // Adiciona todas as fotos selecionadas ao FormData (suporta múltiplas)
+            if (arquivoInput.files && arquivoInput.files.length > 0) {
+                for (let i = 0; i < arquivoInput.files.length; i++) {
+                    formData.append('files[' + i + ']', arquivoInput.files[i]);
+                }
             }
 
             fetch(DISCORD_WEBHOOK_URL, {
