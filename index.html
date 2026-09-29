@@ -1791,7 +1791,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- ENVIO DE RELATÓRIO VIA WEBHOOK ---
+        // --- ENVIO DE RELATÓRIO VIA WEBHOOK (EMBED) ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         async function tentarAbrirRelatorio() {
@@ -1825,7 +1825,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         function fecharModalRelatorio() { modalRelatorio.style.display = 'none'; }
 
-        function enviarRelatorio(event) {
+        async function enviarRelatorio(event) {
             event.preventDefault();
             const btnEnviar = document.getElementById('btnEnviarRelatorio');
             
@@ -1839,17 +1839,48 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const arquivoInput = document.getElementById('fotosRelatorio');
             const linkVideo = document.getElementById('linkVideo').value.trim();
 
-            let conteudoMensagem = `📜 **NOVO RELATÓRIO DE MISSÃO - CLÃ SENJU** 📜\n\n`;
-            conteudoMensagem += `👤 **Nome no Jogo:** ${nomeJogo}\n`;
-            conteudoMensagem += `💬 **Discord:** ${nomeDiscord}\n\n`;
-            conteudoMensagem += `📝 **Relatório:**\n> ${textoRelatorio.replace(/\n/g, '\n> ')}\n`;
+            const userId = localStorage.getItem('discord_user_id');
+            let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
+
+            // Monta os fields do Embed do Discord
+            let camposEmbed = [
+                {
+                    name: "👤 Shinobi",
+                    value: `**${nomeJogo}** (${mencaoDiscord})`,
+                    inline: true
+                },
+                {
+                    name: "📋 Descrição da Missão",
+                    value: textoRelatorio,
+                    inline: false
+                }
+            ];
 
             if (linkVideo) {
-                conteudoMensagem += `\n🎥 **Vídeo:** ${linkVideo}`;
+                camposEmbed.push({
+                    name: "🎥 Vídeo de Comprovação",
+                    value: linkVideo,
+                    inline: false
+                });
             }
 
+            const payloadDiscord = {
+                embeds: [
+                    {
+                        title: "📜 NOVO RELATÓRIO DE MISSÃO REGISTRADO",
+                        description: "Um shinobi concluiu sua tarefa e enviou o relatório para análise do comando.",
+                        color: 12713992, // Cor Dourada Senju (#c29b38)
+                        fields: camposEmbed,
+                        footer: {
+                            text: "Clã Senju • A Vontade do Fogo"
+                        },
+                        timestamp: new Date().toISOString()
+                    }
+                ]
+            };
+
             const formData = new FormData();
-            formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
+            formData.append('payload_json', JSON.stringify(payloadDiscord));
 
             if (arquivoInput.files && arquivoInput.files.length > 0) {
                 for (let i = 0; i < arquivoInput.files.length; i++) {
@@ -1863,7 +1894,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             })
             .then(response => {
                 if (response.ok) {
-                    alert(`Relatório com as fotos enviado com sucesso para o Discord, ${nomeJogo}!`);
+                    alert(`Relatório enviado com sucesso para o Discord, ${nomeJogo}!`);
                     fecharModalRelatorio();
                     document.getElementById('formRelatorio').reset();
                 } else {
