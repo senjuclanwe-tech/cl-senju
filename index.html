@@ -921,7 +921,7 @@
                     <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade do Fogo" loading="lazy">
                 </div>
                 <div class="historia-texto">
-                    <h3>A Vontade du Fogo e os Hokages</h3>
+                    <h3>A Vontade do Fogo e os Hokages</h3>
                     <p>Sob a liderança de Hashirama (o Primeiro Hokage) e posteriormente de seu irmão Tobirama Senju (o Segundo Hokage), o clã estabeleceu a filosofia da Vontade do Fogo — o princípio de que todos os habitantes da vila devem proteger uns aos outros como uma verdadeira família.</p>
                 </div>
             </div>
@@ -959,11 +959,6 @@
             <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
                 Apenas membros elegíveis participam (Líder e Braço Direito ficam de fora da disputa).
             </p>
-
-            <div class="form-group" style="text-align: left; margin-bottom: 15px;">
-                <label for="webhookSorteio">Webhook do Discord para o Sorteio:</label>
-                <input type="url" id="webhookSorteio" value="https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd">
-            </div>
 
             <!-- Caixa de Exibição da Roleta / Sorteado -->
             <div id="boxRoleta" style="background: rgba(0,0,0,0.5); border: 2px dashed var(--senju-gold); border-radius: 8px; padding: 30px; margin-bottom: 20px;">
@@ -1197,6 +1192,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         const CLIENT_ID = "1554155836585021510";
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e";
+        const WEBHOOK_SORTEIO_URL = "https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd";
         const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
@@ -1212,7 +1208,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         window.onload = async function() {
-            // Compatibilidade total PC e Celular para capturar o token OAuth do Discord
             let hashParams = new URLSearchParams(window.location.hash.slice(1));
             let queryParams = new URLSearchParams(window.location.search);
             let accessToken = hashParams.get('access_token') || queryParams.get('access_token');
@@ -1319,7 +1314,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 if (eAdminLogado) {
                     botoesAdminHtml = `
                         <div class="admin-buttons-card">
-                            <button class="btn-card-action" onclick="abrirModalEditarMembro(${m.id})" title="Editar Membro">✏️</button>
+                            <button class="btn-card-action" onclick="abrirModalEditarMembro(${m.id})" title="Editar Membro">✏</button>
                             <button class="btn-card-action btn-excluir-membro" onclick="excluirMembro(${m.id})" title="Excluir Membro">&times;</button>
                         </div>
                     `;
@@ -1596,12 +1591,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         async function iniciarSorteio() {
             const btnGirar = document.getElementById('btnGirar');
             const textoRoleta = document.getElementById('textoRoleta');
-            const webhookUrl = document.getElementById('webhookSorteio').value.trim();
-
-            if (!webhookUrl) {
-                alert('Por favor, informe a URL do Webhook do Discord.');
-                return;
-            }
 
             btnGirar.disabled = true;
 
@@ -1642,25 +1631,45 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     
                     textoRoleta.innerHTML = `🏆 GANHADOR: <span style="color: #fff; text-shadow: 0 0 10px var(--senju-red);">${vencedor.nome_jogo}</span>! 🏆`;
                     
-                    // Envia o resultado para o Discord marcando @everyone e o @ do vencedor
-                    enviarResultadoSorteioDiscord(webhookUrl, vencedor);
+                    // Envia o resultado formatado em Embed bonito para o Discord
+                    enviarResultadoSorteioDiscord(vencedor);
 
                     btnGirar.disabled = false;
                 }
             }, 100);
         }
 
-        function enviarResultadoSorteioDiscord(webhookUrl, vencedor) {
+        function enviarResultadoSorteioDiscord(vencedor) {
             let mencaoDiscord = vencedor.discord_id ? `<@${vencedor.discord_id}>` : vencedor.nome_jogo;
-            let mensagem = `@everyone 🎲 **RESULTADO DO SORTEIO DO CLÃ SENJU** 🎲\n\n`;
-            mensagem += `O grande vencedor sorteado foi: **${vencedor.nome_jogo}** (${mencaoDiscord})!\n`;
-            mensagem += `Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio. 🏆`;
-
+            
             const payload = {
-                content: mensagem
+                content: "@everyone",
+                embeds: [
+                    {
+                        title: "🎲 SORTEIO DO CLÃ SENJU REALIZADO! 🎲",
+                        description: "A roleta girou e o destino escolheu o grande vencedor desta rodada!",
+                        color: 12713992, // Tom dourado/amarelado antigo (--senju-gold)
+                        fields: [
+                            {
+                                name: "🏆 Vencedor da Rodada",
+                                value: `**${vencedor.nome_jogo}** (${mencaoDiscord})`,
+                                inline: false
+                            },
+                            {
+                                name: "📜 Próximo Passo",
+                                value: "Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio.",
+                                inline: false
+                            }
+                        ],
+                        footer: {
+                            text: "Clã Senju • A Vontade do Fogo"
+                        },
+                        timestamp: new Date().toISOString()
+                    }
+                ]
             };
 
-            fetch(webhookUrl, {
+            fetch(WEBHOOK_SORTEIO_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
