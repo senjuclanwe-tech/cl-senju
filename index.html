@@ -1864,6 +1864,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
             }
 
+            let qtdAnexos = arquivoInput.files ? arquivoInput.files.length : 0;
+            if (qtdAnexos > 0) {
+                camposEmbed.push({
+                    name: "🖼️ Evidências Anexadas",
+                    value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`,
+                    inline: false
+                });
+            }
+
             const payloadDiscord = {
                 embeds: [
                     {
