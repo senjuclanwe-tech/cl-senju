@@ -107,6 +107,22 @@
             transform: translateY(-2px);
         }
 
+        .btn-nav-sorteio {
+            background-color: #8a2be2;
+            color: #fff !important;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: transform 0.2s, background-color 0.2s;
+            display: none; /* Oculto por padrão, aparece só para admin */
+        }
+
+        .btn-nav-sorteio:hover {
+            background-color: #9932cc;
+            transform: translateY(-2px);
+        }
+
         /* LOGIN DISCRETO NO TOPO */
         .auth-container {
             display: flex;
@@ -756,7 +772,7 @@
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
             nav ul { gap: 12px; }
-            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa) { display: none; }
+            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa):not(.btn-nav-sorteio) { display: none; }
             .historia-bloco {
                 flex-direction: column;
             }
@@ -779,6 +795,7 @@
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
                 <li><a href="#historia">História</a></li>
+                <li><a onclick="abrirSorteio()" class="btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
                 <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
@@ -858,7 +875,7 @@
         </div>
     </div>
 
-    <!-- SEÇÃO DE HISTÓRIA ÉPICA (NO RODAPÉ COM AS 5 IMAGENS À ESQUERDA) -->
+    <!-- SEÇÃO DE HISTÓRIA ÉPICA (RODAPÉ) -->
     <div class="historia-wrapper" id="historia">
         <div class="container" style="padding-top: 0; padding-bottom: 0;">
             <h2 class="section-title">A História do Clã Senju</h2>
@@ -904,7 +921,7 @@
                     <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade do Fogo" loading="lazy">
                 </div>
                 <div class="historia-texto">
-                    <h3>A Vontade do Fogo e os Hokages</h3>
+                    <h3>A Vontade du Fogo e os Hokages</h3>
                     <p>Sob a liderança de Hashirama (o Primeiro Hokage) e posteriormente de seu irmão Tobirama Senju (o Segundo Hokage), o clã estabeleceu a filosofia da Vontade do Fogo — o princípio de que todos os habitantes da vila devem proteger uns aos outros como uma verdadeira família.</p>
                 </div>
             </div>
@@ -928,6 +945,37 @@
             <button class="close-btn" style="align-self: flex-end; margin-bottom: 10px;" onclick="fecharModalZoom()">&times;</button>
             <img id="imagemZoom" src="" alt="Zoom da Foto">
             <div id="tituloZoom" class="modal-zoom-title"></div>
+        </div>
+    </div>
+
+    <!-- MODAL DE SORTEIO DO CLÃ -->
+    <div class="modal-overlay" id="modalSorteio">
+        <div class="modal-content" style="text-align: center;">
+            <div class="modal-header">
+                <h2>Roleta de Sorteio do Clã</h2>
+                <button class="close-btn" onclick="fecharSorteio()">&times;</button>
+            </div>
+            
+            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                Apenas membros elegíveis participam (Líder e Braço Direito ficam de fora da disputa).
+            </p>
+
+            <div class="form-group" style="text-align: left; margin-bottom: 15px;">
+                <label for="webhookSorteio">Webhook do Discord para o Sorteio:</label>
+                <input type="url" id="webhookSorteio" value="https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd">
+            </div>
+
+            <!-- Caixa de Exibição da Roleta / Sorteado -->
+            <div id="boxRoleta" style="background: rgba(0,0,0,0.5); border: 2px dashed var(--senju-gold); border-radius: 8px; padding: 30px; margin-bottom: 20px;">
+                <div id="textoRoleta" style="font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--senju-gold); min-height: 50px; display: flex; align-items: center; justify-content: center;">
+                    Pronto para sortear?
+                </div>
+            </div>
+
+            <div class="modal-footer" style="justify-content: center;">
+                <button type="button" class="btn-cancelar" onclick="fecharSorteio()">Fechar</button>
+                <button type="button" class="btn-discord-login" id="btnGirar" onclick="iniciarSorteio()" style="padding: 12px 25px; background-color: #8a2be2;">Girar Roleta 🎲</button>
+            </div>
         </div>
     </div>
 
@@ -1213,6 +1261,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const btnLogin = document.getElementById('btn-login');
             const btnAdmin = document.getElementById('btn-painel-admin');
             const btnAdicionarMembro = document.getElementById('btn-adicionar-membro');
+            const navBtnSorteio = document.getElementById('navBtnSorteio');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -1225,6 +1274,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 if (adminsAtuais.includes(userId)) {
                     if(btnAdmin) btnAdmin.style.display = 'inline-block';
                     if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
+                    if(navBtnSorteio) navBtnSorteio.style.display = 'inline-block';
                 }
             }
         }
@@ -1523,6 +1573,108 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('modalZoom').style.display = 'none';
         }
 
+        // --- SISTEMA DE SORTEIO ---
+        const modalSorteio = document.getElementById('modalSorteio');
+
+        async function abrirSorteio() {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                alert('Acesso negado! Apenas administradores podem acessar o sorteio.');
+                return;
+            }
+
+            modalSorteio.style.display = 'flex';
+            document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
+            document.getElementById('btnGirar').disabled = false;
+        }
+
+        function fecharSorteio() {
+            modalSorteio.style.display = 'none';
+        }
+
+        async function iniciarSorteio() {
+            const btnGirar = document.getElementById('btnGirar');
+            const textoRoleta = document.getElementById('textoRoleta');
+            const webhookUrl = document.getElementById('webhookSorteio').value.trim();
+
+            if (!webhookUrl) {
+                alert('Por favor, informe a URL do Webhook do Discord.');
+                return;
+            }
+
+            btnGirar.disabled = true;
+
+            const { data: membros, error } = await supabaseClient.from('membros').select('*');
+
+            if (error || !membros || membros.length === 0) {
+                alert("Erro ao carregar membros para o sorteio.");
+                btnGirar.disabled = false;
+                return;
+            }
+
+            // Filtra removendo Líder e Braço Direito
+            const elegiveis = membros.filter(m => {
+                const cargo = (m.cargo_especial || "").toLowerCase();
+                if (cargo.includes('líder') || cargo.includes('braço direito')) return false;
+                if (m.nome_jogo.toLowerCase().includes('tobirama') || m.nome_jogo.toLowerCase().includes('hayai')) return false;
+                return true;
+            });
+
+            if (elegiveis.length === 0) {
+                textoRoleta.innerText = "Nenhum membro elegível encontrado!";
+                btnGirar.disabled = false;
+                return;
+            }
+
+            let contador = 0;
+            let maxRodadas = 25;
+            
+            let intervalo = setInterval(() => {
+                let aleatorioTemp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+                textoRoleta.innerText = aleatorioTemp.nome_jogo;
+                contador++;
+
+                if (contador >= maxRodadas) {
+                    clearInterval(intervalo);
+                    
+                    let vencedor = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+                    
+                    textoRoleta.innerHTML = `🏆 GANHADOR: <span style="color: #fff; text-shadow: 0 0 10px var(--senju-red);">${vencedor.nome_jogo}</span>! 🏆`;
+                    
+                    // Envia o resultado para o Discord marcando @everyone e o @ do vencedor
+                    enviarResultadoSorteioDiscord(webhookUrl, vencedor);
+
+                    btnGirar.disabled = false;
+                }
+            }, 100);
+        }
+
+        function enviarResultadoSorteioDiscord(webhookUrl, vencedor) {
+            let mencaoDiscord = vencedor.discord_id ? `<@${vencedor.discord_id}>` : vencedor.nome_jogo;
+            let mensagem = `@everyone 🎲 **RESULTADO DO SORTEIO DO CLÃ SENJU** 🎲\n\n`;
+            mensagem += `O grande vencedor sorteado foi: **${vencedor.nome_jogo}** (${mencaoDiscord})!\n`;
+            mensagem += `Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio. 🏆`;
+
+            const payload = {
+                content: mensagem
+            };
+
+            fetch(webhookUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    console.error('Erro ao enviar mensagem do sorteio para o Discord.');
+                }
+            })
+            .catch(err => {
+                console.error('Erro de conexão ao enviar webhook:', err);
+            });
+        }
+
         // --- CENTRAL DE RECOMPENSAS ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
@@ -1700,6 +1852,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (event.target == modalAdmin) fecharModalAdmin();
             if (event.target == modalMembro) fecharModalMembro();
             if (event.target == modalRecompensa) fecharModalRecompensa();
+            if (event.target == modalSorteio) fecharSorteio();
         }
 
         function mudarAba(tipo, event) {
