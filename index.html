@@ -472,7 +472,7 @@
             background-color: #4752C4;
         }
 
-        /* ESTILO DA HISTÓRIA ÉPICA (NOVO RODAPÉ) */
+        /* ESTILO DA HISTÓRIA ÉPICA (RODAPÉ) */
         .historia-wrapper {
             background: rgba(20, 10, 5, 0.85);
             border-top: 3px solid var(--senju-gold);
@@ -1164,8 +1164,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         window.onload = async function() {
-            const fragment = new URLSearchParams(window.location.hash.slice(1));
-            const accessToken = fragment.get('access_token');
+            // Compatibilidade total PC e Celular para capturar o token OAuth do Discord
+            let hashParams = new URLSearchParams(window.location.hash.slice(1));
+            let queryParams = new URLSearchParams(window.location.search);
+            let accessToken = hashParams.get('access_token') || queryParams.get('access_token');
 
             if (accessToken) {
                 try {
@@ -1173,11 +1175,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         headers: { authorization: `Bearer ${accessToken}` }
                     });
                     const data = await res.json();
-                    localStorage.setItem('discord_user_id', data.id);
-                    localStorage.setItem('discord_username', data.username);
-                    window.history.replaceState({}, document.title, REDIRECT_URI);
+                    if (data.id) {
+                        localStorage.setItem('discord_user_id', data.id);
+                        localStorage.setItem('discord_username', data.username);
+                        window.history.replaceState({}, document.title, REDIRECT_URI);
+                    }
                 } catch (err) {
-                    console.error(err);
+                    console.error("Erro ao autenticar Discord:", err);
                 }
             }
 
