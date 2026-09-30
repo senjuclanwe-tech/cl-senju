@@ -115,7 +115,7 @@
             font-weight: 700;
             font-size: 0.9rem;
             transition: transform 0.2s, background-color 0.2s;
-            display: none; /* Oculto por padrão, aparece só para admin */
+            display: none;
         }
 
         .btn-nav-sorteio:hover {
@@ -334,15 +334,15 @@
 
         .members-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 18px;
         }
 
         .member-card {
             background-color: rgba(26, 14, 8, 0.85);
             border: 1px solid rgba(194, 155, 56, 0.3);
             border-radius: 8px;
-            padding: 25px;
+            padding: 18px 20px;
             text-align: center;
             position: relative;
             transition: border-color 0.3s, transform 0.3s;
@@ -350,52 +350,52 @@
 
         .member-card:hover {
             border-color: var(--senju-gold);
-            transform: translateY(-4px);
+            transform: translateY(-3px);
         }
 
         .member-card h4 {
             font-family: 'Cinzel', serif;
             color: var(--text-main);
-            font-size: 1.3rem;
-            margin-bottom: 8px;
+            font-size: 1.15rem;
+            margin-bottom: 6px;
         }
 
         .member-card .cargo-especial {
             color: var(--senju-red);
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 1px;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
         .member-card .trabalho-tag {
             color: #5865F2;
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             display: block;
         }
 
         .member-card .graduacao {
             color: var(--senju-gold);
             font-weight: 700;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1px;
             background-color: rgba(194, 155, 56, 0.1);
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 4px;
             display: inline-block;
         }
 
         .admin-buttons-card {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            top: 8px;
+            right: 8px;
             display: flex;
-            gap: 5px;
+            gap: 4px;
             z-index: 10;
         }
 
@@ -403,10 +403,10 @@
             background: rgba(0,0,0,0.6);
             border: 1px solid rgba(194, 155, 56, 0.4);
             color: var(--text-muted);
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -423,6 +423,45 @@
             background-color: var(--senju-red) !important;
             color: white !important;
             border-color: var(--senju-red);
+        }
+
+        /* PAGINAÇÃO DE MEMBROS */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-page {
+            background-color: rgba(26, 14, 8, 0.9);
+            border: 1px solid rgba(194, 155, 56, 0.4);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-page:hover:not(:disabled) {
+            background-color: var(--senju-gold);
+            color: #0f0805;
+            border-color: var(--senju-gold);
+        }
+
+        .btn-page:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-indicator {
+            color: var(--senju-gold);
+            font-family: 'Cinzel', serif;
+            font-weight: 600;
+            font-size: 0.95rem;
         }
 
         /* ÁLBUM / GALERIA DE MÍDIA */
@@ -902,6 +941,13 @@
         <div id="lista-membros" class="members-grid">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando membros...</p>
         </div>
+
+        <!-- Controles de Paginação -->
+        <div id="paginacao-membros" class="pagination-container" style="display: none;">
+            <button class="btn-page" id="btnPagAnterior" onclick="mudarPagina(-1)">◀ Anterior</button>
+            <span id="indicadorPagina" class="page-indicator">Página 1 de 1</span>
+            <button class="btn-page" id="btnPagProxima" onclick="mudarPagina(1)">Próxima ▶</button>
+        </div>
     </div>
 
     <!-- ÁLBUM DE FOTOS E VÍDEOS -->
@@ -1126,7 +1172,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalRelatorio()">Cancelar</button>
-                    <button type="submit" class="btn-discord-login" id="btnEnviarRelatorio" style="padding: 10px 20px;">Enviar Relatório</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;">Enviar Relatório</button>
                 </div>
             </form>
         </div>
@@ -1250,8 +1296,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        // Variável global para cachear os membros carregados
+        // Variáveis globais para cache e paginação
         let listaMembrosCache = [];
+        let membrosFiltradosCache = [];
+        let paginaAtual = 1;
+        const itensPorPagina = 8; // Máximo de 8 membros por página (deixa limpo e organizado)
 
         function logarComDiscord() {
             const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
@@ -1341,23 +1390,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 listaMembrosCache = membros;
             }
 
-            renderizarMembros(listaMembrosCache);
-        }
-
-        // Função para desenhar a lista de membros na tela com base em um array (permite filtragem)
-        async function renderizarMembros(membrosArray) {
-            const container = document.getElementById('lista-membros');
-            if(!container) return;
-
-            if (!membrosArray || membrosArray.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro encontrado.</p>';
-                return;
-            }
-
             const pesoCargo = { "Líder": 1, "Braço Direito": 2 };
             const pesoGraduacao = { "Jounin": 1, "Chunnin": 2, "Gennin": 3, "Estudante": 4 };
 
-            membrosArray.sort((a, b) => {
+            listaMembrosCache.sort((a, b) => {
                 const pA = pesoCargo[a.cargo_especial] || 99;
                 const pB = pesoCargo[b.cargo_especial] || 99;
                 if (pA !== pB) return pA - pB;
@@ -1369,12 +1405,38 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return a.nome_jogo.localeCompare(b.nome_jogo);
             });
 
+            membrosFiltradosCache = [...listaMembrosCache];
+            paginaAtual = 1;
+            renderizarPaginaMembros();
+        }
+
+        // Função para desenhar os membros da página atual
+        async function renderizarPaginaMembros() {
+            const container = document.getElementById('lista-membros');
+            const paginacaoContainer = document.getElementById('paginacao-membros');
+            if(!container) return;
+
+            if (!membrosFiltradosCache || membrosFiltradosCache.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro encontrado.</p>';
+                if(paginacaoContainer) paginacaoContainer.style.display = 'none';
+                return;
+            }
+
+            // Cálculo da paginação
+            const totalPaginas = Math.ceil(membrosFiltradosCache.length / itensPorPagina);
+            if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+            if (paginaAtual < 1) paginaAtual = 1;
+
+            const inicio = (paginaAtual - 1) * itensPorPagina;
+            const fim = inicio + itensPorPagina;
+            const itensPagina = membrosFiltradosCache.slice(inicio, fim);
+
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             const eAdminLogado = userId && adminsAtuais.includes(userId);
 
             container.innerHTML = '';
-            membrosArray.forEach((m) => {
+            itensPagina.forEach((m) => {
                 const card = document.createElement('div');
                 card.className = 'member-card';
                 
@@ -1389,7 +1451,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
 
                 let cargoEspecialHtml = m.cargo_especial ? `<div class="cargo-especial">${m.cargo_especial}</div>` : '';
-                let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">Trabalho: ${m.trabalho}</div>` : '';
+                let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">${m.trabalho}</div>` : '';
 
                 card.innerHTML = `
                     ${botoesAdminHtml}
@@ -1400,24 +1462,40 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 `;
                 container.appendChild(card);
             });
+
+            // Atualiza barra de paginação
+            if (totalPaginas > 1) {
+                paginacaoContainer.style.display = 'flex';
+                document.getElementById('indicadorPagina').innerText = `Página ${paginaAtual} de ${totalPaginas}`;
+                document.getElementById('btnPagAnterior').disabled = (paginaAtual === 1);
+                document.getElementById('btnPagProxima').disabled = (paginaAtual === totalPaginas);
+            } else {
+                paginacaoContainer.style.display = 'none';
+            }
+        }
+
+        function mudarPagina(direcao) {
+            paginaAtual += direcao;
+            renderizarPaginaMembros();
+            // Leve scroll suave de volta ao topo da seção de membros para facilitar a leitura
+            document.getElementById('membros').scrollIntoView({ behavior: 'smooth' });
         }
 
         // Função de filtro em tempo real pela barra de busca
         function filtrarMembros() {
             const termo = document.getElementById('inputBuscaMembro').value.toLowerCase().trim();
             if (!termo) {
-                renderizarMembros(listaMembrosCache);
-                return;
+                membrosFiltradosCache = [...listaMembrosCache];
+            } else {
+                membrosFiltradosCache = listaMembrosCache.filter(m => 
+                    m.nome_jogo.toLowerCase().includes(termo) || 
+                    (m.cargo_especial && m.cargo_especial.toLowerCase().includes(termo)) ||
+                    (m.trabalho && m.trabalho.toLowerCase().includes(termo)) ||
+                    m.graduacao.toLowerCase().includes(termo)
+                );
             }
-
-            const filtrados = listaMembrosCache.filter(m => 
-                m.nome_jogo.toLowerCase().includes(termo) || 
-                (m.cargo_especial && m.cargo_especial.toLowerCase().includes(termo)) ||
-                (m.trabalho && m.trabalho.toLowerCase().includes(termo)) ||
-                m.graduacao.toLowerCase().includes(termo)
-            );
-
-            renderizarMembros(filtrados);
+            paginaAtual = 1;
+            renderizarPaginaMembros();
         }
 
         const modalMembro = document.getElementById('modalMembro');
@@ -1688,7 +1766,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // Filtra removendo Líder e Braço Direito
             const elegiveis = membros.filter(m => {
                 const cargo = (m.cargo_especial || "").toLowerCase();
                 if (cargo.includes('líder') || cargo.includes('braço direito')) return false;
