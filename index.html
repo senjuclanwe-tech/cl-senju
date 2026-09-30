@@ -289,11 +289,47 @@
             color: var(--text-muted);
         }
 
-        /* LISTA DE MEMBROS */
-        .members-header-controls {
+        /* SEÇÃO DE MEMBROS E CONTROLES DE BUSCA */
+        .members-controls-wrapper {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 25px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .search-box-container {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-box-container input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            background-color: rgba(26, 14, 8, 0.9);
+            border: 1px solid rgba(194, 155, 56, 0.4);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .search-box-container input:focus {
+            border-color: var(--senju-gold);
+            box-shadow: 0 0 8px rgba(194, 155, 56, 0.3);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--senju-gold);
+            font-size: 1rem;
         }
 
         .members-grid {
@@ -786,6 +822,13 @@
                 width: 100%;
                 flex: none;
             }
+            .members-controls-wrapper {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box-container {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -846,7 +889,12 @@
     <div class="container" id="membros">
         <h2 class="section-title">Membros do Clã</h2>
         
-        <div class="members-header-controls">
+        <!-- Barra de Busca e Botão Adicionar -->
+        <div class="members-controls-wrapper">
+            <div class="search-box-container">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="inputBuscaMembro" oninput="filtrarMembros()" placeholder="Pesquisar membro por nome...">
+            </div>
             <button id="btn-adicionar-membro" class="btn-admin" onclick="abrirModalMembro()">+ Adicionar Membro</button>
         </div>
 
@@ -1202,6 +1250,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
+        // Variável global para cachear os membros carregados
+        let listaMembrosCache = [];
+
         function logarComDiscord() {
             const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
             window.location.href = discordOAuthUrl;
@@ -1282,20 +1333,31 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         // --- CARREGAR E GERENCIAR MEMBROS DO BANCO ---
         async function carregarMembros() {
+            const { data: membros, error } = await supabaseClient.from('membros').select('*');
+
+            if (error || !membros) {
+                listaMembrosCache = [];
+            } else {
+                listaMembrosCache = membros;
+            }
+
+            renderizarMembros(listaMembrosCache);
+        }
+
+        // Função para desenhar a lista de membros na tela com base em um array (permite filtragem)
+        async function renderizarMembros(membrosArray) {
             const container = document.getElementById('lista-membros');
             if(!container) return;
 
-            const { data: membros, error } = await supabaseClient.from('membros').select('*');
-
-            if (error || !membros || membros.length === 0) {
-                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro cadastrado ainda.</p>';
+            if (!membrosArray || membrosArray.length === 0) {
+                container.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum membro encontrado.</p>';
                 return;
             }
 
             const pesoCargo = { "Líder": 1, "Braço Direito": 2 };
             const pesoGraduacao = { "Jounin": 1, "Chunnin": 2, "Gennin": 3, "Estudante": 4 };
 
-            membros.sort((a, b) => {
+            membrosArray.sort((a, b) => {
                 const pA = pesoCargo[a.cargo_especial] || 99;
                 const pB = pesoCargo[b.cargo_especial] || 99;
                 if (pA !== pB) return pA - pB;
@@ -1312,7 +1374,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const eAdminLogado = userId && adminsAtuais.includes(userId);
 
             container.innerHTML = '';
-            membros.forEach((m) => {
+            membrosArray.forEach((m) => {
                 const card = document.createElement('div');
                 card.className = 'member-card';
                 
@@ -1338,6 +1400,24 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 `;
                 container.appendChild(card);
             });
+        }
+
+        // Função de filtro em tempo real pela barra de busca
+        function filtrarMembros() {
+            const termo = document.getElementById('inputBuscaMembro').value.toLowerCase().trim();
+            if (!termo) {
+                renderizarMembros(listaMembrosCache);
+                return;
+            }
+
+            const filtrados = listaMembrosCache.filter(m => 
+                m.nome_jogo.toLowerCase().includes(termo) || 
+                (m.cargo_especial && m.cargo_especial.toLowerCase().includes(termo)) ||
+                (m.trabalho && m.trabalho.toLowerCase().includes(termo)) ||
+                m.graduacao.toLowerCase().includes(termo)
+            );
+
+            renderizarMembros(filtrados);
         }
 
         const modalMembro = document.getElementById('modalMembro');
@@ -1637,7 +1717,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     
                     textoRoleta.innerHTML = `🏆 GANHADOR: <span style="color: #fff; text-shadow: 0 0 10px var(--senju-red);">${vencedor.nome_jogo}</span>! 🏆`;
                     
-                    // Envia o resultado formatado em Embed bonito para o Discord
                     enviarResultadoSorteioDiscord(vencedor);
 
                     btnGirar.disabled = false;
@@ -1654,7 +1733,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     {
                         title: "🎲 SORTEIO DO CLÃ SENJU REALIZADO! 🎲",
                         description: "A roleta girou e o destino escolheu o grande vencedor desta rodada!",
-                        color: 12713992, // Tom dourado/amarelado antigo (--senju-gold)
+                        color: 12713992,
                         fields: [
                             {
                                 name: "🏆 Vencedor da Rodada",
@@ -1728,7 +1807,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             event.preventDefault();
             const btnEnviar = document.getElementById('btnEnviarRecompensa');
             
-            // Trava o botão imediatamente
             btnEnviar.disabled = true;
             btnEnviar.innerText = "Enviando recompensa...";
 
@@ -1774,7 +1852,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 alert('Erro de conexão ao tentar enviar a solicitação.');
             })
             .finally(() => {
-                // Cooldown de 5 segundos antes de liberar o botão novamente
                 let segundosRestantes = 5;
                 btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
 
@@ -1829,7 +1906,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             event.preventDefault();
             const btnEnviar = document.getElementById('btnEnviarRelatorio');
             
-            // Trava o botão imediatamente
             btnEnviar.disabled = true;
             btnEnviar.innerText = "Enviando relatório...";
 
@@ -1842,7 +1918,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
 
-            // Monta os fields do Embed do Discord
             let camposEmbed = [
                 {
                     name: "👤 Shinobi",
@@ -1878,7 +1953,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     {
                         title: "📜 NOVO RELATÓRIO DE MISSÃO REGISTRADO",
                         description: "Um shinobi concluiu sua tarefa e enviou o relatório para análise do comando.",
-                        color: 12713992, // Cor Dourada Senju (#c29b38)
+                        color: 12713992,
                         fields: camposEmbed,
                         footer: {
                             text: "Clã Senju • A Vontade do Fogo"
@@ -1915,7 +1990,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 alert('Erro de conexão ao tentar enviar o relatório.');
             })
             .finally(() => {
-                // Cooldown de 5 segundos antes de liberar o botão novamente
                 let segundosRestantes = 5;
                 btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
 
