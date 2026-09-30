@@ -30,6 +30,47 @@
             min-height: 100vh;
         }
 
+        /* SISTEMA DE NOTIFICAÇÕES (TOAST) */
+        #toast-container {
+            position: fixed;
+            top: 85px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background-color: rgba(26, 14, 8, 0.95);
+            border: 2px solid var(--senju-gold);
+            color: var(--text-main);
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+            max-width: 350px;
+        }
+
+        .toast.erro {
+            border-color: var(--senju-red);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
         /* HEADER / MENU */
         header {
             display: flex;
@@ -873,6 +914,9 @@
 </head>
 <body>
 
+    <!-- CONTÊINER PARA AVISOS FLUTUANTES (TOAST) -->
+    <div id="toast-container"></div>
+
     <!-- MENU / HEADER -->
     <header>
         <div class="logo">CLÃ <span>SENJU</span></div>
@@ -1172,7 +1216,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalRelatorio()">Cancelar</button>
-                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;">Enviar Relatório</button>
+                    <button type="submit" class="btn-discord-login" style="padding: 10px 20px;" id="btnEnviarRelatorio">Enviar Relatório</button>
                 </div>
             </form>
         </div>
@@ -1296,11 +1340,22 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        // Variáveis globais para cache e paginação
+        // Variáveis globais para cache, paginação e segurança de duplo clique
         let listaMembrosCache = [];
         let membrosFiltradosCache = [];
         let paginaAtual = 1;
-        const itensPorPagina = 8; // Máximo de 8 membros por página
+        const itensPorPagina = 8;
+        let salvandoMembroEmAndamento = false; // Trava anti-duplo clique
+
+        // Função de notificação customizada (Substitui o alert feioso)
+        function mostrarAviso(mensagem, tipo = 'sucesso') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${tipo === 'erro' ? 'erro' : ''}`;
+            toast.innerHTML = `<span>${tipo === 'erro' ? '⚠️' : '✨'}</span> <span>${mensagem}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 3000);
+        }
 
         function logarComDiscord() {
             const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
@@ -1503,7 +1558,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
@@ -1518,7 +1573,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
@@ -1546,10 +1601,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         async function salvarMembro(event) {
             event.preventDefault();
+
+            // SEGURANÇA: Impede cliques duplos / múltiplos envios acidentais
+            if (salvandoMembroEmAndamento) return;
+
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
@@ -1564,47 +1623,65 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             // VERIFICAÇÃO DE ID DUPLICADO
             const idExistente = listaMembrosCache.find(m => m.discord_id === discord_id && m.id != idEdicao);
             if (idExistente) {
-                alert(`⚠️ Opa! Já existe um membro cadastrado com esse ID do Discord (${idExistente.nome_jogo}). Verifique os dados.`);
+                mostrarAviso(`Já existe um membro cadastrado com esse ID (${idExistente.nome_jogo}).`, 'erro');
                 return;
             }
+
+            // Ativa a trava
+            salvandoMembroEmAndamento = true;
+            const btnSubmit = document.getElementById('btnSalvarMembroTexto');
+            const textoOriginalBtn = btnSubmit.innerText;
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = "Salvando...";
 
             if (idEdicao === "") {
                 const { error } = await supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }]);
                 if (error) {
-                    alert('Erro ao cadastrar membro: ' + error.message);
+                    mostrarAviso('Erro ao cadastrar membro: ' + error.message, 'erro');
+                    salvandoMembroEmAndamento = false;
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = textoOriginalBtn;
                     return;
                 }
-                alert(`Membro ${nome_jogo} cadastrado na nuvem com sucesso!`);
+                mostrarAviso(`Membro ${nome_jogo} cadastrado com sucesso!`);
             } else {
                 const { error } = await supabaseClient.from('membros').update({ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }).eq('id', idEdicao);
                 if (error) {
-                    alert('Erro ao atualizar membro: ' + error.message);
+                    mostrarAviso('Erro ao atualizar membro: ' + error.message, 'erro');
+                    salvandoMembroEmAndamento = false;
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = textoOriginalBtn;
                     return;
                 }
-                alert(`Membro ${nome_jogo} atualizado com sucesso!`);
+                mostrarAviso(`Membro ${nome_jogo} atualizado com sucesso!`);
             }
 
             carregarMembros();
             fecharModalMembro();
             verificarPermissaoAdmin();
+
+            // Libera a trava após concluir
+            salvandoMembroEmAndamento = false;
+            btnSubmit.disabled = false;
+            btnSubmit.innerText = textoOriginalBtn;
         }
 
         async function excluirMembro(id) {
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
             if (confirm(`Tem certeza que deseja remover este membro do clã?`)) {
                 const { error } = await supabaseClient.from('membros').delete().eq('id', id);
                 if (error) {
-                    alert('Erro ao excluir: ' + error.message);
+                    mostrarAviso('Erro ao excluir: ' + error.message, 'erro');
                     return;
                 }
                 carregarMembros();
-                alert(`Membro removido com sucesso!`);
+                mostrarAviso(`Membro removido com sucesso!`);
             }
         }
 
@@ -1687,7 +1764,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
@@ -1698,11 +1775,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             const { error } = await supabaseClient.from('midias').insert([{ tipo, titulo, url, autor }]);
             if (error) {
-                alert('Erro ao publicar mídia: ' + error.message);
+                mostrarAviso('Erro ao publicar mídia: ' + error.message, 'erro');
                 return;
             }
 
-            alert(`Mídia "${titulo}" publicada na nuvem com sucesso!`);
+            mostrarAviso(`Mídia "${titulo}" publicada com sucesso!`);
             fecharModalAdmin();
             document.getElementById('formAdmin').reset();
             carregarMidias();
@@ -1712,18 +1789,18 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
             if (confirm(`Tem certeza que deseja remover esta mídia do álbum?`)) {
                 const { error } = await supabaseClient.from('midias').delete().eq('id', id);
                 if (error) {
-                    alert('Erro ao excluir mídia: ' + error.message);
+                    mostrarAviso('Erro ao excluir mídia: ' + error.message, 'erro');
                     return;
                 }
                 carregarMidias();
-                alert(`Mídia removida com sucesso!`);
+                mostrarAviso(`Mídia removida com sucesso!`);
             }
         }
 
@@ -1745,7 +1822,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado! Apenas administradores podem acessar o sorteio.');
+                mostrarAviso('Acesso negado! Apenas administradores podem acessar o sorteio.', 'erro');
                 return;
             }
 
@@ -1767,7 +1844,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const { data: membros, error } = await supabaseClient.from('membros').select('*');
 
             if (error || !membros || membros.length === 0) {
-                alert("Erro ao carregar membros para o sorteio.");
+                mostrarAviso("Erro ao carregar membros para o sorteio.", 'erro');
                 btnGirar.disabled = false;
                 return;
             }
@@ -1841,13 +1918,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    console.error('Erro ao enviar mensagem do sorteio para o Discord.');
-                }
-            })
-            .catch(err => {
+            }).catch(err => {
                 console.error('Erro de conexão ao enviar webhook:', err);
             });
         }
@@ -1860,7 +1931,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const username = localStorage.getItem('discord_username');
 
             if (!userId) {
-                alert('Você precisa entrar com a sua conta do Discord no topo da página antes de solicitar recompensas!');
+                mostrarAviso('Você precisa entrar com o Discord no topo da página!', 'erro');
                 return;
             }
 
@@ -1870,7 +1941,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const eAdmin = adminsAtuais.includes(userId);
 
             if (!membroEncontrado && !eAdmin) {
-                alert('Acesso negado! Apenas membros registrados no alistamento do clã podem solicitar recompensas.');
+                mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
                 return;
             }
 
@@ -1923,16 +1994,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             })
             .then(response => {
                 if (response.ok) {
-                    alert(`Solicitação de recompensa enviada com sucesso para o Discord, ${nomeJogo}! O comando irá analisar.`);
+                    mostrarAviso(`Solicitação enviada com sucesso, ${nomeJogo}!`);
                     fecharModalRecompensa();
                     document.getElementById('formRecompensa').reset();
                 } else {
-                    alert('Erro ao enviar solicitação pelo webhook. Tente novamente.');
+                    mostrarAviso('Erro ao enviar solicitação.', 'erro');
                 }
             })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro de conexão ao tentar enviar a solicitação.');
+            .catch(() => {
+                mostrarAviso('Erro de conexão.', 'erro');
             })
             .finally(() => {
                 let segundosRestantes = 5;
@@ -1959,7 +2029,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const username = localStorage.getItem('discord_username');
 
             if (!userId) {
-                alert('Você precisa entrar com a sua conta do Discord no topo da página antes de enviar um relatório!');
+                mostrarAviso('Você precisa entrar com o Discord no topo da página!', 'erro');
                 return;
             }
 
@@ -1969,7 +2039,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const eAdmin = adminsAtuais.includes(userId);
 
             if (!membroEncontrado && !eAdmin) {
-                alert('Acesso negado! Apenas membros registrados no alistamento do clã podem enviar relatórios de missão.');
+                mostrarAviso('Acesso negado! Apenas membros registrados podem enviar.', 'erro');
                 return;
             }
 
@@ -2061,16 +2131,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             })
             .then(response => {
                 if (response.ok) {
-                    alert(`Relatório enviado com sucesso para o Discord, ${nomeJogo}!`);
+                    mostrarAviso(`Relatório enviado com sucesso, ${nomeJogo}!`);
                     fecharModalRelatorio();
                     document.getElementById('formRelatorio').reset();
                 } else {
-                    alert('Erro ao enviar relatório pelo webhook. Tente novamente.');
+                    mostrarAviso('Erro ao enviar relatório.', 'erro');
                 }
             })
-            .catch(error => {
-                console.error('Erro:', error);
-                alert('Erro de conexão ao tentar enviar o relatório.');
+            .catch(() => {
+                mostrarAviso('Erro de conexão.', 'erro');
             })
             .finally(() => {
                 let segundosRestantes = 5;
@@ -2095,7 +2164,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
-                alert('Acesso negado!');
+                mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
             modalAdmin.style.display = 'flex'; 
