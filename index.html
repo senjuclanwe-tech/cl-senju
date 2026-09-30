@@ -1300,7 +1300,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         let listaMembrosCache = [];
         let membrosFiltradosCache = [];
         let paginaAtual = 1;
-        const itensPorPagina = 8; // Máximo de 8 membros por página (deixa limpo e organizado)
+        const itensPorPagina = 8; // Máximo de 8 membros por página
 
         function logarComDiscord() {
             const discordOAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
@@ -1477,7 +1477,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function mudarPagina(direcao) {
             paginaAtual += direcao;
             renderizarPaginaMembros();
-            // Leve scroll suave de volta ao topo da seção de membros para facilitar a leitura
             document.getElementById('membros').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -1561,6 +1560,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const cargo_especial = document.getElementById('cargoEspecialMembro').value;
             const trabalho = document.getElementById('trabalhoMembro').value;
             const e_admin = document.getElementById('checkAdminMembro').checked;
+
+            // VERIFICAÇÃO DE ID DUPLICADO
+            const idExistente = listaMembrosCache.find(m => m.discord_id === discord_id && m.id != idEdicao);
+            if (idExistente) {
+                alert(`⚠️ Opa! Já existe um membro cadastrado com esse ID do Discord (${idExistente.nome_jogo}). Verifique os dados.`);
+                return;
+            }
 
             if (idEdicao === "") {
                 const { error } = await supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }]);
