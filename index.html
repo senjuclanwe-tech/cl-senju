@@ -875,25 +875,31 @@
             color: var(--text-main);
         }
 
-        /* ESTILO DO SWITCH DE SEGURANÇA PARA O WEBHOOK */
+        /* ESTILO DO SWITCH DE SEGURANÇA E BARRA DE WEBHOOK NOS POPUPS */
+        .webhook-admin-box {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed rgba(194, 155, 56, 0.3);
+            text-align: left;
+        }
         .switch {
             position: relative;
             display: inline-block;
-            width: 48px;
-            height: 24px;
+            width: 40px;
+            height: 20px;
         }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #4e5058; transition: .3s; border-radius: 24px;
+            background-color: #4e5058; transition: .3s; border-radius: 20px;
         }
         .slider:before {
-            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
             background-color: white; transition: .3s; border-radius: 50%;
         }
         input:checked + .slider { background-color: #248046; }
-        input:checked + .slider:before { transform: translateX(24px); }
-        #input-webhook-url:disabled, #btn-salvar-webhook:disabled {
+        input:checked + .slider:before { transform: translateX(20px); }
+        .webhook-input-popup:disabled, .webhook-btn-popup:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
@@ -988,31 +994,6 @@
                 <div class="cargo">Braço Direito</div>
                 <p>O braço direito do comando, responsável por manter a ordem nas operações, estratégia em campo e suporte total aos membros.</p>
             </div>
-        </div>
-    </div>
-
-    <!-- PAINEL DE CONFIGURAÇÃO DE WEBHOOK (RESTRITO PARA ADMINS) -->
-    <div class="container" id="painel-admin-webhook" style="display: none;">
-        <h2 class="section-title">⚙️ Configurações do Sistema</h2>
-        <div style="background-color: rgba(26, 14, 8, 0.9); border: 2px solid var(--senju-gold); border-radius: 8px; padding: 25px; max-width: 800px; margin: 0 auto;">
-            <h3 style="font-family: 'Cinzel', serif; color: var(--senju-gold); font-size: 1.3rem; margin-bottom: 10px;">Webhook do Discord (Servidor Principal)</h3>
-            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Gerencie o link do Webhook usado nos sorteios, relatórios e recompensas do clã.</p>
-
-            <!-- Trava de Segurança (Switch) -->
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
-                <label class="switch">
-                    <input type="checkbox" id="toggle-modo-edicao" onchange="alternarEdicaoWebhook()">
-                    <span class="slider round"></span>
-                </label>
-                <span id="label-status-edicao" style="color: var(--text-muted); font-weight: 600; font-size: 0.9rem;">🔒 Modo de Edição Bloqueado</span>
-            </div>
-
-            <!-- Input e Botão -->
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="input-webhook-url" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 12px; background-color: #0f0805; border: 1px solid rgba(194, 155, 56, 0.4); border-radius: 6px; color: var(--text-main); font-size: 0.95rem;">
-                <button id="btn-salvar-webhook" onclick="salvarWebhookSupabase()" disabled style="background-color: var(--senju-gold); color: #0f0805; border: none; padding: 0 20px; border-radius: 6px; font-weight: 700; cursor: pointer; transition: opacity 0.2s;">Salvar</button>
-            </div>
-            <span id="webhook-msg-status" style="display: block; margin-top: 10px; font-size: 0.85rem; font-weight: 600;"></span>
         </div>
     </div>
 
@@ -1140,7 +1121,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE SORTEIO DO CLÃ -->
+    <!-- MODAL DE SORTEIO DO CLÃ (COM BARRA DE WEBHOOK ADMIN) -->
     <div class="modal-overlay" id="modalSorteio">
         <div class="modal-content" style="text-align: center;">
             <div class="modal-header">
@@ -1163,10 +1144,29 @@
                 <button type="button" class="btn-cancelar" onclick="fecharSorteio()">Fechar</button>
                 <button type="button" class="btn-discord-login" id="btnGirar" onclick="iniciarSorteio()" style="padding: 12px 25px; background-color: #8a2be2;">Girar Roleta 🎲</button>
             </div>
+
+            <!-- BARRA DE WEBHOOK DO SORTEIO (OCULTA PARA NÃO-ADMINS) -->
+            <div id="webhook-box-sorteio" class="webhook-admin-box" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook do Sorteio</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-edicao-sorteio" onchange="alternarEdicaoPopup('sorteio')">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="label-status-sorteio" style="font-size: 0.75rem; color: var(--text-muted);">🔒 Bloqueado</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="input-webhook-sorteio" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <button id="btn-salvar-sorteio" class="webhook-btn-popup" onclick="salvarWebhookPopup('sorteio')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
+                </div>
+                <span id="msg-status-sorteio" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL / POP-UP DE CENTRAL DE RECOMPENSAS -->
+    <!-- MODAL / POP-UP DE CENTRAL DE RECOMPENSAS (COM BARRA DE WEBHOOK ADMIN) -->
     <div class="modal-overlay" id="modalRecompensa">
         <div class="modal-content">
             <div class="modal-header">
@@ -1226,10 +1226,29 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <button type="submit" class="btn-discord-login" id="btnEnviarRecompensa" style="padding: 10px 20px; background-color: #2e8b57;">Solicitar Recompensa</button>
                 </div>
             </form>
+
+            <!-- BARRA DE WEBHOOK DAS RECOMPENSAS (OCULTA PARA NÃO-ADMINS) -->
+            <div id="webhook-box-recompensa" class="webhook-admin-box" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook de Recompensas</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-edicao-recompensa" onchange="alternarEdicaoPopup('recompensa')">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="label-status-recompensa" style="font-size: 0.75rem; color: var(--text-muted);">🔒 Bloqueado</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="input-webhook-recompensa" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <button id="btn-salvar-recompensa" class="webhook-btn-popup" onclick="salvarWebhookPopup('recompensa')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
+                </div>
+                <span id="msg-status-recompensa" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL / POP-UP DE RELATÓRIO -->
+    <!-- MODAL / POP-UP DE RELATÓRIO (COM BARRA DE WEBHOOK ADMIN) -->
     <div class="modal-overlay" id="modalRelatorio">
         <div class="modal-content">
             <div class="modal-header">
@@ -1267,6 +1286,25 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <button type="submit" class="btn-discord-login" style="padding: 10px 20px;" id="btnEnviarRelatorio">Enviar Relatório</button>
                 </div>
             </form>
+
+            <!-- BARRA DE WEBHOOK DO RELATÓRIO (OCULTA PARA NÃO-ADMINS) -->
+            <div id="webhook-box-relatorio" class="webhook-admin-box" style="display: none;">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook de Relatórios</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-edicao-relatorio" onchange="alternarEdicaoPopup('relatorio')">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="label-status-relatorio" style="font-size: 0.75rem; color: var(--text-muted);">🔒 Bloqueado</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="input-webhook-relatorio" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <button id="btn-salvar-relatorio" class="webhook-btn-popup" onclick="salvarWebhookPopup('relatorio')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
+                </div>
+                <span id="msg-status-relatorio" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
+            </div>
         </div>
     </div>
 
@@ -1386,42 +1424,50 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        // Chaves usadas para buscar os webhooks dinâmicos no Supabase (tabela Configs)
-        const CHAVE_WEBHOOK_PRINCIPAL = 'webhook_url';
-        const WEBHOOK_SORTEIO_URL = "https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd";
+        // Chaves das tabelas Configs no Supabase para cada tipo de webhook
+        const CHAVES_WEBHOOK = {
+            'sorteio': 'webhook_sorteio',
+            'recompensa': 'webhook_recompensa',
+            'relatorio': 'webhook_relatorio'
+        };
 
-        // Variáveis globais para cache, paginação e segurança de duplo clique
+        // Fallbacks caso precise
+        const FALLBACKS_WEBHOOK = {
+            'sorteio': 'https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd',
+            'recompensa': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
+            'relatorio': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e'
+        };
+
         let listaMembrosCache = [];
         let membrosFiltradosCache = [];
         let paginaAtual = 1;
         const itensPorPagina = 8;
         let salvandoMembroEmAndamento = false;
 
-        // Função para buscar o Webhook principal dinamicamente da tabela Configs do Supabase
-        async function obterWebhookUrlDinamico() {
+        // Função dinâmica para buscar o webhook atual do Supabase
+        async function obterWebhookUrl(tipo) {
             try {
-                const { data, error } = await supabaseClient
+                const chaveDb = CHAVES_WEBHOOK[tipo];
+                const { data } = await supabaseClient
                     .from('Configs')
                     .select('valor')
-                    .eq('chave', CHAVE_WEBHOOK_PRINCIPAL)
+                    .eq('chave', chaveDb)
                     .single();
                 
                 if (data && data.valor) {
                     return data.valor;
                 }
             } catch (e) {
-                console.error("Erro ao buscar webhook do banco, usando fallback.", e);
+                console.error(`Erro ao buscar webhook de ${tipo}:`, e);
             }
-            // Fallback padrão caso dê algum erro de rede
-            return "https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e";
+            return FALLBACKS_WEBHOOK[tipo];
         }
 
-        // Função de notificação customizada (Substitui o alert feioso)
         function mostrarAviso(mensagem, tipo = 'sucesso') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${tipo === 'erro' ? 'erro' : ''}`;
-            toast.innerHTML = `<span>${tipo === 'erro' ? '⚠️️' : '✨'}</span> <span>${mensagem}</span>`;
+            toast.innerHTML = `<span>${tipo === 'erro' ? '⚠️' : '✨'}</span> <span>${mensagem}</span>`;
             container.appendChild(toast);
             setTimeout(() => { toast.remove(); }, 3000);
         }
@@ -1461,7 +1507,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             await verificarPermissaoAdmin();
             carregarMembros();
             carregarMidias();
-            carregarWebhookConfigAdmin();
         };
 
         async function obterAdminsAutorizados() {
@@ -1505,81 +1550,76 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         }
 
-        // --- PAINEL DE CONFIGURAÇÃO DE WEBHOOK (ADMIN) ---
-        async function carregarWebhookConfigAdmin() {
-            try {
-                const userId = localStorage.getItem('discord_user_id');
-                const adminsAtuais = await obterAdminsAutorizados();
-                const ehAdmin = userId && adminsAtuais.includes(userId);
+        // --- CONTROLE DOS SWITCHES E WEBHOOKS NOS POPUPS ---
+        async function carregarWebhookNoPopup(tipo) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            const ehAdmin = userId && adminsAtuais.includes(userId);
 
-                const painelWebhook = document.getElementById('painel-admin-webhook');
-                if (!ehAdmin) {
-                    if (painelWebhook) painelWebhook.style.display = 'none';
-                    return;
-                }
-
-                if (painelWebhook) painelWebhook.style.display = 'block';
-
-                const urlAtual = await obterWebhookUrlDinamico();
-                const inputField = document.getElementById('input-webhook-url');
-                if (inputField) inputField.value = urlAtual;
-            } catch (err) {
-                console.error("Erro ao carregar webhook no painel admin:", err);
+            const box = document.getElementById(`webhook-box-${tipo}`);
+            if (!ehAdmin) {
+                if (box) box.style.display = 'none';
+                return;
             }
+
+            if (box) box.style.display = 'block';
+            const url = await obterWebhookUrl(tipo);
+            const input = document.getElementById(`input-webhook-${tipo}`);
+            if (input) input.value = url;
         }
 
-        function alternarEdicaoWebhook() {
-            const isChecked = document.getElementById('toggle-modo-edicao').checked;
-            const inputField = document.getElementById('input-webhook-url');
-            const btnSalvar = document.getElementById('btn-salvar-webhook');
-            const labelStatus = document.getElementById('label-status-edicao');
+        function alternarEdicaoPopup(tipo) {
+            const isChecked = document.getElementById(`toggle-edicao-${tipo}`).checked;
+            const inputField = document.getElementById(`input-webhook-${tipo}`);
+            const btnSalvar = document.getElementById(`btn-salvar-${tipo}`);
+            const labelStatus = document.getElementById(`label-status-${tipo}`);
 
             if (isChecked) {
                 inputField.disabled = false;
                 btnSalvar.disabled = false;
-                labelStatus.innerHTML = "🔓 Modo de Edição Destravado";
+                labelStatus.innerHTML = "🔓 Destravado";
                 labelStatus.style.color = "var(--senju-gold)";
                 inputField.focus();
             } else {
                 inputField.disabled = true;
                 btnSalvar.disabled = true;
-                labelStatus.innerHTML = "🔒 Modo de Edição Bloqueado";
+                labelStatus.innerHTML = "🔒 Bloqueado";
                 labelStatus.style.color = "var(--text-muted)";
             }
         }
 
-        async function salvarWebhookSupabase() {
-            const novoUrl = document.getElementById('input-webhook-url').value.trim();
-            const msgStatus = document.getElementById('webhook-msg-status');
+        async function salvarWebhookPopup(tipo) {
+            const novoUrl = document.getElementById(`input-webhook-${tipo}`).value.trim();
+            const msgStatus = document.getElementById(`msg-status-${tipo}`);
+            const chaveDb = CHAVES_WEBHOOK[tipo];
 
             if (!novoUrl.startsWith('https://discord.com/api/webhooks/')) {
                 msgStatus.style.color = 'var(--senju-red)';
-                msgStatus.innerText = '⚠️ URL de Webhook inválida!';
+                msgStatus.innerText = '⚠️ URL inválida!';
                 return;
             }
 
             msgStatus.style.color = 'var(--senju-gold)';
-            msgStatus.innerText = 'Salvando no Supabase...';
+            msgStatus.innerText = 'Salvando...';
 
             try {
                 const { error } = await supabaseClient
                     .from('Configs')
-                    .upsert({ chave: CHAVE_WEBHOOK_PRINCIPAL, valor: novoUrl }, { onConflict: 'chave' });
+                    .upsert({ chave: chaveDb, valor: novoUrl }, { onConflict: 'chave' });
 
                 if (error) throw error;
 
                 msgStatus.style.color = '#248046';
-                msgStatus.innerText = '✅ Webhook atualizado com sucesso!';
+                msgStatus.innerText = '✅ Atualizado!';
                 
-                // Trava o switch novamente por segurança após salvar
-                document.getElementById('toggle-modo-edicao').checked = false;
-                alternarEdicaoWebhook();
+                document.getElementById(`toggle-edicao-${tipo}`).checked = false;
+                alternarEdicaoPopup(tipo);
 
-                setTimeout(() => { msgStatus.innerText = ''; }, 4000);
+                setTimeout(() => { msgStatus.innerText = ''; }, 3000);
             } catch (err) {
                 console.error(err);
                 msgStatus.style.color = 'var(--senju-red)';
-                msgStatus.innerText = '❌ Erro ao salvar webhook.';
+                msgStatus.innerText = '❌ Erro ao salvar.';
             }
         }
 
@@ -1745,7 +1785,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         async function salvarMembro(event) {
             event.preventDefault();
-
             if (salvandoMembroEmAndamento) return;
 
             const userId = localStorage.getItem('discord_user_id');
@@ -1969,6 +2008,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             modalSorteio.style.display = 'flex';
             document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
             document.getElementById('btnGirar').disabled = false;
+            
+            // Carrega webhook do sorteio no popup
+            carregarWebhookNoPopup('sorteio');
         }
 
         function fecharSorteio() {
@@ -2024,7 +2066,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }, 100);
         }
 
-        function enviarResultadoSorteioDiscord(vencedor) {
+        async function enviarResultadoSorteioDiscord(vencedor) {
             let mencaoDiscord = vencedor.discord_id ? `<@${vencedor.discord_id}>` : vencedor.nome_jogo;
             
             const payload = {
@@ -2054,7 +2096,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 ]
             };
 
-            fetch(WEBHOOK_SORTEIO_URL, {
+            const webhookUrl = await obterWebhookUrl('sorteio');
+
+            fetch(webhookUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -2093,6 +2137,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
 
             modalRecompensa.style.display = 'flex';
+            carregarWebhookNoPopup('recompensa');
         }
 
         function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
@@ -2128,10 +2173,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
             }
 
-            // Pega o webhook dinâmico atual do Supabase
-            const discordWebhookAtual = await obterWebhookUrlDinamico();
+            const webhookUrl = await obterWebhookUrl('recompensa');
 
-            fetch(discordWebhookAtual, {
+            fetch(webhookUrl, {
                 method: 'POST',
                 body: formData
             })
@@ -2194,6 +2238,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
 
             modalRelatorio.style.display = 'flex';
+            carregarWebhookNoPopup('relatorio');
         }
 
         function fecharModalRelatorio() { modalRelatorio.style.display = 'none'; }
@@ -2268,10 +2313,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
             }
 
-            // Pega o webhook dinâmico atual do Supabase
-            const discordWebhookAtual = await obterWebhookUrlDinamico();
+            const webhookUrl = await obterWebhookUrl('relatorio');
 
-            fetch(discordWebhookAtual, {
+            fetch(webhookUrl, {
                 method: 'POST',
                 body: formData
             })
