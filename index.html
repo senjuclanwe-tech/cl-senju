@@ -727,6 +727,25 @@
             border-radius: 4px;
         }
 
+        /* AVISO DISCRETO E DESTACADO NO PAINEL DE RECOMPENSAS */
+        .aviso-expiracao-painel {
+            background: rgba(194, 155, 56, 0.08);
+            border-left: 3px solid var(--senju-gold);
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 18px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .aviso-expiracao-painel span {
+            color: var(--senju-gold);
+            font-weight: 600;
+        }
+
         /* TEXTO DE ORIENTAÇÃO DAS RECOMPENSAS */
         .recompensas-info-box {
             background: rgba(194, 155, 56, 0.08);
@@ -1150,6 +1169,12 @@
                 <h2 id="tituloDetalhesMembro">Painel de Recompensas do Membro</h2>
                 <button class="close-btn" onclick="fecharModalDetalhesMembro()">&times;</button>
             </div>
+            
+            <!-- AVISO DESTACADO E DISCRETO DA EXCLUSÃO APÓS 5 DIAS -->
+            <div class="aviso-expiracao-painel">
+                <span>⏳ Informação:</span> As solicitações e imagens ficam visíveis por até 5 dias a partir da data de envio e são removidas automaticamente.
+            </div>
+
             <div id="conteudoDetalhesMembro" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
                 Carregando dados...
             </div>
