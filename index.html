@@ -706,6 +706,27 @@
             overflow-y: auto;
         }
 
+        /* SCROLL PERSONALIZADO PARA O PAINEL DE DETALHES DE RECOMPENSAS */
+        #conteudoDetalhesMembro {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        #conteudoDetalhesMembro::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #conteudoDetalhesMembro::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+
+        #conteudoDetalhesMembro::-webkit-scrollbar-thumb {
+            background: var(--senju-gold);
+            border-radius: 4px;
+        }
+
         /* TEXTO DE ORIENTAÇÃO DAS RECOMPENSAS */
         .recompensas-info-box {
             background: rgba(194, 155, 56, 0.08);
@@ -1122,7 +1143,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALHES/HISTÓRICO DE RECOMPENSAS DO MEMBRO (COM CONTROLE DE VISIBILIDADE DO ADM) -->
+    <!-- MODAL DE DETALHES/HISTÓRICO DE RECOMPENSAS DO MEMBRO (COM SCROLL E CONTROLES DE ADM) -->
     <div class="modal-overlay" id="modalDetalhesMembro">
         <div class="modal-content">
             <div class="modal-header">
@@ -1749,7 +1770,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             renderizarPaginaMembros();
         }
 
-        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO ---
+        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO (COM FILTRO DE 5 DIAS E SCROLL) ---
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
         async function abrirDetalhesMembro(membro) {
@@ -1780,23 +1801,24 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 let statusExibicao = sol.status;
                 let botaoAcao = '';
 
+                // Se estiver pago, verifica se passou de 5 dias. Se passou, oculta do painel.
                 if (sol.status === 'Pago' && sol.data_pagamento) {
                     const dataPag = new Date(sol.data_pagamento);
                     const diffDias = (hoje - dataPag) / (1000 * 60 * 60 * 24);
                     if (diffDias > 5) {
-                        return;
+                        return; // Oculta registros pagos com mais de 5 dias
                     }
                     statusExibicao = `Pago em ${sol.data_pagamento}`;
                 }
 
-                // CÁLCULO DE BLOCOS ACUMULATIVOS: A cada 5 missões = 1000 ryos. (Ex: 15 missões = 3 blocos = 3000 ryos)
+                // CÁLCULO DE BLOCOS ACUMULATIVOS: A cada 5 missões = 1000 ryos.
                 const blocosCompletos = Math.floor(sol.qtd_missoes / 5);
                 const valorTotalRyos = blocosCompletos * 1000;
                 const missoesExcedentes = sol.qtd_missoes % 5;
 
                 let avisoSobraHtml = '';
                 if (missoesExcedentes > 0) {
-                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-red); margin-top: 2px;">⚠️ ${missoesExcedentes} print(s) excedente(s) ignorado(s) por não formarem um bloco completo de 5 missões.</p>`;
+                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-red); margin-top: 2px;">⚠️️ ${missoesExcedentes} print(s) excedente(s) ignorado(s) por não formarem um bloco completo de 5 missões.</p>`;
                 }
 
                 let printsHtml = '';
@@ -1810,11 +1832,16 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 if (eAdmin && sol.status === 'Pendente') {
                     botaoAcao = `
-                        <div style="text-align: right; margin-top: 12px;">
+                        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px;">
+                            <button onclick="negarRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="background-color: var(--senju-red); display: inline-block; width: auto; padding: 8px 14px;">❌ Negar</button>
                             <button onclick="confirmarPagamentoRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
                         </div>
                     `;
                 }
+
+                let corStatus = 'var(--senju-gold)';
+                if (sol.status === 'Pago') corStatus = '#248046';
+                if (sol.status === 'Negado') corStatus = 'var(--senju-red)';
 
                 html += `
                     <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
@@ -1822,7 +1849,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         <p><b>Missões Enviadas:</b> ${sol.qtd_missoes}</p>
                         <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span> (${blocosCompletos} bloco(s) de 5)</p>
                         ${avisoSobraHtml}
-                        <p style="margin-top: 6px;"><b>Status:</b> <span style="color: ${sol.status === 'Pago' ? '#248046' : 'var(--senju-gold)'}; font-weight: bold;">${statusExibicao}</span></p>
+                        <p style="margin-top: 6px;"><b>Status:</b> <span style="color: ${corStatus}; font-weight: bold;">${statusExibicao}</span></p>
                         ${printsHtml}
                         ${botaoAcao}
                     </div>
@@ -1830,7 +1857,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
 
             if (!html) {
-                conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Nenhuma solicitação ativa no momento.</p>`;
+                conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Nenhuma solicitação ativa ou recente no momento.</p>`;
             } else {
                 conteudo.innerHTML = html;
             }
@@ -1840,7 +1867,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             modalDetalhesMembro.style.display = 'none';
         }
 
-        async function confirmarPagamentoRecompensa(solicitacaoId, discordIdId) {
+        async function confirmarPagamentoRecompensa(solicitacaoId, discordId) {
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
@@ -1882,6 +1909,53 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
 
             mostrarAviso('Pagamento confirmado e arquivos limpos do storage!');
+            fecharModalDetalhesMembro();
+            carregarMembros();
+        }
+
+        async function negarRecompensa(solicitacaoId, discordId) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                mostrarAviso('Acesso negado!', 'erro');
+                return;
+            }
+
+            if (!confirm("Deseja NEGAR esta recompensa? As fotos enviadas não atendem aos requisitos e serão apagadas do Storage.")) return;
+
+            // Busca os prints para remover do Supabase Storage
+            const { data: sol } = await supabaseClient
+                .from('solicitacoes_recompensa')
+                .select('*')
+                .eq('id', solicitacaoId)
+                .single();
+
+            if (sol && sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
+                for (let urlCompleta of sol.caminhos_imagens) {
+                    try {
+                        const partes = urlCompleta.split('/recompensas-prints/');
+                        if (partes.length > 1) {
+                            const caminhoArquivo = partes[1];
+                            await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
+                        }
+                    } catch (err) {
+                        console.error("Erro ao remover arquivo do storage:", err);
+                    }
+                }
+            }
+
+            // Atualiza o status para 'Negado' e limpa o array de imagens
+            const { error } = await supabaseClient
+                .from('solicitacoes_recompensa')
+                .update({ status: 'Negado', caminhos_imagens: [] })
+                .eq('id', solicitacaoId);
+
+            if (error) {
+                mostrarAviso('Erro ao negar solicitação.', 'erro');
+                return;
+            }
+
+            mostrarAviso('Solicitação negada e arquivos apagados do storage!');
             fecharModalDetalhesMembro();
             carregarMembros();
         }
@@ -2358,12 +2432,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // Busca o ID interno do membro no banco para montar a URL personalizada do painel
             const { data: dadosMembro } = await supabaseClient.from('membros').select('id').eq('discord_id', userId).single();
             const membroIdInterno = dadosMembro ? dadosMembro.id : '';
             const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
 
-            // Cálculo dos blocos acumulativos para o Discord
             const blocosCompletos = Math.floor(qtdMissoes / 5);
             const ryosCalculados = blocosCompletos * 1000;
 
