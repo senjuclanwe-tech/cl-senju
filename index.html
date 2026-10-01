@@ -1511,7 +1511,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             carregarMembros();
             carregarMidias();
 
-            // Se o adm abriu a página vindo direto do link do Discord com um ID de membro na URL (ex: ?membroId=...)
             const membroIdNaUrl = queryParams.get('membroId');
             if (membroIdNaUrl) {
                 setTimeout(async () => {
@@ -1750,7 +1749,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             renderizarPaginaMembros();
         }
 
-        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO ---
+        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO (COM CÁLCULO E BOTÃO ARRUMADO) ---
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
         async function abrirDetalhesMembro(membro) {
@@ -1763,7 +1762,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             conteudo.innerHTML = "<p>Buscando solicitações...</p>";
             modalDetalhesMembro.style.display = 'flex';
 
-            // Busca solicitações deste membro
             const { data: solicitacoes } = await supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('*')
@@ -1782,15 +1780,17 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 let statusExibicao = sol.status;
                 let botaoAcao = '';
 
-                // Verifica expiração do status "Pago" após 5 dias
                 if (sol.status === 'Pago' && sol.data_pagamento) {
                     const dataPag = new Date(sol.data_pagamento);
                     const diffDias = (hoje - dataPag) / (1000 * 60 * 60 * 24);
                     if (diffDias > 5) {
-                        return; // Se passou de 5 dias, oculta da listagem
+                        return;
                     }
                     statusExibicao = `Pago em ${sol.data_pagamento}`;
                 }
+
+                // Cálculo do valor em Ryos (5 missões = 1000 ryos, logo 200 ryos por missão enviada)
+                const valorTotalRyos = sol.qtd_missoes * 200;
 
                 let printsHtml = '';
                 if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
@@ -1801,15 +1801,19 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     printsHtml += `</div>`;
                 }
 
-                // REGRA DO BOTÃO: Se for ADMIN, exibe o botão de confirmar pagamento. Se for membro comum, a variável fica vazia (invisível).
                 if (eAdmin && sol.status === 'Pendente') {
-                    botaoAcao = `<button onclick="confirmarPagamentoRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="margin-top: 12px; background-color: #248046; width: 100%;">✅ Confirmar Pagamento</button>`;
+                    botaoAcao = `
+                        <div style="text-align: right; margin-top: 12px;">
+                            <button onclick="confirmarPagamentoRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
+                        </div>
+                    `;
                 }
 
                 html += `
                     <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
                         <p><b>Data do Envio:</b> ${sol.data_envio}</p>
                         <p><b>Missões Concluídas:</b> ${sol.qtd_missoes}</p>
+                        <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span></p>
                         <p><b>Status:</b> <span style="color: ${sol.status === 'Pago' ? '#248046' : 'var(--senju-gold)'}; font-weight: bold;">${statusExibicao}</span></p>
                         ${printsHtml}
                         ${botaoAcao}
@@ -1838,7 +1842,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             if (!confirm("Deseja confirmar o pagamento? As imagens anexadas serão apagadas do Storage e o status mudará para pago.")) return;
 
-            // 1. Busca a solicitação para pegar os caminhos dos arquivos no storage
             const { data: sol } = await supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('*')
@@ -1846,7 +1849,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 .single();
 
             if (sol && sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
-                // Remove os arquivos do Supabase Storage para economizar espaço
                 for (let urlCompleta of sol.caminhos_imagens) {
                     try {
                         const partes = urlCompleta.split('/recompensas-prints/');
@@ -1860,7 +1862,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
             }
 
-            // 2. Atualiza o status no banco para "Pago" e salva a data atual
             const dataHoje = new Date().toISOString().split('T')[0];
             const { error } = await supabaseClient
                 .from('solicitacoes_recompensa')
@@ -2304,7 +2305,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const qtdMissoes = arquivoInput.files.length;
             let urlsImagens = [];
 
-            // Faz upload de cada arquivo selecionado para o Storage do Supabase
             try {
                 for (let i = 0; i < arquivoInput.files.length; i++) {
                     const arquivo = arquivoInput.files[i];
@@ -2316,7 +2316,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                     if (uploadError) throw uploadError;
 
-                    // Pega a URL pública da imagem enviada
                     const { data: publicUrlData } = supabaseClient.storage
                         .from('recompensas-prints')
                         .getPublicUrl(nomeArquivoUnico);
@@ -2335,7 +2334,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             const dataHoje = new Date().toISOString().split('T')[0];
 
-            // Salva na tabela solicitacoes_recompensa do Supabase
             const { data: novaSolicitacao, error: dbError } = await supabaseClient.from('solicitacoes_recompensa').insert([{
                 discord_id: userId,
                 nome_jogo: nomeJogo,
@@ -2352,12 +2350,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // Pega o ID interno do membro cadastrado na tabela de membros para montar o link direto do adm
             const { data: dadosMembro } = await supabaseClient.from('membros').select('id').eq('discord_id', userId).single();
             const membroIdInterno = dadosMembro ? dadosMembro.id : '';
             const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
 
-            // Dispara o Webhook para o Discord contendo o botão interativo para o adm abrir direto no painel do membro
             let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
             const payloadDiscord = {
                 content: `💰 **SOLICITAÇÃO DE RECOMPENSA**`,
@@ -2374,11 +2370,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 ],
                 components: [
                     {
-                        type: 1, // Ações em linha (Botões do Discord)
+                        type: 1,
                         components: [
                             {
                                 type: 2,
-                                style: 5, // Estilo Link
+                                style: 5,
                                 label: "Abrir Painel do Membro",
                                 url: urlPainelAdm
                             }
