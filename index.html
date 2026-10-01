@@ -1195,8 +1195,8 @@
 
 ━━━━━━━━━━━━━━━━━━━━ 
 <b>MISSÕES DE KAGE</b>
-5 MISSÕES DE KAGE CONCLUÍDAS 
-RECOMPENSA: 1.000 RYOS (blocos mínimos de 5 missões)
+A CADA 5 MISSÕES CONCLUÍDAS 
+RECOMPENSA: 1.000 RYOS (Acumulativo de 5 em 5: 5 = 1k, 10 = 2k, 15 = 3k...)
 
 <b>COMO COMPROVAR?</b>
 Para cada missão realizada, ANTES DE FINALIZÁ-LA, você deverá: 
@@ -1789,7 +1789,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     statusExibicao = `Pago em ${sol.data_pagamento}`;
                 }
 
-                // CÁLCULO DE BLOCOS: 5 missões = 1000 ryos. Descarta sobras que não formem bloco fechado de 5.
+                // CÁLCULO DE BLOCOS ACUMULATIVOS: A cada 5 missões = 1000 ryos. (Ex: 15 missões = 3 blocos = 3000 ryos)
                 const blocosCompletos = Math.floor(sol.qtd_missoes / 5);
                 const valorTotalRyos = blocosCompletos * 1000;
                 const missoesExcedentes = sol.qtd_missoes % 5;
@@ -2363,6 +2363,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const membroIdInterno = dadosMembro ? dadosMembro.id : '';
             const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
 
+            // Cálculo dos blocos acumulativos para o Discord
+            const blocosCompletos = Math.floor(qtdMissoes / 5);
+            const ryosCalculados = blocosCompletos * 1000;
+
             let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
             const payloadDiscord = {
                 content: `💰 **SOLICITAÇÃO DE RECOMPENSA**`,
@@ -2372,7 +2376,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         color: 12713992,
                         fields: [
                             { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
-                            { name: "Missões Enviadas", value: `${qtdMissoes} missões enviadas.`, inline: true }
+                            { name: "Prints Enviados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true }
                         ],
                         timestamp: new Date().toISOString()
                     }
@@ -2399,7 +2403,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 body: JSON.stringify(payloadDiscord)
             }).catch(err => console.error("Erro ao enviar webhook:", err));
 
-            mostrarAviso(`Solicitação de ${qtdMissoes} missões enviada com sucesso!`);
+            mostrarAviso(`Solicitação de ${qtdMissoes} prints enviada com sucesso!`);
             fecharModalRecompensa();
             document.getElementById('formRecompensa').reset();
             btnEnviar.disabled = false;
