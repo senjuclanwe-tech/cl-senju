@@ -1770,7 +1770,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             renderizarPaginaMembros();
         }
 
-        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO (COM FILTRO DE 5 DIAS E SCROLL) ---
+        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO (COM EXPIRAÇÃO DE 5 DIAS) ---
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
         async function abrirDetalhesMembro(membro) {
@@ -1798,27 +1798,31 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const hoje = new Date();
 
             solicitacoes.forEach(sol => {
-                let statusExibicao = sol.status;
-                let botaoAcao = '';
-
-                // Se estiver pago, verifica se passou de 5 dias. Se passou, oculta do painel.
-                if (sol.status === 'Pago' && sol.data_pagamento) {
+                // Se já foi pago ou negado, verifica se passou de 5 dias da data de pagamento/negação para remover tudo definitivamente
+                if ((sol.status === 'Pago' || sol.status === 'Negado') && sol.data_pagamento) {
                     const dataPag = new Date(sol.data_pagamento);
                     const diffDias = (hoje - dataPag) / (1000 * 60 * 60 * 24);
                     if (diffDias > 5) {
-                        return; // Oculta registros pagos com mais de 5 dias
+                        // Limpa do storage e do banco se passou de 5 dias e ainda não foi limpo
+                        if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
+                            limparStorageExpirado(sol.id, sol.caminhos_imagens);
+                        }
+                        return; // Oculta da tela
                     }
-                    statusExibicao = `Pago em ${sol.data_pagamento}`;
                 }
 
-                // CÁLCULO DE BLOCOS ACUMULATIVOS: A cada 5 missões = 1000 ryos.
+                let statusExibicao = sol.status;
+                if ((sol.status === 'Pago' || sol.status === 'Negado') && sol.data_pagamento) {
+                    statusExibicao = `${sol.status} em ${sol.data_pagamento}`;
+                }
+
                 const blocosCompletos = Math.floor(sol.qtd_missoes / 5);
                 const valorTotalRyos = blocosCompletos * 1000;
                 const missoesExcedentes = sol.qtd_missoes % 5;
 
                 let avisoSobraHtml = '';
                 if (missoesExcedentes > 0) {
-                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-red); margin-top: 2px;">⚠ ${missoesExcedentes} print(s) excedente(s) ignorado(s) por não formarem um bloco completo de 5 missões.</p>`;
+                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-gold); margin-top: 2px;">ℹ ${missoesExcedentes} print(s) além do bloco serão acumulados para a próxima solicitação.</p>`;
                 }
 
                 let printsHtml = '';
@@ -1830,11 +1834,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     printsHtml += `</div>`;
                 }
 
+                let botaoAcao = '';
                 if (eAdmin && sol.status === 'Pendente') {
                     botaoAcao = `
                         <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px;">
-                            <button onclick="negarRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="background-color: var(--senju-red); display: inline-block; width: auto; padding: 8px 14px;">❌ Negar</button>
-                            <button onclick="confirmarPagamentoRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
+                            <button onclick="negarRecompensa(${sol.id})" class="btn-discord-login" style="background-color: var(--senju-red); display: inline-block; width: auto; padding: 8px 14px;">❌ Negar</button>
+                            <button onclick="confirmarPagamentoRecompensa(${sol.id})" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
                         </div>
                     `;
                 }
@@ -1846,7 +1851,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 html += `
                     <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
                         <p><b>Data do Envio:</b> ${sol.data_envio}</p>
-                        <p><b>Missões Enviadas:</b> ${sol.qtd_missoes}</p>
+                        <p><b>Prints Enviados:</b> ${sol.qtd_missoes}</p>
                         <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span> (${blocosCompletos} bloco(s) de 5)</p>
                         ${avisoSobraHtml}
                         <p style="margin-top: 6px;"><b>Status:</b> <span style="color: ${corStatus}; font-weight: bold;">${statusExibicao}</span></p>
@@ -1867,7 +1872,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             modalDetalhesMembro.style.display = 'none';
         }
 
-        async function confirmarPagamentoRecompensa(solicitacaoId, discordId) {
+        async function confirmarPagamentoRecompensa(solicitacaoId) {
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
@@ -1875,32 +1880,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            if (!confirm("Deseja confirmar o pagamento? As imagens anexadas serão apagadas do Storage e o status mudará para pago.")) return;
-
-            const { data: sol } = await supabaseClient
-                .from('solicitacoes_recompensa')
-                .select('*')
-                .eq('id', solicitacaoId)
-                .single();
-
-            if (sol && sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
-                for (let urlCompleta of sol.caminhos_imagens) {
-                    try {
-                        const partes = urlCompleta.split('/recompensas-prints/');
-                        if (partes.length > 1) {
-                            const caminhoArquivo = partes[1];
-                            await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
-                        }
-                    } catch (err) {
-                        console.error("Erro ao remover arquivo do storage:", err);
-                    }
-                }
-            }
+            if (!confirm("Deseja confirmar o pagamento? As imagens continuarão visíveis por mais 5 dias.")) return;
 
             const dataHoje = new Date().toISOString().split('T')[0];
             const { error } = await supabaseClient
                 .from('solicitacoes_recompensa')
-                .update({ status: 'Pago', data_pagamento: dataHoje, caminhos_imagens: [] })
+                .update({ status: 'Pago', data_pagamento: dataHoje })
                 .eq('id', solicitacaoId);
 
             if (error) {
@@ -1908,12 +1893,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            mostrarAviso('Pagamento confirmado e arquivos limpos do storage!');
+            mostrarAviso('Pagamento confirmado! As fotos ficarão disponíveis por 5 dias.');
             fecharModalDetalhesMembro();
             carregarMembros();
         }
 
-        async function negarRecompensa(solicitacaoId, discordId) {
+        async function negarRecompensa(solicitacaoId) {
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
@@ -1921,31 +1906,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            if (!confirm("Deseja NEGAR esta recompensa? As fotos enviadas não atendem aos requisitos e serão apagadas do Storage.")) return;
+            if (!confirm("Deseja NEGAR esta solicitação? As fotos continuarão visíveis por mais 5 dias para conferência.")) return;
 
-            const { data: sol } = await supabaseClient
-                .from('solicitacoes_recompensa')
-                .select('*')
-                .eq('id', solicitacaoId)
-                .single();
-
-            if (sol && sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
-                for (let urlCompleta of sol.caminhos_imagens) {
-                    try {
-                        const partes = urlCompleta.split('/recompensas-prints/');
-                        if (partes.length > 1) {
-                            const caminhoArquivo = partes[1];
-                            await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
-                        }
-                    } catch (err) {
-                        console.error("Erro ao remover arquivo do storage:", err);
-                    }
-                }
-            }
-
+            const dataHoje = new Date().toISOString().split('T')[0];
             const { error } = await supabaseClient
                 .from('solicitacoes_recompensa')
-                .update({ status: 'Negado', caminhos_imagens: [] })
+                .update({ status: 'Negado', data_pagamento: dataHoje })
                 .eq('id', solicitacaoId);
 
             if (error) {
@@ -1953,9 +1919,28 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            mostrarAviso('Solicitação negada e arquivos apagados do storage!');
+            mostrarAviso('Solicitação negada! As fotos ficarão disponíveis por 5 dias.');
             fecharModalDetalhesMembro();
             carregarMembros();
+        }
+
+        async function limparStorageExpirado(solicitacaoId, caminhosImagens) {
+            try {
+                for (let urlCompleta of caminhosImagens) {
+                    const partes = urlCompleta.split('/recompensas-prints/');
+                    if (partes.length > 1) {
+                        const caminhoArquivo = partes[1];
+                        await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
+                    }
+                }
+                // Limpa o array de imagens no banco para indicar que já foram apagadas
+                await supabaseClient
+                    .from('solicitacoes_recompensa')
+                    .update({ caminhos_imagens: [] })
+                    .eq('id', solicitacaoId);
+            } catch (err) {
+                console.error("Erro ao limpar storage expirado:", err);
+            }
         }
 
         const modalMembro = document.getElementById('modalMembro');
@@ -2328,7 +2313,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CENTRAL DE RECOMPENSAS COM LINK DIRECIONADO NO TEXTO DO DISCORD ---
+        // --- CENTRAL DE RECOMPENSAS COM LINK DIRETO NO TEXTO DO DISCORD ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
         async function tentarAbrirRecompensa() {
