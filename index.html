@@ -1818,7 +1818,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 let avisoSobraHtml = '';
                 if (missoesExcedentes > 0) {
-                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-red); margin-top: 2px;">⚠️️ ${missoesExcedentes} print(s) excedente(s) ignorado(s) por não formarem um bloco completo de 5 missões.</p>`;
+                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-red); margin-top: 2px;">⚠ ${missoesExcedentes} print(s) excedente(s) ignorado(s) por não formarem um bloco completo de 5 missões.</p>`;
                 }
 
                 let printsHtml = '';
@@ -1923,7 +1923,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             if (!confirm("Deseja NEGAR esta recompensa? As fotos enviadas não atendem aos requisitos e serão apagadas do Storage.")) return;
 
-            // Busca os prints para remover do Supabase Storage
             const { data: sol } = await supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('*')
@@ -1944,7 +1943,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
             }
 
-            // Atualiza o status para 'Negado' e limpa o array de imagens
             const { error } = await supabaseClient
                 .from('solicitacoes_recompensa')
                 .update({ status: 'Negado', caminhos_imagens: [] })
@@ -2330,7 +2328,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CENTRAL DE RECOMPENSAS COM LINK DIRECIONADO NO BOTÃO DO DISCORD ---
+        // --- CENTRAL DE RECOMPENSAS COM LINK DIRECIONADO NO TEXTO DO DISCORD ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
         async function tentarAbrirRecompensa() {
@@ -2448,22 +2446,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         color: 12713992,
                         fields: [
                             { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
-                            { name: "Prints Enviados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true }
+                            { name: "Prints Enviados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true },
+                            { name: "🔍 Ação do Admin", value: `[Verificar Fotos](${urlPainelAdm})`, inline: false }
                         ],
                         timestamp: new Date().toISOString()
-                    }
-                ],
-                components: [
-                    {
-                        type: 1,
-                        components: [
-                            {
-                                type: 2,
-                                style: 5,
-                                label: "Abrir Painel do Membro",
-                                url: urlPainelAdm
-                            }
-                        ]
                     }
                 ]
             };
