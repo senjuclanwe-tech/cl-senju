@@ -1749,7 +1749,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             renderizarPaginaMembros();
         }
 
-        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO (COM CÁLCULO E BOTÃO ARRUMADO) ---
+        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO ---
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
         async function abrirDetalhesMembro(membro) {
@@ -1789,8 +1789,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     statusExibicao = `Pago em ${sol.data_pagamento}`;
                 }
 
-                // Cálculo do valor em Ryos (5 missões = 1000 ryos, logo 200 ryos por missão enviada)
-                const valorTotalRyos = sol.qtd_missoes * 200;
+                // CÁLCULO DE BLOCOS: 5 missões = 1000 ryos. Descarta sobras que não formem bloco fechado de 5.
+                const blocosCompletos = Math.floor(sol.qtd_missoes / 5);
+                const valorTotalRyos = blocosCompletos * 1000;
+                const missoesExcedentes = sol.qtd_missoes % 5;
+
+                let avisoSobraHtml = '';
+                if (missoesExcedentes > 0) {
+                    avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-red); margin-top: 2px;">⚠️ ${missoesExcedentes} print(s) excedente(s) ignorado(s) por não formarem um bloco completo de 5 missões.</p>`;
+                }
 
                 let printsHtml = '';
                 if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
@@ -1812,9 +1819,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 html += `
                     <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
                         <p><b>Data do Envio:</b> ${sol.data_envio}</p>
-                        <p><b>Missões Concluídas:</b> ${sol.qtd_missoes}</p>
-                        <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span></p>
-                        <p><b>Status:</b> <span style="color: ${sol.status === 'Pago' ? '#248046' : 'var(--senju-gold)'}; font-weight: bold;">${statusExibicao}</span></p>
+                        <p><b>Missões Enviadas:</b> ${sol.qtd_missoes}</p>
+                        <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span> (${blocosCompletos} bloco(s) de 5)</p>
+                        ${avisoSobraHtml}
+                        <p style="margin-top: 6px;"><b>Status:</b> <span style="color: ${sol.status === 'Pago' ? '#248046' : 'var(--senju-gold)'}; font-weight: bold;">${statusExibicao}</span></p>
                         ${printsHtml}
                         ${botaoAcao}
                     </div>
@@ -2248,7 +2256,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CENTRAL DE RECOMPENSAS COM UPLOAD PARA STORAGE E WEBHOOK COM BOTÃO PARA O ADM ---
+        // --- CENTRAL DE RECOMPENSAS COM LINK DIRECIONADO NO BOTÃO DO DISCORD ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
         async function tentarAbrirRecompensa() {
@@ -2350,6 +2358,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
+            // Busca o ID interno do membro no banco para montar a URL personalizada do painel
             const { data: dadosMembro } = await supabaseClient.from('membros').select('id').eq('discord_id', userId).single();
             const membroIdInterno = dadosMembro ? dadosMembro.id : '';
             const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
@@ -2363,7 +2372,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         color: 12713992,
                         fields: [
                             { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
-                            { name: "Missões", value: `${qtdMissoes} missões enviadas.`, inline: true }
+                            { name: "Missões Enviadas", value: `${qtdMissoes} missões enviadas.`, inline: true }
                         ],
                         timestamp: new Date().toISOString()
                     }
