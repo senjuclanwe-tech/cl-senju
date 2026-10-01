@@ -387,6 +387,7 @@
             text-align: center;
             position: relative;
             transition: border-color 0.3s, transform 0.3s;
+            cursor: pointer;
         }
 
         .member-card:hover {
@@ -1121,6 +1122,22 @@
         </div>
     </div>
 
+    <!-- MODAL DE DETALHES/HISTÓRICO DE RECOMPENSAS DO MEMBRO (PARA ADMINS) -->
+    <div class="modal-overlay" id="modalDetalhesMembro">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="tituloDetalhesMembro">Painel de Recompensas do Membro</h2>
+                <button class="close-btn" onclick="fecharModalDetalhesMembro()">&times;</button>
+            </div>
+            <div id="conteudoDetalhesMembro" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                Carregando dados...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" onclick="fecharModalDetalhesMembro()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE SORTEIO DO CLÃ (COM BARRA DE WEBHOOK ADMIN) -->
     <div class="modal-overlay" id="modalSorteio">
         <div class="modal-content" style="text-align: center;">
@@ -1179,14 +1196,13 @@
 ━━━━━━━━━━━━━━━━━━━━ 
 <b>MISSÕES DE KAGE</b>
 5 MISSÕES DE KAGE CONCLUÍDAS 
-RECOMPENSA: 1.000 RYOS 
+RECOMPENSA: 1.000 RYOS (blocos mínimos de 5 missões)
 
 <b>COMO COMPROVAR?</b>
 Para cada missão realizada, ANTES DE FINALIZÁ-LA, você deverá: 
 • Tirar um print com o círculo vermelho da missão visível. 
 • Manter o comando "/timestamp" ativo e aparecendo na tela. 
-• Guarde os prints das 5 missões realizadas. 
-• Após completar as 5 missões, envie as comprovações na Central de Recompensas para solicitar seus 1.000 Ryos. 
+• Selecione todos os prints das missões realizadas no botão abaixo. O sistema contará automaticamente quantas missões você fez.
 
 <b>ATENÇÃO</b>
 Prints sem o círculo vermelho da missão ou sem o "/timestamp" poderão não ser considerados como comprovação.
@@ -1207,18 +1223,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 </div>
 
                 <div class="form-group">
-                    <label for="textoRecompensa">Detalhes / Observações das Missões:</label>
-                    <textarea id="textoRecompensa" required placeholder="Descreva os detalhes das 5 missões concluídas..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="fotosRecompensa">Prints das 5 Missões (Selecione todos os prints segurando Ctrl):</label>
+                    <label for="fotosRecompensa">Prints das Missões (Selecione todos os prints segurando Ctrl):</label>
                     <input type="file" id="fotosRecompensa" accept="image/*" multiple required>
-                </div>
-
-                <div class="form-group">
-                    <label for="linkVideoRecompensa">Link de Vídeo (Opcional - Prova em vídeo):</label>
-                    <input type="url" id="linkVideoRecompensa" placeholder="https://youtube.com/...">
                 </div>
 
                 <div class="modal-footer">
@@ -1424,14 +1430,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        // Chaves das tabelas Configs no Supabase para cada tipo de webhook
         const CHAVES_WEBHOOK = {
             'sorteio': 'webhook_sorteio',
             'recompensa': 'webhook_recompensa',
             'relatorio': 'webhook_relatorio'
         };
 
-        // Fallbacks caso precise
         const FALLBACKS_WEBHOOK = {
             'sorteio': 'https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd',
             'recompensa': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
@@ -1444,7 +1448,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const itensPorPagina = 8;
         let salvandoMembroEmAndamento = false;
 
-        // Função dinâmica para buscar o webhook atual do Supabase
         async function obterWebhookUrl(tipo) {
             try {
                 const chaveDb = CHAVES_WEBHOOK[tipo];
@@ -1550,7 +1553,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         }
 
-        // --- CONTROLE DOS SWITCHES E WEBHOOKS NOS POPUPS ---
         async function carregarWebhookNoPopup(tipo) {
             const userId = localStorage.getItem('discord_user_id');
             const adminsAtuais = await obterAdminsAutorizados();
@@ -1680,11 +1682,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             itensPagina.forEach((m) => {
                 const card = document.createElement('div');
                 card.className = 'member-card';
+                card.onclick = () => abrirDetalhesMembro(m);
                 
                 let botoesAdminHtml = '';
                 if (eAdminLogado) {
                     botoesAdminHtml = `
-                        <div class="admin-buttons-card">
+                        <div class="admin-buttons-card" onclick="event.stopPropagation()">
                             <button class="btn-card-action" onclick="abrirModalEditarMembro(${m.id})" title="Editar Membro">✏</button>
                             <button class="btn-card-action btn-excluir-membro" onclick="excluirMembro(${m.id})" title="Excluir Membro">&times;</button>
                         </div>
@@ -1734,6 +1737,132 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
             paginaAtual = 1;
             renderizarPaginaMembros();
+        }
+
+        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO ---
+        const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
+
+        async function abrirDetalhesMembro(membro) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            const eAdmin = userId && adminsAtuais.includes(userId);
+
+            document.getElementById('tituloDetalhesMembro').innerText = `Painel de Recompensas: ${membro.nome_jogo}`;
+            const conteudo = document.getElementById('conteudoDetalhesMembro');
+            conteudo.innerHTML = "<p>Buscando solicitações...</p>";
+            modalDetalhesMembro.style.display = 'flex';
+
+            // Busca solicitações deste membro
+            const { data: solicitacoes } = await supabaseClient
+                .from('solicitacoes_recompensa')
+                .select('*')
+                .eq('discord_id', membro.discord_id)
+                .order('id', { ascending: false });
+
+            if (!solicitacoes || solicitacoes.length === 0) {
+                conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Este membro não possui solicitações de recompensa pendentes ou recentes.</p>`;
+                return;
+            }
+
+            let html = '';
+            const hoje = new Date();
+
+            solicitacoes.forEach(sol => {
+                let statusExibicao = sol.status;
+                let botaoAcao = '';
+
+                // Verifica expiração do status "Pago" após 5 dias
+                if (sol.status === 'Pago' && sol.data_pagamento) {
+                    const dataPag = new Date(sol.data_pagamento);
+                    const diffDias = (hoje - dataPag) / (1000 * 60 * 60 * 24);
+                    if (diffDias > 5) {
+                        return; // Se passou de 5 dias, oculta da listagem
+                    }
+                    statusExibicao = `Pago em ${sol.data_pagamento}`;
+                }
+
+                let printsHtml = '';
+                if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
+                    printsHtml = `<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">`;
+                    sol.caminhos_imagens.forEach(urlImg => {
+                        printsHtml += `<a href="${urlImg}" target="_blank"><img src="${urlImg}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid var(--senju-gold);"></a>`;
+                    });
+                    printsHtml += `</div>`;
+                }
+
+                if (eAdmin && sol.status === 'Pendente') {
+                    botaoAcao = `<button onclick="confirmarPagamentoRecompensa(${sol.id}, '${membro.discord_id}')" class="btn-discord-login" style="margin-top: 12px; background-color: #248046;">✅ Confirmar Pagamento</button>`;
+                }
+
+                html += `
+                    <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                        <p><b>Data do Envio:</b> ${sol.data_envio}</p>
+                        <p><b>Missões Concluídas:</b> ${sol.qtd_missoes}</p>
+                        <p><b>Status:</b> <span style="color: ${sol.status === 'Pago' ? '#248046' : 'var(--senju-gold)'}; font-weight: bold;">${statusExibicao}</span></p>
+                        ${printsHtml}
+                        ${botaoAcao}
+                    </div>
+                `;
+            });
+
+            if (!html) {
+                conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Nenhuma solicitação ativa no momento.</p>`;
+            } else {
+                conteudo.innerHTML = html;
+            }
+        }
+
+        function fecharModalDetalhesMembro() {
+            modalDetalhesMembro.style.display = 'none';
+        }
+
+        async function confirmarPagamentoRecompensa(solicitacaoId, discordIdId) {
+            const userId = localStorage.getItem('discord_user_id');
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                mostrarAviso('Acesso negado!', 'erro');
+                return;
+            }
+
+            if (!confirm("Deseja confirmar o pagamento? As imagens anexadas serão apagadas do Storage e o status mudará para pago.")) return;
+
+            // 1. Busca a solicitação para pegar os caminhos dos arquivos no storage
+            const { data: sol } = await supabaseClient
+                .from('solicitacoes_recompensa')
+                .select('*')
+                .eq('id', solicitacaoId)
+                .single();
+
+            if (sol && sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
+                // Remove os arquivos do Supabase Storage para economizar espaço
+                for (let urlCompleta of sol.caminhos_imagens) {
+                    try {
+                        const partes = urlCompleta.split('/recompensas-prints/');
+                        if (partes.length > 1) {
+                            const caminhoArquivo = partes[1];
+                            await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
+                        }
+                    } catch (err) {
+                        console.error("Erro ao remover arquivo do storage:", err);
+                    }
+                }
+            }
+
+            // 2. Atualiza o status no banco para "Pago" e salva a data atual
+            const dataHoje = new Date().toISOString().split('T')[0];
+            const { error } = await supabaseClient
+                .from('solicitacoes_recompensa')
+                .update({ status: 'Pago', data_pagamento: dataHoje, caminhos_imagens: [] })
+                .eq('id', solicitacaoId);
+
+            if (error) {
+                mostrarAviso('Erro ao atualizar pagamento.', 'erro');
+                return;
+            }
+
+            mostrarAviso('Pagamento confirmado e arquivos limpos do storage!');
+            fecharModalDetalhesMembro();
+            carregarMembros();
         }
 
         const modalMembro = document.getElementById('modalMembro');
@@ -2009,7 +2138,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
             document.getElementById('btnGirar').disabled = false;
             
-            // Carrega webhook do sorteio no popup
             carregarWebhookNoPopup('sorteio');
         }
 
@@ -2107,7 +2235,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CENTRAL DE RECOMPENSAS ---
+        // --- CENTRAL DE RECOMPENSAS COM UPLOAD PARA STORAGE E WEBHOOK LIMPO ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
         async function tentarAbrirRecompensa() {
@@ -2147,65 +2275,89 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const btnEnviar = document.getElementById('btnEnviarRecompensa');
             
             btnEnviar.disabled = true;
-            btnEnviar.innerText = "Enviando recompensa...";
+            btnEnviar.innerText = "Enviando prints para o storage...";
 
             const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
             const nomeDiscord = document.getElementById('nomeDiscordRecompensa').value.trim();
-            const texto = document.getElementById('textoRecompensa').value.trim();
             const arquivoInput = document.getElementById('fotosRecompensa');
-            const linkVideo = document.getElementById('linkVideoRecompensa').value.trim();
+            const userId = localStorage.getItem('discord_user_id');
 
-            let conteudoMensagem = `💰 **SOLICITAÇÃO DE RECOMPENSA (1.000 RYOS)** 💰\n\n`;
-            conteudoMensagem += `👤 **Nome no Jogo:** ${nomeJogo}\n`;
-            conteudoMensagem += `💬 **Discord:** ${nomeDiscord}\n\n`;
-            conteudoMensagem += `📝 **Detalhes:**\n> ${texto.replace(/\n/g, '\n> ')}\n`;
-
-            if (linkVideo) {
-                conteudoMensagem += `\n🎥 **Vídeo de Prova:** ${linkVideo}`;
+            if (!arquivoInput.files || arquivoInput.files.length === 0) {
+                mostrarAviso('Selecione pelo menos um print!', 'erro');
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Solicitar Recompensa";
+                return;
             }
 
-            const formData = new FormData();
-            formData.append('payload_json', JSON.stringify({ content: conteudoMensagem }));
+            const qtdMissoes = arquivoInput.files.length;
+            let urlsImagens = [];
 
-            if (arquivoInput.files && arquivoInput.files.length > 0) {
+            // Faz upload de cada arquivo selecionado para o Storage do Supabase
+            try {
                 for (let i = 0; i < arquivoInput.files.length; i++) {
-                    formData.append(`files[${i}]`, arquivoInput.files[i]);
+                    const arquivo = arquivoInput.files[i];
+                    const nomeArquivoUnico = `${userId}_${Date.now()}_${i}_${arquivo.name}`;
+                    
+                    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                        .from('recompensas-prints')
+                        .upload(nomeArquivoUnico, arquivo);
+
+                    if (uploadError) throw uploadError;
+
+                    // Pega a URL pública da imagem enviada
+                    const { data: publicUrlData } = supabaseClient.storage
+                        .from('recompensas-prints')
+                        .getPublicUrl(nomeArquivoUnico);
+
+                    if (publicUrlData && publicUrlData.publicUrl) {
+                        urlsImagens.push(publicUrlData.publicUrl);
+                    }
                 }
+            } catch (err) {
+                console.error("Erro no upload:", err);
+                mostrarAviso("Erro ao enviar imagens para o storage.", 'erro');
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Solicitar Recompensa";
+                return;
             }
+
+            const dataHoje = new Date().toISOString().split('T')[0];
+
+            // Salva na tabela solicitacoes_recompensa do Supabase
+            const { error: dbError } = await supabaseClient.from('solicitacoes_recompensa').insert([{
+                discord_id: userId,
+                nome_jogo: nomeJogo,
+                qtd_missoes: qtdMissoes,
+                caminhos_imagens: urlsImagens,
+                status: 'Pendente',
+                data_envio: dataHoje
+            }]);
+
+            if (dbError) {
+                mostrarAviso("Erro ao salvar solicitação no banco.", 'erro');
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Solicitar Recompensa";
+                return;
+            }
+
+            // Dispara o Webhook limpo para o Discord (somente texto, sem imagens)
+            let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
+            const payloadDiscord = {
+                content: `💰 **SOLICITAÇÃO DE RECOMPENSA**\n\n👤 **Shinobi:** ${nomeJogo} (${mencaoDiscord})\n📋 **Missões Realizadas:** ${qtdMissoes} missões enviadas.\n\n_O membro está aguardando a verificação do comando e o pagamento no jogo._`
+            };
 
             const webhookUrl = await obterWebhookUrl('recompensa');
-
             fetch(webhookUrl, {
                 method: 'POST',
-                body: formData
-            })
-            .then(response => {
-                if (response.ok) {
-                    mostrarAviso(`Solicitação enviada com sucesso, ${nomeJogo}!`);
-                    fecharModalRecompensa();
-                    document.getElementById('formRecompensa').reset();
-                } else {
-                    mostrarAviso('Erro ao enviar solicitação.', 'erro');
-                }
-            })
-            .catch(() => {
-                mostrarAviso('Erro de conexão.', 'erro');
-            })
-            .finally(() => {
-                let segundosRestantes = 5;
-                btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payloadDiscord)
+            }).catch(err => console.error("Erro ao enviar webhook:", err));
 
-                let intervaloCooldown = setInterval(() => {
-                    segundosRestantes--;
-                    if (segundosRestantes > 0) {
-                        btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
-                    } else {
-                        clearInterval(intervaloCooldown);
-                        btnEnviar.disabled = false;
-                        btnEnviar.innerText = "Solicitar Recompensa";
-                    }
-                }, 1000);
-            });
+            mostrarAviso(`Solicitação de ${qtdMissoes} missões enviada com sucesso!`);
+            fecharModalRecompensa();
+            document.getElementById('formRecompensa').reset();
+            btnEnviar.disabled = false;
+            btnEnviar.innerText = "Solicitar Recompensa";
         }
 
         // --- ENVIO DE RELATÓRIO VIA WEBHOOK (EMBED) ---
@@ -2368,6 +2520,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (event.target == modalMembro) fecharModalMembro();
             if (event.target == modalRecompensa) fecharModalRecompensa();
             if (event.target == modalSorteio) fecharSorteio();
+            if (event.target == modalDetalhesMembro) fecharModalDetalhesMembro();
         }
 
         function mudarAba(tipo, event) {
