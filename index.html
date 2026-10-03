@@ -148,7 +148,7 @@
             transform: translateY(-2px);
         }
 
-        .btn-nav-sorteio {
+        .btn-nav-sorteio, .btn-nav-notificacoes {
             background-color: #8a2be2;
             color: #fff !important;
             padding: 6px 14px;
@@ -159,8 +159,8 @@
             display: none;
         }
 
-        .btn-nav-sorteio:hover {
-            background-color: #9932cc;
+        .btn-nav-sorteio:hover, .btn-nav-notificacoes:hover {
+            opacity: 0.9;
             transform: translateY(-2px);
         }
 
@@ -958,7 +958,7 @@
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
             nav ul { gap: 12px; }
-            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa):not(.btn-nav-sorteio) { display: none; }
+            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa):not(.btn-nav-sorteio):not(.btn-nav-notificacoes) { display: none; }
             .historia-bloco {
                 flex-direction: column;
             }
@@ -991,6 +991,7 @@
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
                 <li><a href="#historia">História</a></li>
+                <li><a onclick="abrirPainelNotificacoes()" class="btn-nav-notificacoes" id="navBtnNotificacoes">🔔 Avisos ADM</a></li>
                 <li><a onclick="abrirSorteio()" class="btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
                 <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
@@ -1174,6 +1175,54 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-cancelar" onclick="fecharModalDetalhesMembro()">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE NOTIFICAÇÕES DO COMANDO (EXCLUSIVO PARA ADMINS) -->
+    <div class="modal-overlay" id="modalNotificacoesAdmin">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Central de Avisos do Comando</h2>
+                <button class="close-btn" onclick="fecharPainelNotificacoes()">&times;</button>
+            </div>
+
+            <form id="formNotificacao" onsubmit="enviarNotificacaoAdmin(event)">
+                <div class="form-group">
+                    <label for="selectMembroNotificacao">Marcar Membro:</label>
+                    <select id="selectMembroNotificacao" required>
+                        <option value="">Carregando membros...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="textoNotificacaoAdmin">Mensagem / Aviso:</label>
+                    <textarea id="textoNotificacaoAdmin" required placeholder="Digite o aviso para o membro..." style="height: 90px;"></textarea>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancelar" onclick="fecharPainelNotificacoes()">Fechar</button>
+                    <button type="submit" class="btn-discord-login" id="btnEnviarNotif" style="background-color: #8a2be2;">Enviar Notificação & Webhook</button>
+                </div>
+            </form>
+
+            <!-- BARRA DE WEBHOOK DE NOTIFICAÇÕES -->
+            <div id="webhook-box-notificacao" class="webhook-admin-box">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook de Notificações</span>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <label class="switch">
+                            <input type="checkbox" id="toggle-edicao-notificacao" onchange="alternarEdicaoPopup('notificacao')">
+                            <span class="slider round"></span>
+                        </label>
+                        <span id="label-status-notificacao" style="font-size: 0.75rem; color: var(--text-muted);">🔒 Bloqueado</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <input type="text" id="input-webhook-notificacao" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <button id="btn-salvar-notificacao" class="webhook-btn-popup" onclick="salvarWebhookPopup('notificacao')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
+                </div>
+                <span id="msg-status-notificacao" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
             </div>
         </div>
     </div>
@@ -1491,13 +1540,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const CHAVES_WEBHOOK = {
             'sorteio': 'webhook_sorteio',
             'recompensa': 'webhook_recompensa',
-            'relatorio': 'webhook_relatorio'
+            'relatorio': 'webhook_relatorio',
+            'notificacao': 'webhook_notificacoes_admin'
         };
 
         const FALLBACKS_WEBHOOK = {
             'sorteio': 'https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd',
             'recompensa': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
-            'relatorio': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e'
+            'relatorio': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
+            'notificacao': 'https://discord.com/api/webhooks/1555751541007192255/xjQNNdEvlyrcIZBR3_wXkQVn7CVuQs7DnHvc2bvaZFj_3Np5Vam_pT8ZVU2fA4l5U1En'
         };
 
         const WEBHOOK_APROVADO = "https://discord.com/api/webhooks/1555730877781377034/M3JyAR9gKMRuHPkmc_W4vIAHRJkiwo3TPE9bxIwTC7KGY3vS7leAhyxrmRCWolhnD0uQ";
@@ -1610,6 +1661,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const btnAdmin = document.getElementById('btn-painel-admin');
             const btnAdicionarMembro = document.getElementById('btn-adicionar-membro');
             const navBtnSorteio = document.getElementById('navBtnSorteio');
+            const navBtnNotificacoes = document.getElementById('navBtnNotificacoes');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -1623,6 +1675,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         if(btnAdmin) btnAdmin.style.display = 'inline-block';
                         if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
                         if(navBtnSorteio) navBtnSorteio.style.display = 'inline-block';
+                        if(navBtnNotificacoes) navBtnNotificacoes.style.display = 'inline-block';
                     }
                 });
             }
@@ -1696,6 +1749,85 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     msgStatus.style.color = 'var(--senju-red)';
                     msgStatus.innerText = '❌ Erro ao salvar.';
                 });
+        }
+
+        // --- PAINEL DE NOTIFICAÇÕES DO COMANDO (EXCLUSIVO ADMINS) ---
+        const modalNotificacoesAdmin = document.getElementById('modalNotificacoesAdmin');
+
+        function abrirPainelNotificacoes() {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                const select = document.getElementById('selectMembroNotificacao');
+                select.innerHTML = '<option value="">Carregando membros...</option>';
+
+                supabaseClient.from('membros').select('*').order('nome_jogo', { ascending: true }).then(({ data: membros }) => {
+                    if (!membros || membros.length === 0) {
+                        select.innerHTML = '<option value="">Nenhum membro cadastrado</option>';
+                        return;
+                    }
+
+                    let optionsHtml = '<option value="">Selecione um membro...</option>';
+                    membros.forEach(m => {
+                        optionsHtml += `<option value="${m.discord_id}">${m.nome_jogo}</option>`;
+                    });
+                    select.innerHTML = optionsHtml;
+                });
+
+                modalNotificacoesAdmin.style.display = 'flex';
+                carregarWebhookNoPopup('notificacao');
+            });
+        }
+
+        function fecharPainelNotificacoes() {
+            modalNotificacoesAdmin.style.display = 'none';
+        }
+
+        function enviarNotificacaoAdmin(event) {
+            event.preventDefault();
+            const btn = document.getElementById('btnEnviarNotif');
+            btn.disabled = true;
+            btn.innerText = "Enviando...";
+
+            const discordIdMembro = document.getElementById('selectMembroNotificacao').value;
+            const textoMensagem = document.getElementById('textoNotificacaoAdmin').value.trim();
+            const autorNome = localStorage.getItem('discord_username') || 'Comando';
+
+            supabaseClient.from('notificacoes_admin').insert([{
+                texto: textoMensagem,
+                membro_marcado: discordIdMembro,
+                autor: autorNome
+            }]).then(({ error }) => {
+                if (error) {
+                    mostrarAviso('Erro ao salvar notificação.', 'erro');
+                    btn.disabled = false;
+                    btn.innerText = "Enviar Notificação & Webhook";
+                    return;
+                }
+
+                let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "Membro";
+                const payload = {
+                    content: `🚨 **AVISO DO COMANDO** ${mencao}\n\n${textoMensagem}\n\n*Enviado por: ${autorNome}*`
+                };
+
+                obterWebhookUrl('notificacao').then(webhookUrl => {
+                    fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).catch(err => console.error("Erro webhook notif:", err));
+                });
+
+                mostrarAviso('Notificação enviada e registrada com sucesso!');
+                fecharPainelNotificacoes();
+                document.getElementById('formNotificacao').reset();
+                btn.disabled = false;
+                btn.innerText = "Enviar Notificação & Webhook";
+            });
         }
 
         // --- CARREGAR E GERENCIAR MEMBROS DO BANCO ---
@@ -2465,12 +2597,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // Verificar se o usuário já teve uma recompensa APROVADA nas últimas 24 horas
             supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('created_at, data_envio, status')
                 .eq('discord_id', userId)
-                .eq('status', 'Pago') // Só considera bloqueio se foi aprovado/pago!
+                .eq('status', 'Pago')
                 .order('id', { ascending: false })
                 .limit(1)
                 .then(({ data: ultimasAprovadas }) => {
@@ -2491,7 +2622,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         }
                     }
 
-                    // Se passou das 24h da última aprovada (ou se foi negado anteriormente), valida o membro
                     supabaseClient.from('membros').select('*').then(({ data: membros }) => {
                         const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
                         obterAdminsAutorizados().then(adminsAtuais => {
@@ -2790,6 +2920,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (event.target == modalSorteio) fecharSorteio();
             if (event.target == modalDetalhesMembro) fecharModalDetalhesMembro();
             if (event.target == modalMotivoNegacao) fecharModalNegacao();
+            if (event.target == modalNotificacoesAdmin) fecharPainelNotificacoes();
         }
 
         function mudarAba(tipo, event) {
