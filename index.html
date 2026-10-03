@@ -1806,8 +1806,32 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "";
             
+            // EMBED BONITO E ORGANIZADO PARA A NOTIFICAÇÃO
             const payload = {
-                content: `${mencao} 🚨 **AVISO DO COMANDO:**\n\n${textoMensagem}`
+                content: `${mencao}`,
+                embeds: [
+                    {
+                        title: "🚨 COMUNICADO OFICIAL DO COMANDO",
+                        description: textoMensagem,
+                        color: 12713992, // Cor Dourada/Senju
+                        fields: [
+                            {
+                                name: "📌 Destinatário",
+                                value: discordIdMembro ? `<@${discordIdMembro}>` : "Membro do Clã",
+                                inline: true
+                            },
+                            {
+                                name: "🛡️ Origem",
+                                value: "Liderança Senju",
+                                inline: true
+                            }
+                        ],
+                        footer: {
+                            text: "Clã Senju • A Vontade do Fogo"
+                        },
+                        timestamp: new Date().toISOString()
+                    }
+                ]
             };
 
             obterWebhookUrl('notificacao').then(webhookUrl => {
