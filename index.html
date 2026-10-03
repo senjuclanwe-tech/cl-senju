@@ -164,6 +164,24 @@
             transform: translateY(-2px);
         }
 
+        /* BOTÃO DISCRETO DE RELATÓRIO SEMANAL (APENAS PARA ADMINS) */
+        .btn-nav-semanal {
+            background: rgba(194, 155, 56, 0.15);
+            border: 1px solid var(--senju-gold);
+            color: var(--senju-gold) !important;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: none;
+            transition: all 0.2s;
+        }
+
+        .btn-nav-semanal:hover {
+            background: var(--senju-gold);
+            color: #0f0805 !important;
+        }
+
         /* LOGIN DISCRETO NO TOPO */
         .auth-container {
             display: flex;
@@ -435,7 +453,6 @@
             z-index: 10;
         }
 
-        /* BOTÃO DE NOTIFICAÇÃO DISCRETO NO CANTO ESQUERDO DO CARD */
         .admin-left-buttons-card {
             position: absolute;
             top: 8px;
@@ -710,7 +727,6 @@
             overflow-y: auto;
         }
 
-        /* SCROLL PERSONALIZADO PARA O PAINEL DE DETALHES DE RECOMPENSAS */
         #conteudoDetalhesMembro {
             max-height: 60vh;
             overflow-y: auto;
@@ -731,7 +747,6 @@
             border-radius: 4px;
         }
 
-        /* AVISO DISCRETO E DESTACADO NO PAINEL DE RECOMPENSAS */
         .aviso-expiracao-painel {
             background: rgba(194, 155, 56, 0.08);
             border-left: 3px solid var(--senju-gold);
@@ -750,7 +765,6 @@
             font-weight: 600;
         }
 
-        /* TEXTO DE ORIENTAÇÃO DAS RECOMPENSAS */
         .recompensas-info-box {
             background: rgba(194, 155, 56, 0.08);
             border: 1px dashed var(--senju-gold);
@@ -767,7 +781,6 @@
             color: var(--senju-gold);
         }
 
-        /* MODAL ESPECÍFICO PARA ZOOM DE FOTO */
         .modal-zoom-content {
             background: transparent;
             border: none;
@@ -920,7 +933,6 @@
             color: var(--text-main);
         }
 
-        /* ESTILO DO SWITCH DE SEGURANÇA E BARRA DE WEBHOOK NOS POPUPS */
         .webhook-admin-box {
             margin-top: 20px;
             padding-top: 15px;
@@ -1002,6 +1014,8 @@
                 <li><a href="#galeria">Álbuns</a></li>
                 <li><a href="#historia">História</a></li>
                 <li><a onclick="abrirSorteio()" class="btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
+                <!-- Botão Discreto de Resumo Semanal (Apenas para Admins) -->
+                <li><a onclick="enviarRelatorioSemanalWebhook()" class="btn-nav-semanal" id="navBtnSemanal" title="Enviar Relatório Semanal (Apenas Domingo)">📊 Resumo Semanal</a></li>
                 <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
@@ -1100,7 +1114,6 @@
         </div>
         
         <div class="historia-container">
-            <!-- Bloco 1 -->
             <div class="historia-bloco">
                 <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/t4xmQ6xw/Gemini-Generated-Image-nk6go1nk6go1nk6g.jpg', 'A Era dos Conflitos Sangrentos')">
                     <img src="https://i.postimg.cc/t4xmQ6xw/Gemini-Generated-Image-nk6go1nk6go1nk6g.jpg" alt="A Era dos Conflitos Sangrentos" loading="lazy">
@@ -1111,7 +1124,6 @@
                 </div>
             </div>
 
-            <!-- Bloco 2 -->
             <div class="historia-bloco">
                 <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/L83Q8pxY/historia2.jpg', 'O Sonho de Paz')">
                     <img src="https://i.postimg.cc/L83Q8pxY/historia2.jpg" alt="O Sonho de Paz" loading="lazy">
@@ -1122,7 +1134,6 @@
                 </div>
             </div>
 
-            <!-- Bloco 3 -->
             <div class="historia-bloco">
                 <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/prQzJ2hC/historia3.jpg', 'A Fundação de Konoha')">
                     <img src="https://i.postimg.cc/prQzJ2hC/historia3.jpg" alt="A Fundação de Konoha" loading="lazy">
@@ -1133,7 +1144,6 @@
                 </div>
             </div>
 
-            <!-- Bloco 4 -->
             <div class="historia-bloco">
                 <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/3xxm2QKd/historia4.jpg', 'A Vontade do Fogo')">
                     <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade do Fogo" loading="lazy">
@@ -1144,7 +1154,6 @@
                 </div>
             </div>
 
-            <!-- Bloco 5 -->
             <div class="historia-bloco">
                 <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/vmGjrB4n/historia5.jpg', 'O Impacto Eterno')">
                     <img src="https://i.postimg.cc/vmGjrB4n/historia5.jpg" alt="O Impacto Eterno" loading="lazy">
@@ -1166,7 +1175,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALHES/HISTÓRICO DE RECOMPENSAS DO MEMBRO (COM SCROLL E CONTROLES DE ADM) -->
+    <!-- MODAL DE DETALHES/HISTÓRICO DE RECOMPENSAS DO MEMBRO -->
     <div class="modal-overlay" id="modalDetalhesMembro">
         <div class="modal-content">
             <div class="modal-header">
@@ -1174,7 +1183,6 @@
                 <button class="close-btn" onclick="fecharModalDetalhesMembro()">&times;</button>
             </div>
             
-            <!-- AVISO DESTACADO E DISCRETO DA EXCLUSÃO APÓS 5 DIAS -->
             <div class="aviso-expiracao-painel">
                 <span>⏳ Informação:</span> As solicitações e imagens ficam visíveis por até 5 dias a partir da data de envio e são removidas automaticamente.
             </div>
@@ -1188,7 +1196,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE NOTIFICAÇÕES DO COMANDO (EXCLUSIVO PARA ADMINS) -->
+    <!-- MODAL DE NOTIFICAÇÕES DO COMANDO -->
     <div class="modal-overlay" id="modalNotificacoesAdmin">
         <div class="modal-content">
             <div class="modal-header">
@@ -1220,7 +1228,6 @@
                 </div>
             </form>
 
-            <!-- BARRA DE WEBHOOK DE NOTIFICAÇÕES -->
             <div id="webhook-box-notificacao" class="webhook-admin-box">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook de Notificações</span>
@@ -1259,7 +1266,7 @@
         </div>
     </div>
 
-    <!-- MODAL DE SORTEIO DO CLÃ (COM BARRA DE WEBHOOK ADMIN) -->
+    <!-- MODAL DE SORTEIO DO CLÃ -->
     <div class="modal-overlay" id="modalSorteio">
         <div class="modal-content" style="text-align: center;">
             <div class="modal-header">
@@ -1271,7 +1278,6 @@
                 Apenas membros elegíveis participam (Líder e Braço Direito ficam de fora da disputa).
             </p>
 
-            <!-- Caixa de Exibição da Roleta / Sorteado -->
             <div id="boxRoleta" style="background: rgba(0,0,0,0.5); border: 2px dashed var(--senju-gold); border-radius: 8px; padding: 30px; margin-bottom: 20px;">
                 <div id="textoRoleta" style="font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--senju-gold); min-height: 50px; display: flex; align-items: center; justify-content: center;">
                     Pronto para sortear?
@@ -1283,10 +1289,9 @@
                 <button type="button" class="btn-discord-login" id="btnGirar" onclick="iniciarSorteio()" style="padding: 12px 25px; background-color: #8a2be2;">Girar Roleta 🎲</button>
             </div>
 
-            <!-- BARRA DE WEBHOOK DO SORTEIO (OCULTA PARA NÃO-ADMINS) -->
             <div id="webhook-box-sorteio" class="webhook-admin-box" style="display: none;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook do Sorteio</span>
+                    <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙ Webhook do Sorteio</span>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <label class="switch">
                             <input type="checkbox" id="toggle-edicao-sorteio" onchange="alternarEdicaoPopup('sorteio')">
@@ -1304,7 +1309,7 @@
         </div>
     </div>
 
-    <!-- MODAL / POP-UP DE CENTRAL DE RECOMPENSAS (COM BARRA DE WEBHOOK ADMIN) -->
+    <!-- MODAL / POP-UP DE CENTRAL DE RECOMPENSAS -->
     <div class="modal-overlay" id="modalRecompensa">
         <div class="modal-content">
             <div class="modal-header">
@@ -1354,7 +1359,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 </div>
             </form>
 
-            <!-- BARRA DE WEBHOOK DAS RECOMPENSAS (OCULTA PARA NÃO-ADMINS) -->
             <div id="webhook-box-recompensa" class="webhook-admin-box" style="display: none;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook de Recompensas</span>
@@ -1375,7 +1379,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         </div>
     </div>
 
-    <!-- MODAL / POP-UP DE RELATÓRIO (COM BARRA DE WEBHOOK ADMIN) -->
+    <!-- MODAL / POP-UP DE RELATÓRIO -->
     <div class="modal-overlay" id="modalRelatorio">
         <div class="modal-content">
             <div class="modal-header">
@@ -1414,7 +1418,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 </div>
             </form>
 
-            <!-- BARRA DE WEBHOOK DO RELATÓRIO (OCULTA PARA NÃO-ADMINS) -->
             <div id="webhook-box-relatorio" class="webhook-admin-box" style="display: none;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
                     <span style="font-size: 0.8rem; color: var(--senju-gold); font-weight: 600;">⚙️ Webhook de Relatórios</span>
@@ -1469,7 +1472,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         </div>
     </div>
 
-    <!-- MODAL / POP-UP PARA CADASTRAR/EDITAR MEMBRO (RESTRITO) -->
+    <!-- MODAL / POP-UP PARA CADASTRAR/EDITAR MEMBRO -->
     <div class="modal-overlay" id="modalMembro">
         <div class="modal-content">
             <div class="modal-header">
@@ -1492,10 +1495,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 <div class="form-group">
                     <label for="graduacaoMembro">Graduação:</label>
                     <select id="graduacaoMembro" required>
-                        <option value="Estudante">Estudante</option>
-                        <option value="Genin">Genin</option>
-                        <option value="Chunin">Chunin</option>
-                        <option value="Jounin">Jounin</option>
+                        <option value="Estudante">Estudante [ 学 生 ]</option>
+                        <option value="Genin">Genin [ 元仁 ]</option>
+                        <option value="Chunin">Chunin [ ちゅうにん ]</option>
+                        <option value="Jounin">Jounin [ じょうにん ]</option>
                     </select>
                 </div>
 
@@ -1503,8 +1506,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <label for="cargoEspecialMembro">Cargo Especial (Opcional):</label>
                     <select id="cargoEspecialMembro">
                         <option value="">Nenhum (Membro Comum)</option>
-                        <option value="Líder">Líder</option>
-                        <option value="Braço Direito">Braço Direito</option>
+                        <option value="Líder">Líder Senju [ 千住リーダー ]</option>
+                        <option value="Braço Direito">Braço Direito [ 千住サブリーダー ]</option>
                     </select>
                 </div>
 
@@ -1542,7 +1545,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
     <!-- SCRIPTS -->
     <script>
-        // ======= CONFIGURAÇÃO SUPABASE E DISCORD =======
         const SUPABASE_URL = "https://lloekbdprngyhoqtrykv.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxsb2VrYmRwcm5neWhvcXRyeWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTg5MDUsImV4cCI6MjEwNjE5NDkwNX0.ZMddhSZ1Al8Mc0bqErgmv7WBd6omFAhkA8d1b2818Bo";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1675,6 +1677,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const btnAdmin = document.getElementById('btn-painel-admin');
             const btnAdicionarMembro = document.getElementById('btn-adicionar-membro');
             const navBtnSorteio = document.getElementById('navBtnSorteio');
+            const navBtnSemanal = document.getElementById('navBtnSemanal');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -1688,6 +1691,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         if(btnAdmin) btnAdmin.style.display = 'inline-block';
                         if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
                         if(navBtnSorteio) navBtnSorteio.style.display = 'inline-block';
+                        if(navBtnSemanal) navBtnSemanal.style.display = 'inline-block';
                     }
                 });
             }
@@ -1763,7 +1767,118 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        // --- PAINEL DE NOTIFICAÇÕES DO COMANDO (EXCLUSIVO ADMINS) ---
+        // --- FUNÇÃO DO RELATÓRIO SEMANAL (BLOQUEADO PARA SÓ FUNCIONAR NO DOMINGO) ---
+        function enviarRelatorioSemanalWebhook() {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                // Verifica o dia atual (0 = Domingo, 1 = Segunda, ..., 6 = Sábado)
+                const diaAtual = new Date().getDay();
+                if (diaAtual !== 0) {
+                    mostrarAviso('⚠️ O relatório semanal só pode ser enviado no Domingo!', 'erro');
+                    return;
+                }
+
+                mostrarAviso('Calculando relatório semanal...');
+
+                const agora = new Date();
+                const inicioDaSemana = new Date();
+                const diaDaSemana = agora.getDay();
+                const diferencaParaSegunda = (diaDaSemana === 0 ? -6 : 1 - diaDaSemana);
+                inicioDaSemana.setDate(agora.getDate() + diferencaParaSegunda);
+                inicioDaSemana.setHours(0, 0, 0, 0);
+
+                supabaseClient
+                    .from('solicitacoes_recompensa')
+                    .select('*')
+                    .eq('status', 'Pago')
+                    .then(({ data: solicitacoes, error }) => {
+                        if (error || !solicitacoes) {
+                            mostrarAviso('Erro ao buscar dados para o relatório.', 'erro');
+                            return;
+                        }
+
+                        let missoesSemana = solicitacoes.filter(sol => {
+                            const dataSol = new Date(sol.created_at || sol.data_envio);
+                            return dataSol >= inicioDaSemana && dataSol <= agora;
+                        });
+
+                        if (missoesSemana.length === 0) {
+                            mostrarAviso('Nenhuma missão aprovada nesta semana.', 'erro');
+                            return;
+                        }
+
+                        let resumoMembros = {};
+                        let totalGeralSemanal = 0;
+
+                        missoesSemana.forEach(sol => {
+                            let nome = sol.nome_jogo || 'Desconhecido';
+                            let qtd = sol.qtd_missoes || 0;
+
+                            if (!resumoMembros[nome]) {
+                                resumoMembros[nome] = 0;
+                            }
+                            resumoMembros[nome] += qtd;
+                            totalGeralSemanal += qtd;
+                        });
+
+                        let camposMembros = [];
+                        for (let [nome, qtd] of Object.entries(resumoMembros)) {
+                            camposMembros.push({
+                                name: `👤 ${nome}`,
+                                value: `Fez **${qtd}** missão(ões) nesta semana`,
+                                inline: false
+                            });
+                        }
+
+                        camposMembros.push({
+                            name: `📊 Total Geral da Semana`,
+                            value: `O clã concluiu um total de **${totalGeralSemanal}** missões aprovadas!`,
+                            inline: false
+                        });
+
+                        const payload = {
+                            embeds: [
+                                {
+                                    title: "📈 RELATÓRIO SEMANAL DE MISSÕES DO CLÃ",
+                                    description: "Balanço oficial de todas as missões **aprovadas** pelos shinobi nesta semana (de segunda a domingo):",
+                                    color: 12713992,
+                                    fields: camposMembros,
+                                    footer: {
+                                        text: "Clã Senju • A Vontade do Fogo"
+                                    },
+                                    timestamp: new Date().toISOString()
+                                }
+                            ]
+                        };
+
+                        obterWebhookUrl('relatorio').then(webhookUrl => {
+                            fetch(webhookUrl, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            })
+                            .then(response => {
+                                if (response.ok) {
+                                    mostrarAviso('Resumo semanal enviado com sucesso!');
+                                } else {
+                                    mostrarAviso('Erro ao enviar o resumo.', 'erro');
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                mostrarAviso('Erro de conexão.', 'erro');
+                            });
+                        });
+                    });
+            });
+        }
+
+        // --- PAINEL DE NOTIFICAÇÕES DO COMANDO ---
         const modalNotificacoesAdmin = document.getElementById('modalNotificacoesAdmin');
 
         function abrirPainelNotificacoes(discordIdMembro, nomeJogoMembro) {
@@ -1777,7 +1892,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const select = document.getElementById('selectMembroNotificacao');
                 const inputDiscord = document.getElementById('inputDiscordMembroNotificacao');
                 
-                // Trava o select apenas com o membro correto do card clicado
                 select.innerHTML = `<option value="${discordIdMembro}" selected>${nomeJogoMembro}</option>`;
                 select.disabled = true;
                 select.style.backgroundColor = '#150b06';
@@ -1785,7 +1899,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 select.style.cursor = 'not-allowed';
 
                 inputDiscord.value = discordIdMembro;
-
                 modalNotificacoesAdmin.style.display = 'flex';
                 carregarWebhookNoPopup('notificacao');
             });
@@ -1806,14 +1919,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "";
             
-            // EMBED BONITO E ORGANIZADO PARA A NOTIFICAÇÃO
             const payload = {
                 content: `${mencao}`,
                 embeds: [
                     {
                         title: "🚨 COMUNICADO OFICIAL DO COMANDO",
                         description: textoMensagem,
-                        color: 12713992, // Cor Dourada/Senju
+                        color: 12713992,
                         fields: [
                             {
                                 name: "📌 Destinatário",
@@ -1860,7 +1972,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CARREGAR E GERENCIAR MEMBROS DO BANCO ---
+        // --- CARREGAR E GERENCIAR MEMBROS COM ORDENAÇÃO EXATA ---
         function carregarMembros() {
             supabaseClient.from('membros').select('*').then(({ data: membros, error }) => {
                 if (error || !membros) {
@@ -1869,17 +1981,24 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     listaMembrosCache = membros;
                 }
 
-                const pesoCargo = { "Líder": 1, "Braço Direito": 2 };
-                const pesoGraduacao = { "Jounin": 1, "Chunin": 2, "Gennin": 3, "Estudante": 4 };
-
+                // ORDENAÇÃO EXATA SOLICITADA: Líder -> Braço Direito -> Jounin -> Chunin -> Genin -> Estudante
                 listaMembrosCache.sort((a, b) => {
-                    const pA = pesoCargo[a.cargo_especial] || 99;
-                    const pB = pesoCargo[b.cargo_especial] || 99;
-                    if (pA !== pB) return pA - pB;
+                    const getPeso = (m) => {
+                        const cargoEsp = (m.cargo_especial || "").toLowerCase();
+                        const graduacao = (m.graduacao || "").toLowerCase();
 
-                    const gA = pesoGraduacao[a.graduacao] || 99;
-                    const gB = pesoGraduacao[b.graduacao] || 99;
-                    if (gA !== gB) return gA - gB;
+                        if (cargoEsp.includes('líder') || cargoEsp.includes('leader')) return 1;
+                        if (cargoEsp.includes('braço direito') || cargoEsp.includes('sub')) return 2;
+                        if (graduacao.includes('jounin') || graduacao.includes('じょうにん')) return 3;
+                        if (graduacao.includes('chunin') || graduacao.includes('ちゅうにん')) return 4;
+                        if (graduacao.includes('genin') || graduacao.includes('gennin') || graduacao.includes('元仁')) return 5;
+                        if (graduacao.includes('estudante') || graduacao.includes('学 生')) return 6;
+                        return 7;
+                    };
+
+                    const pA = getPeso(a);
+                    const pB = getPeso(b);
+                    if (pA !== pB) return pA - pB;
 
                     return a.nome_jogo.localeCompare(b.nome_jogo);
                 });
@@ -1923,7 +2042,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     let botaoEsquerdaHtml = '';
 
                     if (eAdminLogado) {
-                        // Passa explicitamente o ID e o Nome do membro atual para o botão de notificação deste card
                         botaoEsquerdaHtml = `
                             <div class="admin-left-buttons-card" onclick="event.stopPropagation()">
                                 <button class="btn-card-action" onclick="abrirPainelNotificacoes('${m.discord_id}', '${m.nome_jogo.replace(/'/g, "\\'")}')" title="Notificar Membro">🔔</button>
@@ -1985,7 +2103,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             renderizarPaginaMembros();
         }
 
-        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO (COM EXPIRAÇÃO DE 5 DIAS) ---
+        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO ---
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
         function abrirDetalhesMembro(membro) {
@@ -2258,9 +2376,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     document.getElementById('idMembroDiscord').value = membro.discord_id;
                     
                     let gradBanco = membro.graduacao || "";
-                    if (gradBanco.toLowerCase().includes('jounin')) document.getElementById('graduacaoMembro').value = "Jounin";
-                    else if (gradBanco.toLowerCase().includes('chunin')) document.getElementById('graduacaoMembro').value = "Chunin";
-                    else if (gradBanco.toLowerCase().includes('genin') || gradBanco.toLowerCase().includes('gennin')) document.getElementById('graduacaoMembro').value = "Genin";
+                    if (gradBanco.toLowerCase().includes('jounin') || gradBanco.toLowerCase().includes('じょうにん')) document.getElementById('graduacaoMembro').value = "Jounin";
+                    else if (gradBanco.toLowerCase().includes('chunin') || gradBanco.toLowerCase().includes('ちゅうにん')) document.getElementById('graduacaoMembro').value = "Chunin";
+                    else if (gradBanco.toLowerCase().includes('genin') || gradBanco.toLowerCase().includes('元仁')) document.getElementById('graduacaoMembro').value = "Genin";
                     else document.getElementById('graduacaoMembro').value = "Estudante";
 
                     let cargoBanco = membro.cargo_especial || "";
@@ -2276,7 +2394,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     else document.getElementById('trabalhoMembro').value = "";
 
                     document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
-
                     modalMembro.style.display = 'flex';
                 });
             });
@@ -2301,10 +2418,21 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const idEdicao = document.getElementById('idMembroEdicao').value;
                 const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
                 const discord_id = document.getElementById('idMembroDiscord').value.trim();
-                const graduacao = document.getElementById('graduacaoMembro').value;
-                const cargo_especial = document.getElementById('cargoEspecialMembro').value;
+                const graduacaoSelect = document.getElementById('graduacaoMembro').value;
+                const cargoEspecialSelect = document.getElementById('cargoEspecialMembro').value;
                 const trabalho = document.getElementById('trabalhoMembro').value;
                 const e_admin = document.getElementById('checkAdminMembro').checked;
+
+                // Salva mantendo o padrão completo com o kanji que você especificou
+                let graduacao = graduacaoSelect;
+                if (graduacaoSelect === "Estudante") graduacao = "Estudante [ 学 生 ]";
+                if (graduacaoSelect === "Genin") graduacao = "Genin [ 元仁 ]";
+                if (graduacaoSelect === "Chunin") graduacao = "Chunin [ ちゅうにん ]";
+                if (graduacaoSelect === "Jounin") graduacao = "Jounin [ じょうにん ]";
+
+                let cargo_especial = cargoEspecialSelect;
+                if (cargoEspecialSelect === "Líder") cargo_especial = "Líder Senju [ 千住リーダー ]";
+                if (cargoEspecialSelect === "Braço Direito") cargo_especial = "Braço Direito [ 千住サブリーダー ]";
 
                 const idExistente = listaMembrosCache.find(m => m.discord_id === discord_id && m.id != idEdicao);
                 if (idExistente) {
@@ -2376,7 +2504,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CARREGAR E GERENCIAR MÍDIAS DO ÁLBUM ---
+        // --- CARREGAR E GERENCIAR MÍDIAS ---
         function carregarMidias() {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
@@ -2395,7 +2523,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const userId = localStorage.getItem('discord_user_id');
                 obterAdminsAutorizados().then(adminsAtuais => {
                     const eAdminLogado = userId && adminsAtuais.includes(userId);
-
                     let qtdFotos = 0;
                     let qtdVideos = 0;
 
@@ -2439,12 +2566,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         }
                     });
 
-                    if (qtdFotos === 0) {
-                        secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
-                    }
-                    if (qtdVideos === 0) {
-                        secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
-                    }
+                    if (qtdFotos === 0) secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
+                    if (qtdVideos === 0) secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
                 });
             });
         }
@@ -2498,7 +2621,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CONTROLE DOS MODAIS DE ZOOM ---
         function abrirModalZoom(url, titulo) {
             document.getElementById('imagemZoom').src = url;
             document.getElementById('tituloZoom').innerText = titulo;
@@ -2509,7 +2631,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('modalZoom').style.display = 'none';
         }
 
-        // --- SISTEMA DE SORTEIO ---
         const modalSorteio = document.getElementById('modalSorteio');
 
         function abrirSorteio() {
@@ -2523,19 +2644,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 modalSorteio.style.display = 'flex';
                 document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
                 document.getElementById('btnGirar').disabled = false;
-                
                 carregarWebhookNoPopup('sorteio');
             });
         }
 
-        function fecharSorteio() {
-            modalSorteio.style.display = 'none';
-        }
+        function fecharSorteio() { modalSorteio.style.display = 'none'; }
 
         function iniciarSorteio() {
             const btnGirar = document.getElementById('btnGirar');
             const textoRoleta = document.getElementById('textoRoleta');
-
             btnGirar.disabled = true;
 
             supabaseClient.from('membros').select('*').then(({ data: membros, error }) => {
@@ -2547,7 +2664,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 const elegiveis = membros.filter(m => {
                     const cargo = (m.cargo_especial || "").toLowerCase();
-                    if (cargo.includes('líder') || cargo.includes('braço direito')) return false;
+                    if (cargo.includes('líder') || cargo.includes('braço direito') || cargo.includes('sub')) return false;
                     if (m.nome_jogo.toLowerCase().includes('tobirama') || m.nome_jogo.toLowerCase().includes('hayai')) return false;
                     return true;
                 });
@@ -2560,7 +2677,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 let contador = 0;
                 let maxRodadas = 25;
-                
                 let intervalo = setInterval(() => {
                     let aleatorioTemp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
                     textoRoleta.innerText = aleatorioTemp.nome_jogo;
@@ -2568,13 +2684,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                     if (contador >= maxRodadas) {
                         clearInterval(intervalo);
-                        
                         let vencedor = elegiveis[Math.floor(Math.random() * elegiveis.length)];
-                        
                         textoRoleta.innerHTML = `🏆 GANHADOR: <span style="color: #fff; text-shadow: 0 0 10px var(--senju-red);">${vencedor.nome_jogo}</span>! 🏆`;
-                        
                         enviarResultadoSorteioDiscord(vencedor);
-
                         btnGirar.disabled = false;
                     }
                 }, 100);
@@ -2583,7 +2695,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         function enviarResultadoSorteioDiscord(vencedor) {
             let mencaoDiscord = vencedor.discord_id ? `<@${vencedor.discord_id}>` : vencedor.nome_jogo;
-            
             const payload = {
                 content: "@everyone",
                 embeds: [
@@ -2592,20 +2703,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         description: "A roleta girou e o destino escolheu o grande vencedor desta rodada!",
                         color: 12713992,
                         fields: [
-                            {
-                                name: "🏆 Vencedor da Rodada",
-                                value: `**${vencedor.nome_jogo}** (${mencaoDiscord})`,
-                                inline: false
-                            },
-                            {
-                                name: "📜 Próximo Passo",
-                                value: "Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio.",
-                                inline: false
-                            }
+                            { name: "🏆 Vencedor da Rodada", value: `**${vencedor.nome_jogo}** (${mencaoDiscord})`, inline: false },
+                            { name: "📜 Próximo Passo", value: "Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio.", inline: false }
                         ],
-                        footer: {
-                            text: "Clã Senju • A Vontade do Fogo"
-                        },
+                        footer: { text: "Clã Senju • A Vontade do Fogo" },
                         timestamp: new Date().toISOString()
                     }
                 ]
@@ -2616,13 +2717,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).catch(err => {
-                    console.error('Erro de conexão ao enviar webhook:', err);
-                });
+                }).catch(err => console.error(err));
             });
         }
 
-        // --- CENTRAL DE RECOMPENSAS COM COOLDOWN INDIVIDUAL DE 24 HORAS (APENAS SE APROVADO) ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
         function tentarAbrirRecompensa() {
@@ -2647,13 +2745,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         const dataEnvioStr = ultimaAprovada.created_at || ultimaAprovada.data_envio;
                         const ultimaData = new Date(dataEnvioStr);
                         const agora = new Date();
-                        
                         const diferencaHoras = (agora - ultimaData) / (1000 * 60 * 60);
 
                         if (diferencaHoras < 24) {
                             const horarioLiberacao = new Date(ultimaData.getTime() + (24 * 60 * 60 * 1000));
                             const horarioFormatado = horarioLiberacao.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            
                             mostrarAviso(`⏳ Sua última recompensa aprovada foi recente! Poderá enviar novamente amanhã às ${horarioFormatado}.`, 'erro');
                             return;
                         }
@@ -2670,12 +2766,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             }
 
                             document.getElementById('nomeDiscordRecompensa').value = username;
-                            if (membroEncontrado) {
-                                document.getElementById('nomeJogoRecompensa').value = membroEncontrado.nome_jogo;
-                            } else {
-                                document.getElementById('nomeJogoRecompensa').value = "";
-                            }
-
+                            document.getElementById('nomeJogoRecompensa').value = membroEncontrado ? membroEncontrado.nome_jogo : "";
                             modalRecompensa.style.display = 'flex';
                             carregarWebhookNoPopup('recompensa');
                         });
@@ -2688,7 +2779,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function enviarRecompensa(event) {
             event.preventDefault();
             const btnEnviar = document.getElementById('btnEnviarRecompensa');
-            
             btnEnviar.disabled = true;
             btnEnviar.innerText = "Enviando prints para o storage...";
 
@@ -2706,8 +2796,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             const qtdMissoes = arquivoInput.files.length;
             let urlsImagens = [];
-
             let promessasUpload = [];
+
             for (let i = 0; i < arquivoInput.files.length; i++) {
                 const arquivo = arquivoInput.files[i];
                 const nomeArquivoUnico = `${userId}_${Date.now()}_${i}_${arquivo.name}`;
@@ -2751,8 +2841,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                         const blocosCompletos = Math.floor(qtdMissoes / 5);
                         const ryosCalculados = blocosCompletos * 1000;
-
                         let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
+
                         const payloadDiscord = {
                             content: `💰 **SOLICITAÇÃO DE RECOMPENSA**`,
                             embeds: [
@@ -2774,7 +2864,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify(payloadDiscord)
-                            }).catch(err => console.error("Erro ao enviar webhook:", err));
+                            }).catch(err => console.error(err));
                         });
 
                         mostrarAviso(`Solicitação de ${qtdMissoes} prints enviada com sucesso!`);
@@ -2785,14 +2875,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     });
                 })
                 .catch(err => {
-                    console.error("Erro no processo de recompensa:", err);
+                    console.error(err);
                     mostrarAviso("Erro ao processar envio de prints.", 'erro');
                     btnEnviar.disabled = false;
                     btnEnviar.innerText = "Solicitar Recompensa";
                 });
         }
 
-        // --- ENVIO DE RELATÓRIO VIA WEBHOOK (EMBED) ---
         const modalRelatorio = document.getElementById('modalRelatorio');
         
         function tentarAbrirRelatorio() {
@@ -2815,12 +2904,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     }
 
                     document.getElementById('nomeDiscord').value = username;
-                    if (membroEncontrado) {
-                        document.getElementById('nomeJogo').value = membroEncontrado.nome_jogo;
-                    } else {
-                        document.getElementById('nomeJogo').value = "";
-                    }
-
+                    document.getElementById('nomeJogo').value = membroEncontrado ? membroEncontrado.nome_jogo : "";
                     modalRelatorio.style.display = 'flex';
                     carregarWebhookNoPopup('relatorio');
                 });
@@ -2832,7 +2916,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function enviarRelatorio(event) {
             event.preventDefault();
             const btnEnviar = document.getElementById('btnEnviarRelatorio');
-            
             btnEnviar.disabled = true;
             btnEnviar.innerText = "Enviando relatório...";
 
@@ -2841,38 +2924,21 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const textoRelatorio = document.getElementById('textoRelatorio').value.trim();
             const arquivoInput = document.getElementById('fotosRelatorio');
             const linkVideo = document.getElementById('linkVideo').value.trim();
-
             const userId = localStorage.getItem('discord_user_id');
             let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
 
             let camposEmbed = [
-                {
-                    name: "👤 Shinobi",
-                    value: `**${nomeJogo}** (${mencaoDiscord})`,
-                    inline: true
-                },
-                {
-                    name: "📋 Descrição da Missão",
-                    value: textoRelatorio,
-                    inline: false
-                }
+                { name: "👤 Shinobi", value: `**${nomeJogo}** (${mencaoDiscord})`, inline: true },
+                { name: "📋 Descrição da Missão", value: textoRelatorio, inline: false }
             ];
 
             if (linkVideo) {
-                camposEmbed.push({
-                    name: "🎥 Vídeo de Comprovação",
-                    value: linkVideo,
-                    inline: false
-                });
+                camposEmbed.push({ name: "🎥 Vídeo de Comprovação", value: linkVideo, inline: false });
             }
 
             let qtdAnexos = arquivoInput.files ? arquivoInput.files.length : 0;
             if (qtdAnexos > 0) {
-                camposEmbed.push({
-                    name: "🖼️ Evidências Anexadas",
-                    value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`,
-                    inline: false
-                });
+                camposEmbed.push({ name: "🖼️ Evidências Anexadas", value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`, inline: false });
             }
 
             const payloadDiscord = {
@@ -2882,9 +2948,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         description: "Um shinobi concluiu sua tarefa e enviou o relatório para análise do comando.",
                         color: 12713992,
                         fields: camposEmbed,
-                        footer: {
-                            text: "Clã Senju • A Vontade do Fogo"
-                        },
+                        footer: { text: "Clã Senju • A Vontade do Fogo" },
                         timestamp: new Date().toISOString()
                     }
                 ]
@@ -2913,19 +2977,16 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         mostrarAviso('Erro ao enviar relatório.', 'erro');
                     }
                 })
-                .catch(() => {
-                    mostrarAviso('Erro de conexão.', 'erro');
-                })
+                .catch(() => mostrarAviso('Erro de conexão.', 'erro'))
                 .finally(() => {
                     let segundosRestantes = 5;
                     btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
-
-                    let intervaloCooldown = setInterval(() => {
+                    let intervalo = setInterval(() => {
                         segundosRestantes--;
                         if (segundosRestantes > 0) {
                             btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
                         } else {
-                            clearInterval(intervaloCooldown);
+                            clearInterval(intervalo);
                             btnEnviar.disabled = false;
                             btnEnviar.innerText = "Enviar Relatório";
                         }
