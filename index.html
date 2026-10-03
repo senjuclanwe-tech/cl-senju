@@ -148,7 +148,7 @@
             transform: translateY(-2px);
         }
 
-        .btn-nav-sorteio, .btn-nav-notificacoes {
+        .btn-nav-sorteio {
             background-color: #8a2be2;
             color: #fff !important;
             padding: 6px 14px;
@@ -159,7 +159,7 @@
             display: none;
         }
 
-        .btn-nav-sorteio:hover, .btn-nav-notificacoes:hover {
+        .btn-nav-sorteio:hover {
             opacity: 0.9;
             transform: translateY(-2px);
         }
@@ -968,7 +968,7 @@
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
             nav ul { gap: 12px; }
-            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa):not(.btn-nav-sorteio):not(.btn-nav-notificacoes) { display: none; }
+            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa):not(.btn-nav-sorteio) { display: none; }
             .historia-bloco {
                 flex-direction: column;
             }
@@ -1001,7 +1001,6 @@
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
                 <li><a href="#historia">História</a></li>
-                <li><a onclick="abrirPainelNotificacoes()" class="btn-nav-notificacoes" id="navBtnNotificacoes">🔔 Avisos ADM</a></li>
                 <li><a onclick="abrirSorteio()" class="btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
                 <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
                 <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
@@ -1200,14 +1199,14 @@
             <form id="formNotificacao" onsubmit="enviarNotificacaoAdmin(event)">
                 <div class="form-group">
                     <label for="selectMembroNotificacao">Marcar Membro:</label>
-                    <select id="selectMembroNotificacao" onchange="atualizarCampoDiscordNotificacao(this)" required>
-                        <option value="">Carregando membros...</option>
+                    <select id="selectMembroNotificacao" disabled required style="background-color: #150b06; color: var(--senju-gold); cursor: not-allowed;">
+                        <option value="">Carregando...</option>
                     </select>
                 </div>
 
                 <div class="form-group">
                     <label for="inputDiscordMembroNotificacao">Nome / ID Discord (para marcação):</label>
-                    <input type="text" id="inputDiscordMembroNotificacao" readonly placeholder="Selecione um membro acima...">
+                    <input type="text" id="inputDiscordMembroNotificacao" readonly placeholder="Selecionado automaticamente...">
                 </div>
 
                 <div class="form-group">
@@ -1676,7 +1675,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const btnAdmin = document.getElementById('btn-painel-admin');
             const btnAdicionarMembro = document.getElementById('btn-adicionar-membro');
             const navBtnSorteio = document.getElementById('navBtnSorteio');
-            const navBtnNotificacoes = document.getElementById('navBtnNotificacoes');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -1690,7 +1688,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         if(btnAdmin) btnAdmin.style.display = 'inline-block';
                         if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
                         if(navBtnSorteio) navBtnSorteio.style.display = 'inline-block';
-                        if(navBtnNotificacoes) navBtnNotificacoes.style.display = 'inline-block';
                     }
                 });
             }
@@ -1769,7 +1766,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         // --- PAINEL DE NOTIFICAÇÕES DO COMANDO (EXCLUSIVO ADMINS) ---
         const modalNotificacoesAdmin = document.getElementById('modalNotificacoesAdmin');
 
-        function abrirPainelNotificacoes(discordIdPreSelecionado = '') {
+        function abrirPainelNotificacoes(discordIdMembro, nomeJogoMembro) {
             const userId = localStorage.getItem('discord_user_id');
             obterAdminsAutorizados().then(adminsAtuais => {
                 if (!userId || !adminsAtuais.includes(userId)) {
@@ -1779,36 +1776,19 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 const select = document.getElementById('selectMembroNotificacao');
                 const inputDiscord = document.getElementById('inputDiscordMembroNotificacao');
-                select.innerHTML = '<option value="">Carregando membros...</option>';
-                inputDiscord.value = '';
+                
+                // Trava o select apenas com o membro correto do card clicado
+                select.innerHTML = `<option value="${discordIdMembro}" selected>${nomeJogoMembro}</option>`;
+                select.disabled = true;
+                select.style.backgroundColor = '#150b06';
+                select.style.color = 'var(--senju-gold)';
+                select.style.cursor = 'not-allowed';
 
-                supabaseClient.from('membros').select('*').order('nome_jogo', { ascending: true }).then(({ data: membros }) => {
-                    if (!membros || membros.length === 0) {
-                        select.innerHTML = '<option value="">Nenhum membro cadastrado</option>';
-                        return;
-                    }
-
-                    let optionsHtml = '<option value="">Selecione um membro...</option>';
-                    membros.forEach(m => {
-                        const selecionado = (m.discord_id === discordIdPreSelecionado) ? 'selected' : '';
-                        optionsHtml += `<option value="${m.discord_id}" ${selecionado}>${m.nome_jogo}</option>`;
-                    });
-                    select.innerHTML = optionsHtml;
-
-                    if (discordIdPreSelecionado) {
-                        inputDiscord.value = discordIdPreSelecionado;
-                    }
-                });
+                inputDiscord.value = discordIdMembro;
 
                 modalNotificacoesAdmin.style.display = 'flex';
                 carregarWebhookNoPopup('notificacao');
             });
-        }
-
-        function atualizarCampoDiscordNotificacao(selectElement) {
-            const discordId = selectElement.value;
-            const inputDiscord = document.getElementById('inputDiscordMembroNotificacao');
-            inputDiscord.value = discordId;
         }
 
         function fecharPainelNotificacoes() {
@@ -1823,11 +1803,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             const discordIdMembro = document.getElementById('selectMembroNotificacao').value;
             const textoMensagem = document.getElementById('textoNotificacaoAdmin').value.trim();
-            const autorNome = localStorage.getItem('discord_username') || 'Comando';
 
-            let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "Membro";
+            let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "";
+            
             const payload = {
-                content: `🚨 **AVISO DO COMANDO** ${mencao}\n\n${textoMensagem}\n\n*Enviado por: ${autorNome}*`
+                content: `${mencao} 🚨 **AVISO DO COMANDO:**\n\n${textoMensagem}`
             };
 
             obterWebhookUrl('notificacao').then(webhookUrl => {
@@ -1919,9 +1899,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     let botaoEsquerdaHtml = '';
 
                     if (eAdminLogado) {
+                        // Passa explicitamente o ID e o Nome do membro atual para o botão de notificação deste card
                         botaoEsquerdaHtml = `
                             <div class="admin-left-buttons-card" onclick="event.stopPropagation()">
-                                <button class="btn-card-action" onclick="abrirPainelNotificacoes('${m.discord_id}')" title="Notificar Membro">🔔</button>
+                                <button class="btn-card-action" onclick="abrirPainelNotificacoes('${m.discord_id}', '${m.nome_jogo.replace(/'/g, "\\'")}')" title="Notificar Membro">🔔</button>
                             </div>
                         `;
 
@@ -2126,7 +2107,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- SISTEMA DE NEGAÇÃO COM MOTIVO ---
         let solicitacaoIdParaNegar = null;
         const modalMotivoNegacao = document.getElementById('modalMotivoNegacao');
 
@@ -2417,7 +2397,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 </div>
                                 <div class="media-info">
                                     <h4>${m.titulo}</h4>
-                                    <p>Enviado por: ${m.autor}</p>
                                 </div>
                             `;
                             secaoFotos.appendChild(mediaCard);
@@ -2430,7 +2409,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 </div>
                                 <div class="media-info">
                                     <h4>${m.titulo}</h4>
-                                    <p>Enviado por: ${m.autor}</p>
                                 </div>
                             `;
                             secaoVideos.appendChild(mediaCard);
