@@ -435,6 +435,16 @@
             z-index: 10;
         }
 
+        /* BOTÃO DE NOTIFICAÇÃO DISCRETO NO CANTO ESQUERDO DO CARD */
+        .admin-left-buttons-card {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            display: flex;
+            gap: 4px;
+            z-index: 10;
+        }
+
         .btn-card-action {
             background: rgba(0,0,0,0.6);
             border: 1px solid rgba(194, 155, 56, 0.4);
@@ -1130,7 +1140,7 @@
                     <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade do Fogo" loading="lazy">
                 </div>
                 <div class="historia-texto">
-                    <h3>A Vontade do Fogo e os Hokages</h3>
+                    <h3>A Vontade du Fogo e os Hokages</h3>
                     <p>Sob a liderança de Hashirama (o Primeiro Hokage) e posteriormente de seu irmão Tobirama Senju (o Segundo Hokage), o clã estabeleceu a filosofia da Vontade do Fogo — o princípio de que todos os habitantes da vila devem proteger uns aos outros como uma verdadeira família.</p>
                 </div>
             </div>
@@ -1190,9 +1200,14 @@
             <form id="formNotificacao" onsubmit="enviarNotificacaoAdmin(event)">
                 <div class="form-group">
                     <label for="selectMembroNotificacao">Marcar Membro:</label>
-                    <select id="selectMembroNotificacao" required>
+                    <select id="selectMembroNotificacao" onchange="atualizarCampoDiscordNotificacao(this)" required>
                         <option value="">Carregando membros...</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="inputDiscordMembroNotificacao">Nome / ID Discord (para marcação):</label>
+                    <input type="text" id="inputDiscordMembroNotificacao" readonly placeholder="Selecione um membro acima...">
                 </div>
 
                 <div class="form-group">
@@ -1754,7 +1769,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         // --- PAINEL DE NOTIFICAÇÕES DO COMANDO (EXCLUSIVO ADMINS) ---
         const modalNotificacoesAdmin = document.getElementById('modalNotificacoesAdmin');
 
-        function abrirPainelNotificacoes() {
+        function abrirPainelNotificacoes(discordIdPreSelecionado = '') {
             const userId = localStorage.getItem('discord_user_id');
             obterAdminsAutorizados().then(adminsAtuais => {
                 if (!userId || !adminsAtuais.includes(userId)) {
@@ -1763,7 +1778,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
 
                 const select = document.getElementById('selectMembroNotificacao');
+                const inputDiscord = document.getElementById('inputDiscordMembroNotificacao');
                 select.innerHTML = '<option value="">Carregando membros...</option>';
+                inputDiscord.value = '';
 
                 supabaseClient.from('membros').select('*').order('nome_jogo', { ascending: true }).then(({ data: membros }) => {
                     if (!membros || membros.length === 0) {
@@ -1773,14 +1790,25 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                     let optionsHtml = '<option value="">Selecione um membro...</option>';
                     membros.forEach(m => {
-                        optionsHtml += `<option value="${m.discord_id}">${m.nome_jogo}</option>`;
+                        const selecionado = (m.discord_id === discordIdPreSelecionado) ? 'selected' : '';
+                        optionsHtml += `<option value="${m.discord_id}" ${selecionado}>${m.nome_jogo}</option>`;
                     });
                     select.innerHTML = optionsHtml;
+
+                    if (discordIdPreSelecionado) {
+                        inputDiscord.value = discordIdPreSelecionado;
+                    }
                 });
 
                 modalNotificacoesAdmin.style.display = 'flex';
                 carregarWebhookNoPopup('notificacao');
             });
+        }
+
+        function atualizarCampoDiscordNotificacao(selectElement) {
+            const discordId = selectElement.value;
+            const inputDiscord = document.getElementById('inputDiscordMembroNotificacao');
+            inputDiscord.value = discordId;
         }
 
         function fecharPainelNotificacoes() {
@@ -1890,7 +1918,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     card.onclick = () => abrirDetalhesMembro(m);
                     
                     let botoesAdminHtml = '';
+                    let botaoEsquerdaHtml = '';
+
                     if (eAdminLogado) {
+                        botaoEsquerdaHtml = `
+                            <div class="admin-left-buttons-card" onclick="event.stopPropagation()">
+                                <button class="btn-card-action" onclick="abrirPainelNotificacoes('${m.discord_id}')" title="Notificar Membro">🔔</button>
+                            </div>
+                        `;
+
                         botoesAdminHtml = `
                             <div class="admin-buttons-card" onclick="event.stopPropagation()">
                                 <button class="btn-card-action" onclick="abrirModalEditarMembro(${m.id})" title="Editar Membro">✏</button>
@@ -1903,6 +1939,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">${m.trabalho}</div>` : '';
 
                     card.innerHTML = `
+                        ${botaoEsquerdaHtml}
                         ${botoesAdminHtml}
                         <h4>${m.nome_jogo}</h4>
                         ${cargoEspecialHtml}
