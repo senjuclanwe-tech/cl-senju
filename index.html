@@ -1925,7 +1925,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            if (!confirm("Deseja confirmar o pagamento? As imagens continuarão visíveis por mais 5 dias.")) return;
+            if (!confirm("Deseja confirmar a aprovação? As imagens continuarão visíveis por mais 5 dias.")) return;
 
             const { data: solData } = await supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoId).single();
 
@@ -1941,8 +1941,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
 
             if (solData && solData.discord_id) {
+                const blocosCompletos = Math.floor(solData.qtd_missoes / 5);
+                const ryosCalculados = blocosCompletos * 1000;
+
                 const payload = {
-                    content: `<@${solData.discord_id}> 💰 **RECOMPENSA PAGA!** O teu pedido de ${solData.qtd_missoes} prints foi aprovado e pago pela liderança!`
+                    content: `<@${solData.discord_id}> ✅ **MISSÃO DO HOKAGE APROVADA!** O teu pedido de ${solData.qtd_missoes} prints foi verificado e aprovado.\n\n💰 **Recompensa deste lote:** **${ryosCalculados} Ryos** (${blocosCompletos} bloco(s) de 5).\n🏃‍♂️ **Próximo passo:** Procure o responsável pelo pagamento das missões para resgatar os teus Ryos!`
                 };
                 fetch(WEBHOOK_APROVADO, {
                     method: 'POST',
@@ -1951,7 +1954,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }).catch(err => console.error(err));
             }
 
-            mostrarAviso('Pagamento confirmado! As fotos ficarão disponíveis por 5 dias.');
+            mostrarAviso('Aprovação confirmada! O aviso foi enviado no Discord.');
             fecharModalDetalhesMembro();
             carregarMembros();
         }
@@ -1962,7 +1965,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         function negarRecompensa(solicitacaoId) {
             const userId = localStorage.getItem('discord_user_id');
-            const adminsAtuais = obterAdminsAutorizados();
+            const adminsAtuais = await obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
                 mostrarAviso('Acesso negado!', 'erro');
                 return;
