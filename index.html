@@ -190,12 +190,6 @@
             background-color: #4752C4;
         }
 
-        .btn-discord-login:disabled {
-            background-color: #4f545c !important;
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-
         .btn-logout {
             background-color: #d91414;
             color: white;
@@ -1714,7 +1708,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
 
                 const pesoCargo = { "Líder": 1, "Braço Direito": 2 };
-                const pesoGraduacao = { "Jounin": 1, "Chunnin": 2, "Gennin": 3, "Estudante": 4 };
+                const pesoGraduacao = { "Jounin": 1, "Chunin": 2, "Gennin": 3, "Estudante": 4 };
 
                 listaMembrosCache.sort((a, b) => {
                     const pA = pesoCargo[a.cargo_especial] || 99;
@@ -2459,7 +2453,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CENTRAL DE RECOMPENSAS COM LINK DIRETO NO TEXTO DO DISCORD ---
+        // --- CENTRAL DE RECOMPENSAS COM COOLDOWN INDIVIDUAL DE 24 HORAS (APENAS SE APROVADO) ---
         const modalRecompensa = document.getElementById('modalRecompensa');
 
         function tentarAbrirRecompensa() {
@@ -2471,27 +2465,55 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            supabaseClient.from('membros').select('*').then(({ data: membros }) => {
-                const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
-                obterAdminsAutorizados().then(adminsAtuais => {
-                    const eAdmin = adminsAtuais.includes(userId);
+            // Verificar se o usuário já teve uma recompensa APROVADA nas últimas 24 horas
+            supabaseClient
+                .from('solicitacoes_recompensa')
+                .select('created_at, data_envio, status')
+                .eq('discord_id', userId)
+                .eq('status', 'Pago') // Só considera bloqueio se foi aprovado/pago!
+                .order('id', { ascending: false })
+                .limit(1)
+                .then(({ data: ultimasAprovadas }) => {
+                    if (ultimasAprovadas && ultimasAprovadas.length > 0) {
+                        const ultimaAprovada = ultimasAprovadas[0];
+                        const dataEnvioStr = ultimaAprovada.created_at || ultimaAprovada.data_envio;
+                        const ultimaData = new Date(dataEnvioStr);
+                        const agora = new Date();
+                        
+                        const diferencaHoras = (agora - ultimaData) / (1000 * 60 * 60);
 
-                    if (!membroEncontrado && !eAdmin) {
-                        mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
-                        return;
+                        if (diferencaHoras < 24) {
+                            const horarioLiberacao = new Date(ultimaData.getTime() + (24 * 60 * 60 * 1000));
+                            const horarioFormatado = horarioLiberacao.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            
+                            mostrarAviso(`⏳ Sua última recompensa aprovada foi recente! Poderá enviar novamente amanhã às ${horarioFormatado}.`, 'erro');
+                            return;
+                        }
                     }
 
-                    document.getElementById('nomeDiscordRecompensa').value = username;
-                    if (membroEncontrado) {
-                        document.getElementById('nomeJogoRecompensa').value = membroEncontrado.nome_jogo;
-                    } else {
-                        document.getElementById('nomeJogoRecompensa').value = "";
-                    }
+                    // Se passou das 24h da última aprovada (ou se foi negado anteriormente), valida o membro
+                    supabaseClient.from('membros').select('*').then(({ data: membros }) => {
+                        const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
+                        obterAdminsAutorizados().then(adminsAtuais => {
+                            const eAdmin = adminsAtuais.includes(userId);
 
-                    modalRecompensa.style.display = 'flex';
-                    carregarWebhookNoPopup('recompensa');
+                            if (!membroEncontrado && !eAdmin) {
+                                mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
+                                return;
+                            }
+
+                            document.getElementById('nomeDiscordRecompensa').value = username;
+                            if (membroEncontrado) {
+                                document.getElementById('nomeJogoRecompensa').value = membroEncontrado.nome_jogo;
+                            } else {
+                                document.getElementById('nomeJogoRecompensa').value = "";
+                            }
+
+                            modalRecompensa.style.display = 'flex';
+                            carregarWebhookNoPopup('recompensa');
+                        });
+                    });
                 });
-            });
         }
 
         function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
@@ -2541,6 +2563,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             Promise.all(promessasUpload)
                 .then(() => {
                     const dataHoje = new Date().toISOString().split('T')[0];
+                    const timestampCompleto = new Date().toISOString();
 
                     return supabaseClient.from('solicitacoes_recompensa').insert([{
                         discord_id: userId,
@@ -2548,7 +2571,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         qtd_missoes: qtdMissoes,
                         caminhos_imagens: urlsImagens,
                         status: 'Pendente',
-                        data_envio: dataHoje
+                        data_envio: dataHoje,
+                        created_at: timestampCompleto
                     }]).select().single();
                 })
                 .then(({ data: novaSolicitacao, error: dbError }) => {
