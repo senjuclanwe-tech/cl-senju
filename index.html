@@ -1825,36 +1825,34 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const textoMensagem = document.getElementById('textoNotificacaoAdmin').value.trim();
             const autorNome = localStorage.getItem('discord_username') || 'Comando';
 
-            supabaseClient.from('notificacoes_admin').insert([{
-                texto: textoMensagem,
-                membro_marcado: discordIdMembro,
-                autor: autorNome
-            }]).then(({ error }) => {
-                if (error) {
-                    mostrarAviso('Erro ao salvar notificação.', 'erro');
+            let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "Membro";
+            const payload = {
+                content: `🚨 **AVISO DO COMANDO** ${mencao}\n\n${textoMensagem}\n\n*Enviado por: ${autorNome}*`
+            };
+
+            obterWebhookUrl('notificacao').then(webhookUrl => {
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        mostrarAviso('Notificação enviada com sucesso!');
+                        fecharPainelNotificacoes();
+                        document.getElementById('formNotificacao').reset();
+                    } else {
+                        mostrarAviso('Erro ao enviar webhook.', 'erro');
+                    }
+                })
+                .catch(err => {
+                    console.error("Erro webhook notif:", err);
+                    mostrarAviso('Erro de conexão.', 'erro');
+                })
+                .finally(() => {
                     btn.disabled = false;
                     btn.innerText = "Enviar Notificação & Webhook";
-                    return;
-                }
-
-                let mencao = discordIdMembro ? `<@${discordIdMembro}>` : "Membro";
-                const payload = {
-                    content: `🚨 **AVISO DO COMANDO** ${mencao}\n\n${textoMensagem}\n\n*Enviado por: ${autorNome}*`
-                };
-
-                obterWebhookUrl('notificacao').then(webhookUrl => {
-                    fetch(webhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).catch(err => console.error("Erro webhook notif:", err));
                 });
-
-                mostrarAviso('Notificação enviada e registrada com sucesso!');
-                fecharPainelNotificacoes();
-                document.getElementById('formNotificacao').reset();
-                btn.disabled = false;
-                btn.innerText = "Enviar Notificação & Webhook";
             });
         }
 
