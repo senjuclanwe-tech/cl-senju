@@ -1562,7 +1562,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const FALLBACKS_WEBHOOK = {
             'sorteio': 'https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd',
             'recompensa': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
-            'relatorio': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
+            'relatorio': 'https://discord.com/api/webhooks/1555995570886152237/wbvcbUBwW6qLgsNks0TxmFDui2B7Dqw8L5n6R-O8geGxAlxT3tPAuEA8E0J55AEAUH6K',
             'notificacao': 'https://discord.com/api/webhooks/1555751541007192255/xjQNNdEvlyrcIZBR3_wXkQVn7CVuQs7DnHvc2bvaZFj_3Np5Vam_pT8ZVU2fA4l5U1En'
         };
 
@@ -1839,6 +1839,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         });
 
                         const payload = {
+                            content: "@everyone",
                             embeds: [
                                 {
                                     title: "📈 RELATÓRIO SEMANAL DE MISSÕES DO CLÃ",
