@@ -71,26 +71,28 @@
             to { opacity: 0; transform: translateY(-10px); }
         }
 
-        /* HEADER / MENU */
+        /* HEADER / MENU ORGANIZADO */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 5%;
-            background-color: rgba(26, 14, 8, 0.95);
+            padding: 12px 3%;
+            background-color: rgba(26, 14, 8, 0.98);
             border-bottom: 2px solid var(--senju-gold);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
+            gap: 15px;
         }
 
         .logo {
             font-family: 'Cinzel', serif;
-            font-size: 1.4rem;
+            font-size: 1.3rem;
             font-weight: 800;
             color: var(--text-main);
             letter-spacing: 2px;
+            white-space: nowrap;
         }
 
         .logo span {
@@ -101,84 +103,69 @@
         nav ul {
             display: flex;
             list-style: none;
-            gap: 20px;
+            gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         nav a {
             text-decoration: none;
             color: var(--text-muted);
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.88rem;
             transition: color 0.3s;
             cursor: pointer;
+            padding: 5px 8px;
+            white-space: nowrap;
         }
 
         nav a:hover {
             color: var(--senju-red);
         }
 
-        .btn-nav-relatorio {
-            background-color: var(--senju-gold);
-            color: #0f0805 !important;
-            padding: 6px 14px;
+        /* BOTÕES DE AÇÃO DO MENU UNIFORMES E LIMPOS */
+        .btn-nav-base {
+            padding: 6px 12px;
             border-radius: 4px;
             font-weight: 700;
-            font-size: 0.9rem;
-            transition: transform 0.2s, background-color 0.2s;
+            font-size: 0.85rem;
+            transition: transform 0.2s, opacity 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
 
-        .btn-nav-relatorio:hover {
-            background-color: #d4ac42;
+        .btn-nav-base:hover {
             transform: translateY(-2px);
-        }
-
-        .btn-nav-recompensa {
-            background-color: #2e8b57;
-            color: #fff !important;
-            padding: 6px 14px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            transition: transform 0.2s, background-color 0.2s;
-        }
-
-        .btn-nav-recompensa:hover {
-            background-color: #3cb371;
-            transform: translateY(-2px);
+            opacity: 0.95;
         }
 
         .btn-nav-sorteio {
             background-color: #8a2be2;
             color: #fff !important;
-            padding: 6px 14px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            transition: transform 0.2s, background-color 0.2s;
             display: none;
         }
 
-        .btn-nav-sorteio:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-
-        /* BOTÃO DISCRETO DE RELATÓRIO SEMANAL (APENAS PARA ADMINS) */
         .btn-nav-semanal {
             background: rgba(194, 155, 56, 0.15);
             border: 1px solid var(--senju-gold);
             color: var(--senju-gold) !important;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-weight: 600;
-            font-size: 0.8rem;
             display: none;
-            transition: all 0.2s;
         }
-
         .btn-nav-semanal:hover {
             background: var(--senju-gold);
+            color: #0f0805 !important;
+        }
+
+        .btn-nav-recompensa {
+            background-color: #2e8b57;
+            color: #fff !important;
+        }
+
+        .btn-nav-relatorio {
+            background-color: var(--senju-gold);
             color: #0f0805 !important;
         }
 
@@ -187,6 +174,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            white-space: nowrap;
         }
 
         .btn-discord-login {
@@ -977,10 +965,22 @@
             font-weight: 600;
         }
 
+        @media (max-width: 950px) {
+            header {
+                flex-direction: column;
+                padding: 10px;
+                gap: 8px;
+            }
+            nav ul {
+                justify-content: center;
+            }
+            .banner-topo {
+                margin-top: 150px;
+            }
+        }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 2rem; }
-            nav ul { gap: 12px; }
-            nav a:not(.btn-nav-relatorio):not(.btn-nav-recompensa):not(.btn-nav-sorteio) { display: none; }
             .historia-bloco {
                 flex-direction: column;
             }
@@ -1013,11 +1013,10 @@
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
                 <li><a href="#historia">História</a></li>
-                <li><a onclick="abrirSorteio()" class="btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
-                <!-- Botão Discreto de Resumo Semanal (Apenas para Admins) -->
-                <li><a onclick="enviarRelatorioSemanalWebhook()" class="btn-nav-semanal" id="navBtnSemanal" title="Enviar Relatório Semanal (Apenas Domingo)">📊 Resumo Semanal</a></li>
-                <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-recompensa">💰 Recompensas</a></li>
-                <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-relatorio">📋 Relatório</a></li>
+                <li><a onclick="abrirSorteio()" class="btn-nav-base btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
+                <li><a onclick="enviarRelatorioSemanalWebhook()" class="btn-nav-base btn-nav-semanal" id="navBtnSemanal" title="Enviar Relatório Semanal (Apenas Domingo)">📊 Resumo</a></li>
+                <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-base btn-nav-recompensa">💰 Missão Kage</a></li>
+                <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-base btn-nav-relatorio">📋 Relatório</a></li>
             </ul>
         </nav>
         <!-- Login Discreto no Canto Superior -->
@@ -1313,7 +1312,7 @@
     <div class="modal-overlay" id="modalRecompensa">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Central de Recompensas (Ryos)</h2>
+                <h2>Missão Kage (Ryos)</h2>
                 <button class="close-btn" onclick="fecharModalRecompensa()">&times;</button>
             </div>
             
@@ -1767,7 +1766,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        // --- FUNÇÃO DO RELATÓRIO SEMANAL (BLOQUEADO PARA SÓ FUNCIONAR NO DOMINGO) ---
         function enviarRelatorioSemanalWebhook() {
             const userId = localStorage.getItem('discord_user_id');
             obterAdminsAutorizados().then(adminsAtuais => {
@@ -1776,7 +1774,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     return;
                 }
 
-                // Verifica o dia atual (0 = Domingo, 1 = Segunda, ..., 6 = Sábado)
                 const diaAtual = new Date().getDay();
                 if (diaAtual !== 0) {
                     mostrarAviso('⚠️ O relatório semanal só pode ser enviado no Domingo!', 'erro');
@@ -1878,7 +1875,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- PAINEL DE NOTIFICAÇÕES DO COMANDO ---
         const modalNotificacoesAdmin = document.getElementById('modalNotificacoesAdmin');
 
         function abrirPainelNotificacoes(discordIdMembro, nomeJogoMembro) {
@@ -1972,7 +1968,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CARREGAR E GERENCIAR MEMBROS COM ORDENAÇÃO EXATA ---
         function carregarMembros() {
             supabaseClient.from('membros').select('*').then(({ data: membros, error }) => {
                 if (error || !membros) {
@@ -1981,7 +1976,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     listaMembrosCache = membros;
                 }
 
-                // ORDENAÇÃO EXATA SOLICITADA: Líder -> Braço Direito -> Jounin -> Chunin -> Genin -> Estudante
                 listaMembrosCache.sort((a, b) => {
                     const getPeso = (m) => {
                         const cargoEsp = (m.cargo_especial || "").toLowerCase();
@@ -2103,7 +2097,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             renderizarPaginaMembros();
         }
 
-        // --- PAINEL DE DETALHES E BAIXA DE RECOMPENSAS DO MEMBRO ---
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
         function abrirDetalhesMembro(membro) {
@@ -2232,7 +2225,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 const ryosCalculados = blocosCompletos * 1000;
 
                                 const payload = {
-                                    content: `<@${solData.discord_id}> ✅ **MISSÃO DO HOKAGE APROVADA!** O teu pedido de ${solData.qtd_missoes} prints foi verificado e aprovado.\n\n💰 **Recompensa deste lote:** **${ryosCalculados} Ryos** (${blocosCompletos} bloco(s) de 5).\n🏃‍♂️ **Próximo passo:** Procure o responsável pelo pagamento das missões para resgatar os teus Ryos!`
+                                    content: `<@${solData.discord_id}> ✅ **MISSÃO DO KAGE APROVADA!** O teu pedido de ${solData.qtd_missoes} prints foi verificado e aprovado.\n\n💰 **Recompensa deste lote:** **${ryosCalculados} Ryos** (${blocosCompletos} bloco(s) de 5).\n🏃‍♂️ **Próximo passo:** Procure o responsável pelo pagamento das missões para resgatar os teus Ryos!`
                                 };
                                 fetch(WEBHOOK_APROVADO, {
                                     method: 'POST',
@@ -2300,7 +2293,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                         if (solData && solData.discord_id) {
                             const payload = {
-                                content: `<@${solData.discord_id}> ❌ **RECOMPENSA NEGADA.** O teu pedido de recompensa foi rejeitado.\n\n💬 **Motivo:** ${motivo}`
+                                content: `<@${solData.discord_id}> ❌ **MISSÃO KAGE NEGADA.** O teu pedido de recompensa foi rejeitado.\n\n💬 **Motivo:** ${motivo}`
                             };
                             fetch(WEBHOOK_NEGADO, {
                                 method: 'POST',
@@ -2423,7 +2416,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const trabalho = document.getElementById('trabalhoMembro').value;
                 const e_admin = document.getElementById('checkAdminMembro').checked;
 
-                // Salva mantendo o padrão completo com o kanji que você especificou
                 let graduacao = graduacaoSelect;
                 if (graduacaoSelect === "Estudante") graduacao = "Estudante [ 学 生 ]";
                 if (graduacaoSelect === "Genin") graduacao = "Genin [ 元仁 ]";
@@ -2504,7 +2496,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             });
         }
 
-        // --- CARREGAR E GERENCIAR MÍDIAS ---
         function carregarMidias() {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
@@ -2844,10 +2835,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
 
                         const payloadDiscord = {
-                            content: `💰 **SOLICITAÇÃO DE RECOMPENSA**`,
+                            content: `💰 **SOLICITAÇÃO DE MISSÃO KAGE**`,
                             embeds: [
                                 {
-                                    title: "Nova Solicitação de Recompensa Pendente",
+                                    title: "Nova Solicitação de Missão Kage Pendente",
                                     color: 12713992,
                                     fields: [
                                         { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
