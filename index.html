@@ -1184,6 +1184,24 @@
         </div>
     </div>
 
+    <!-- MODAL DE MOTIVO DA NEGAÇÃO -->
+    <div class="modal-overlay" id="modalMotivoNegacao">
+        <div class="modal-content" style="max-width: 450px;">
+            <div class="modal-header">
+                <h2>Motivo da Negação</h2>
+                <button class="close-btn" onclick="fecharModalNegacao()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="textoMotivoNegacao">Explique o motivo para o membro:</label>
+                <textarea id="textoMotivoNegacao" placeholder="Ex: Print sem o círculo vermelho visível / Falta do /timestamp..." style="height: 100px;"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancelar" onclick="fecharModalNegacao()">Cancelar</button>
+                <button type="button" class="btn-discord-login" id="btnConfirmarNegacao" onclick="enviarNegacaoComMotivo()" style="background-color: var(--senju-red);">Confirmar Negação</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE SORTEIO DO CLÃ (COM BARRA DE WEBHOOK ADMIN) -->
     <div class="modal-overlay" id="modalSorteio">
         <div class="modal-content" style="text-align: center;">
@@ -1418,8 +1436,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <label for="graduacaoMembro">Graduação:</label>
                     <select id="graduacaoMembro" required>
                         <option value="Estudante">Estudante</option>
-                        <option value="Gennin">Gennin</option>
-                        <option value="Chunnin">Chunnin</option>
+                        <option value="Genin">Genin</option>
+                        <option value="Chunin">Chunin</option>
                         <option value="Jounin">Jounin</option>
                     </select>
                 </div>
@@ -1487,6 +1505,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             'recompensa': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
             'relatorio': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e'
         };
+
+        // Webhooks específicos de aprovação e negação enviados pelo usuário
+        const WEBHOOK_APROVADO = "https://discord.com/api/webhooks/1555730877781377034/M3JyAR9gKMRuHPkmc_W4vIAHRJkiwo3TPE9bxIwTC7KGY3vS7leAhyxrmRCWolhnD0uQ";
+        const WEBHOOK_NEGADO = "https://discord.com/api/webhooks/1555732189566468167/Js9N8Qp-N4txQSGzSfKmGsYlyoa9UkiOPov4L2BDN_fU64UKVQYchrmwLZW4YpFMQdCi";
 
         let listaMembrosCache = [];
         let membrosFiltradosCache = [];
@@ -1823,16 +1845,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const hoje = new Date();
 
             solicitacoes.forEach(sol => {
-                // Se já foi pago ou negado, verifica se passou de 5 dias da data de pagamento/negação para remover tudo definitivamente
                 if ((sol.status === 'Pago' || sol.status === 'Negado') && sol.data_pagamento) {
                     const dataPag = new Date(sol.data_pagamento);
                     const diffDias = (hoje - dataPag) / (1000 * 60 * 60 * 24);
                     if (diffDias > 5) {
-                        // Limpa do storage e do banco se passou de 5 dias e ainda não foi limpo
                         if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
                             limparStorageExpirado(sol.id, sol.caminhos_imagens);
                         }
-                        return; // Oculta da tela
+                        return;
                     }
                 }
 
@@ -1907,6 +1927,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             if (!confirm("Deseja confirmar o pagamento? As imagens continuarão visíveis por mais 5 dias.")) return;
 
+            const { data: solData } = await supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoId).single();
+
             const dataHoje = new Date().toISOString().split('T')[0];
             const { error } = await supabaseClient
                 .from('solicitacoes_recompensa')
@@ -1918,35 +1940,90 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
+            if (solData && solData.discord_id) {
+                const payload = {
+                    content: `<@${solData.discord_id}> 💰 **RECOMPENSA PAGA!** O teu pedido de ${solData.qtd_missoes} prints foi aprovado e pago pela liderança!`
+                };
+                fetch(WEBHOOK_APROVADO, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error(err));
+            }
+
             mostrarAviso('Pagamento confirmado! As fotos ficarão disponíveis por 5 dias.');
             fecharModalDetalhesMembro();
             carregarMembros();
         }
 
-        async function negarRecompensa(solicitacaoId) {
+        // --- SISTEMA DE NEGAÇÃO COM MOTIVO ---
+        let solicitacaoIdParaNegar = null;
+        const modalMotivoNegacao = document.getElementById('modalMotivoNegacao');
+
+        function negarRecompensa(solicitacaoId) {
             const userId = localStorage.getItem('discord_user_id');
-            const adminsAtuais = await obterAdminsAutorizados();
+            const adminsAtuais = obterAdminsAutorizados();
             if (!userId || !adminsAtuais.includes(userId)) {
                 mostrarAviso('Acesso negado!', 'erro');
                 return;
             }
 
-            if (!confirm("Deseja NEGAR esta solicitação? As fotos continuarão visíveis por mais 5 dias para conferência.")) return;
+            solicitacaoIdParaNegar = solicitacaoId;
+            document.getElementById('textoMotivoNegacao').value = '';
+            modalMotivoNegacao.style.display = 'flex';
+        }
+
+        function fecharModalNegacao() {
+            modalMotivoNegacao.style.display = 'none';
+            solicitacaoIdParaNegar = null;
+        }
+
+        async function enviarNegacaoComMotivo() {
+            if (!solicitacaoIdParaNegar) return;
+
+            const motivo = document.getElementById('textoMotivoNegacao').value.trim();
+            if (!motivo) {
+                mostrarAviso('Escreva o motivo da negação!', 'erro');
+                return;
+            }
+
+            const btnConfirmar = document.getElementById('btnConfirmarNegacao');
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerText = "Enviando...";
+
+            const { data: solData } = await supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoIdParaNegar).single();
 
             const dataHoje = new Date().toISOString().split('T')[0];
             const { error } = await supabaseClient
                 .from('solicitacoes_recompensa')
                 .update({ status: 'Negado', data_pagamento: dataHoje })
-                .eq('id', solicitacaoId);
+                .eq('id', solicitacaoIdParaNegar);
 
             if (error) {
                 mostrarAviso('Erro ao negar solicitação.', 'erro');
+                btnConfirmar.disabled = false;
+                btnConfirmar.innerText = "Confirmar Negação";
                 return;
             }
 
-            mostrarAviso('Solicitação negada! As fotos ficarão disponíveis por 5 dias.');
+            if (solData && solData.discord_id) {
+                const payload = {
+                    content: `<@${solData.discord_id}> ❌ **RECOMPENSA NEGADA.** O teu pedido de recompensa foi rejeitado.\n\n💬 **Motivo:** ${motivo}`
+                };
+                fetch(WEBHOOK_NEGADO, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).catch(err => console.error(err));
+            }
+
+            mostrarAviso('Solicitação negada com sucesso!');
+            fecharModalNegacao();
             fecharModalDetalhesMembro();
             carregarMembros();
+
+            btnConfirmar.disabled = false;
+            btnConfirmar.innerText = "Confirmar Negação";
         }
 
         async function limparStorageExpirado(solicitacaoId, caminhosImagens) {
@@ -1958,7 +2035,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
                     }
                 }
-                // Limpa o array de imagens no banco para indicar que já foram apagadas
                 await supabaseClient
                     .from('solicitacoes_recompensa')
                     .update({ caminhos_imagens: [] })
@@ -2002,9 +2078,28 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('idMembroEdicao').value = membro.id;
             document.getElementById('nomeJogoMembro').value = membro.nome_jogo;
             document.getElementById('idMembroDiscord').value = membro.discord_id;
-            document.getElementById('graduacaoMembro').value = membro.graduacao;
-            document.getElementById('cargoEspecialMembro').value = membro.cargo_especial || "";
-            document.getElementById('trabalhoMembro').value = membro.trabalho || "";
+            
+            // Normaliza a graduação vinda do banco para bater com as opções do select
+            let gradBanco = membro.graduacao || "";
+            if (gradBanco.toLowerCase().includes('jounin')) document.getElementById('graduacaoMembro').value = "Jounin";
+            else if (gradBanco.toLowerCase().includes('chunin')) document.getElementById('graduacaoMembro').value = "Chunin";
+            else if (gradBanco.toLowerCase().includes('genin') || gradBanco.toLowerCase().includes('gennin')) document.getElementById('graduacaoMembro').value = "Genin";
+            else document.getElementById('graduacaoMembro').value = "Estudante";
+
+            // Normaliza o cargo especial
+            let cargoBanco = membro.cargo_especial || "";
+            if (cargoBanco.toLowerCase().includes('líder') || cargoBanco.toLowerCase().includes('leader')) document.getElementById('cargoEspecialMembro').value = "Líder";
+            else if (cargoBanco.toLowerCase().includes('braço direito') || cargoBanco.toLowerCase().includes('sub')) document.getElementById('cargoEspecialMembro').value = "Braço Direito";
+            else document.getElementById('cargoEspecialMembro').value = "";
+
+            // Normaliza o trabalho / profissão vindo do bot (ex: "🔴 -Medico Senju[医者" -> "Médico(a)")
+            let trabBanco = membro.trabalho || "";
+            if (trabBanco.toLowerCase().includes('medico') || trabBanco.toLowerCase().includes('médico')) document.getElementById('trabalhoMembro').value = "Médico(a)";
+            else if (trabBanco.toLowerCase().includes('professor')) document.getElementById('trabalhoMembro').value = "Professor(a)";
+            else if (trabBanco.toLowerCase().includes('policial')) document.getElementById('trabalhoMembro').value = "Policial";
+            else if (trabBanco.toLowerCase().includes('anbu')) document.getElementById('trabalhoMembro').value = "Anbu";
+            else document.getElementById('trabalhoMembro').value = "";
+
             document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
 
             modalMembro.style.display = 'flex';
@@ -2639,6 +2734,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (event.target == modalRecompensa) fecharModalRecompensa();
             if (event.target == modalSorteio) fecharSorteio();
             if (event.target == modalDetalhesMembro) fecharModalDetalhesMembro();
+            if (event.target == modalMotivoNegacao) fecharModalNegacao();
         }
 
         function mudarAba(tipo, event) {
