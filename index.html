@@ -1859,34 +1859,39 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        // FUNÇÃO DE LIMPEZA APÓS O RELATÓRIO DE DOMINGO
+        // FUNÇÃO DE LIMPEZA TOTAL APÓS O RELATÓRIO DE DOMINGO
         async function limparPrintsAposRelatorioDomingo() {
             try {
-                // Busca todas as solicitações que já foram pagas ou negadas
+                // 1. Apaga os arquivos do Storage do Supabase
                 const { data: solicitacoes, error } = await supabaseClient
                     .from('solicitacoes_recompensa')
-                    .select('*')
-                    .in('status', ['Pago', 'Negado']);
+                    .select('*');
 
-                if (error || !solicitacoes) return;
-
-                for (let sol of solicitacoes) {
-                    if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
-                        for (let urlCompleta of sol.caminhos_imagens) {
-                            const partes = urlCompleta.split('/recompensas-prints/');
-                            if (partes.length > 1) {
-                                const caminhoArquivo = partes[1];
-                                await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
+                if (!error && solicitacoes) {
+                    for (let sol of solicitacoes) {
+                        if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
+                            for (let urlCompleta of sol.caminhos_imagens) {
+                                const partes = urlCompleta.split('/recompensas-prints/');
+                                if (partes.length > 1) {
+                                    const caminhoArquivo = partes[1];
+                                    await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
+                                }
                             }
                         }
                     }
-                    // Limpa os links do banco para liberar espaço
-                    await supabaseClient
-                        .from('solicitacoes_recompensa')
-                        .update({ caminhos_imagens: [] })
-                        .eq('id', sol.id);
                 }
-                console.log("Limpeza automática pós-relatório concluída com sucesso!");
+
+                // 2. Apaga TODOS os registros da tabela solicitacoes_recompensa
+                const { error: errorDelete } = await supabaseClient
+                    .from('solicitacoes_recompensa')
+                    .delete()
+                    .not('id', 'is', null);
+
+                if (errorDelete) {
+                    console.error("Erro ao apagar registros da tabela:", errorDelete);
+                } else {
+                    console.log("Tabela solicitacoes_recompensa limpa com sucesso!");
+                }
             } catch (err) {
                 console.error("Erro na limpeza automática:", err);
             }
@@ -1990,7 +1995,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 if (response.ok) {
                                     mostrarAviso('Resumo semanal enviado com sucesso!');
                                     
-                                    // Dispara a limpeza automática 3 segundos após o envio do relatório
+                                    // Dispara a limpeza completa 3 segundos após o envio do relatório
                                     setTimeout(() => {
                                         limparPrintsAposRelatorioDomingo();
                                     }, 3000);
