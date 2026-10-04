@@ -294,6 +294,87 @@
             box-shadow: 0 0 10px rgba(194, 155, 56, 0.4);
         }
 
+        /* PROPAGANDA DO JOGO (NARUTO WORLD EVOLUTION / NWE) */
+        .game-promo-container {
+            max-width: 1100px;
+            margin: 20px auto 40px auto;
+            padding: 0 20px;
+        }
+
+        .game-promo-card {
+            background: linear-gradient(135deg, rgba(26, 14, 8, 0.9) 0%, rgba(43, 23, 13, 0.85) 100%), 
+                        url('https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop') center/cover no-repeat;
+            border: 2px solid var(--senju-gold);
+            border-radius: 10px;
+            padding: 35px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-promo-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(194, 155, 56, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .game-tag {
+            background: linear-gradient(135deg, #ff4500, #ff8c00);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 4px 12px;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 12px;
+            box-shadow: 0 0 10px rgba(255, 140, 0, 0.5);
+        }
+
+        .game-promo-card h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .game-promo-card p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            max-width: 650px;
+            margin: 0 auto 20px auto;
+            line-height: 1.6;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .game-promo-card p span {
+            color: var(--senju-gold);
+            font-weight: 600;
+        }
+
+        .btn-jogar-agora {
+            background-color: var(--senju-gold);
+            color: #0f0805 !important;
+            padding: 12px 30px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(194, 155, 56, 0.4);
+        }
+
+        .btn-jogar-agora:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(194, 155, 56, 0.6);
+        }
+
         /* LIDERANÇA */
         .leadership-grid {
             display: grid;
@@ -1103,6 +1184,18 @@
         <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>
+        </div>
+    </div>
+
+    <!-- PROPAGANDA DO JOGO (NARUTO WORLD EVOLUTION / NWE) -->
+    <div class="game-promo-container">
+        <div class="game-promo-card">
+            <div class="game-promo-content">
+                <span class="game-tag">🔥 NARUTO WORLD EVOLUTION (NWE)</span>
+                <h3>Junte-se à Batalha no Mundo Shinobi</h3>
+                <p>Servidor de <span>SA-MP (San Andreas Multiplayer)</span> focado em <span>Roleplay (RP)</span>! Para jogar, entre no nosso Discord, passe pela <span>Whitelist (WL)</span> e aguarde a análise da staff. Demora um pouquinho, então é só ter paciência e esperar aprovarem!</p>
+                <a href="https://discord.gg/ERaWw8vGhp" target="_blank" class="btn-jogar-agora">ACESSAR DISCORD DO NWE ⚡</a>
+            </div>
         </div>
     </div>
 
