@@ -1238,7 +1238,7 @@
 
             <div class="historia-bloco">
                 <div class="historia-imagem" onclick="abrirModalZoom('https://i.postimg.cc/3xxm2QKd/historia4.jpg', 'A Vontade do Fogo')">
-                    <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade do Fogo" loading="lazy">
+                    <img src="https://i.postimg.cc/3xxm2QKd/historia4.jpg" alt="A Vontade du Fogo" loading="lazy">
                 </div>
                 <div class="historia-texto">
                     <h3>A Vontade du Fogo e os Hokages</h3>
@@ -1276,7 +1276,7 @@
             </div>
             
             <div class="aviso-expiracao-painel">
-                <span>⏳ Informação:</span> As solicitações e imagens ficam visíveis por até 5 dias a partir da data de envio e são removidas automaticamente.
+                <span>⏳ Informação:</span> Os prints e solicitações concluídas são limpos automaticamente após o envio do relatório de domingo.
             </div>
 
             <div id="conteudoDetalhesMembro" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
@@ -1859,6 +1859,39 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
+        // FUNÇÃO DE LIMPEZA APÓS O RELATÓRIO DE DOMINGO
+        async function limparPrintsAposRelatorioDomingo() {
+            try {
+                // Busca todas as solicitações que já foram pagas ou negadas
+                const { data: solicitacoes, error } = await supabaseClient
+                    .from('solicitacoes_recompensa')
+                    .select('*')
+                    .in('status', ['Pago', 'Negado']);
+
+                if (error || !solicitacoes) return;
+
+                for (let sol of solicitacoes) {
+                    if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
+                        for (let urlCompleta of sol.caminhos_imagens) {
+                            const partes = urlCompleta.split('/recompensas-prints/');
+                            if (partes.length > 1) {
+                                const caminhoArquivo = partes[1];
+                                await supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]);
+                            }
+                        }
+                    }
+                    // Limpa os links do banco para liberar espaço
+                    await supabaseClient
+                        .from('solicitacoes_recompensa')
+                        .update({ caminhos_imagens: [] })
+                        .eq('id', sol.id);
+                }
+                console.log("Limpeza automática pós-relatório concluída com sucesso!");
+            } catch (err) {
+                console.error("Erro na limpeza automática:", err);
+            }
+        }
+
         function enviarRelatorioSemanalWebhook() {
             const userId = localStorage.getItem('discord_user_id');
             obterAdminsAutorizados().then(adminsAtuais => {
@@ -1956,6 +1989,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             .then(response => {
                                 if (response.ok) {
                                     mostrarAviso('Resumo semanal enviado com sucesso!');
+                                    
+                                    // Dispara a limpeza automática 3 segundos após o envio do relatório
+                                    setTimeout(() => {
+                                        limparPrintsAposRelatorioDomingo();
+                                    }, 3000);
                                 } else {
                                     mostrarAviso('Erro ao enviar o resumo.', 'erro');
                                 }
@@ -2215,20 +2253,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         }
 
                         let html = '';
-                        const hoje = new Date();
 
                         solicitacoes.forEach(sol => {
-                            if ((sol.status === 'Pago' || sol.status === 'Negado') && sol.data_pagamento) {
-                                const dataPag = new Date(sol.data_pagamento);
-                                const diffDias = (hoje - dataPag) / (1000 * 60 * 60 * 24);
-                                if (diffDias > 5) {
-                                    if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
-                                        limparStorageExpirado(sol.id, sol.caminhos_imagens);
-                                    }
-                                    return;
-                                }
-                            }
-
                             let statusExibicao = sol.status;
                             if ((sol.status === 'Pago' || sol.status === 'Negado') && sol.data_pagamento) {
                                 statusExibicao = `${sol.status} em ${sol.data_pagamento}`;
@@ -2300,7 +2326,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     return;
                 }
 
-                if (!confirm("Deseja confirmar a aprovação? As imagens continuarão visíveis por mais 5 dias.")) return;
+                if (!confirm("Deseja confirmar a aprovação?")) return;
 
                 supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoId).single().then(({ data: solData }) => {
                     const dataHoje = new Date().toISOString().split('T')[0];
@@ -2405,25 +2431,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         btnConfirmar.innerText = "Confirmar Negação";
                     });
             });
-        }
-
-        function limparStorageExpirado(solicitacaoId, caminhosImagens) {
-            try {
-                caminhosImagens.forEach(urlCompleta => {
-                    const partes = urlCompleta.split('/recompensas-prints/');
-                    if (partes.length > 1) {
-                        const caminhoArquivo = partes[1];
-                        supabaseClient.storage.from('recompensas-prints').remove([caminhoArquivo]).catch(e => console.error(e));
-                    }
-                });
-                supabaseClient
-                    .from('solicitacoes_recompensa')
-                    .update({ caminhos_imagens: [] })
-                    .eq('id', solicitacaoId)
-                    .then(() => {});
-            } catch (err) {
-                console.error("Erro ao limpar storage expirado:", err);
-            }
         }
 
         const modalMembro = document.getElementById('modalMembro');
