@@ -159,6 +159,11 @@
             color: #0f0805 !important;
         }
 
+        .btn-nav-calculadora {
+            background-color: #ff8c00;
+            color: #fff !important;
+        }
+
         .btn-nav-recompensa {
             background-color: #2e8b57;
             color: #fff !important;
@@ -292,6 +297,72 @@
             background-color: var(--senju-gold);
             margin: 10px auto 0;
             box-shadow: 0 0 10px rgba(194, 155, 56, 0.4);
+        }
+
+        /* CALCULADORA DO GUY */
+        .calculator-card {
+            background: rgba(26, 14, 8, 0.9);
+            border: 2px solid var(--senju-gold);
+            border-radius: 10px;
+            padding: 35px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media(max-width: 768px) {
+            .calculator-grid { grid-template-columns: 1fr; }
+        }
+
+        .calc-result-box {
+            background: rgba(194, 155, 56, 0.1);
+            border: 1px dashed var(--senju-gold);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 25px;
+            text-align: center;
+        }
+
+        .calc-result-box h3 {
+            font-family: 'Cinzel', serif;
+            color: var(--senju-gold);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+        }
+
+        .calc-result-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        @media(max-width: 600px) {
+            .calc-result-grid { grid-template-columns: 1fr; }
+        }
+
+        .calc-stat-item {
+            background: rgba(15, 8, 5, 0.8);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(194, 155, 56, 0.2);
+        }
+
+        .calc-stat-item span {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .calc-stat-item strong {
+            font-size: 1.1rem;
+            color: var(--senju-gold);
         }
 
         /* PROPAGANDA DO JOGO (NARUTO WORLD EVOLUTION / NWE) */
@@ -1093,6 +1164,7 @@
                 <li><a href="#sobre">Liderança</a></li>
                 <li><a href="#membros">Membros</a></li>
                 <li><a href="#galeria">Álbuns</a></li>
+                <li><a href="#calculadora">Calculadora</a></li>
                 <li><a href="#historia">História</a></li>
                 <li><a onclick="abrirSorteio()" class="btn-nav-base btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
                 <li><a onclick="enviarRelatorioSemanalWebhook()" class="btn-nav-base btn-nav-semanal" id="navBtnSemanal" title="Enviar Relatório Semanal (Apenas Domingo)">📊 Resumo</a></li>
@@ -1184,6 +1256,51 @@
         <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>
+        </div>
+    </div>
+
+    <!-- CALCULADORA DE TREINAMENTO DO NPC GUY -->
+    <div class="container" id="calculadora">
+        <h2 class="section-title">Calculadora de Treino (NPC Guy)</h2>
+        <div class="calculator-card">
+            <p style="color: var(--text-muted); font-size: 0.95rem; text-align: center; margin-bottom: 25px; line-height: 1.5;">
+                O NPC Guy treina Genins (Taijutsu, Ninjutsu e Mentor) cobrando <b>400 Ryos</b> por treino e dobrando o ganho de pontos (de 1 em 1 para 2 em 2). Calcule o seu tempo total, quantas ativações da sua habilidade cabem e o custo!
+            </p>
+
+            <div class="calculator-grid">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="calcBonusTempo">Bônus de Tempo (Cartas do Guy):</label>
+                    <select id="calcBonusTempo" onchange="calcularTreinoGuy()">
+                        <option value="10">Free (10 minutos)</option>
+                        <option value="15">Carta 1 (+5 min = 15 min)</option>
+                        <option value="17">Carta 2 (+7 min = 17 min)</option>
+                        <option value="20">Carta 3 (+10 min = 20 min)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="calcCooldown">Cooldown da Habilidade (segundos):</label>
+                    <input type="number" id="calcCooldown" min="1" value="5" placeholder="Ex: 5" oninput="calcularTreinoGuy()">
+                </div>
+            </div>
+
+            <div class="calc-result-box">
+                <h3>📊 Resultado do Planejamento</h3>
+                <div class="calc-result-grid">
+                    <div class="calc-stat-item">
+                        <span>Tempo Total</span>
+                        <strong id="resTempoTotal">10 min</strong>
+                    </div>
+                    <div class="calc-stat-item">
+                        <span>Ativações da Habilidade</span>
+                        <strong id="resAtivacoes">120x</strong>
+                    </div>
+                    <div class="calc-stat-item">
+                        <span>Custo com o Guy</span>
+                        <strong id="resCusto">400 Ryos</strong>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1671,6 +1788,27 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const itensPorPagina = 8;
         let salvandoMembroEmAndamento = false;
 
+        // CALCULADORA DO GUY
+        function calcularTreinoGuy() {
+            const minutos = parseInt(document.getElementById('calcBonusTempo').value) || 10;
+            const cooldown = parseFloat(document.getElementById('calcCooldown').value) || 1;
+
+            if (cooldown <= 0) {
+                document.getElementById('resTempoTotal').innerText = `${minutos} min`;
+                document.getElementById('resAtivacoes').innerText = `0x`;
+                document.getElementById('resCusto').innerText = `400 Ryos`;
+                return;
+            }
+
+            const segundosTotais = minutos * 60;
+            const ativacoes = Math.floor(segundosTotais / cooldown);
+
+            document.getElementById('resTempoTotal').innerText = `${minutos} min`;
+            document.getElementById('resAtivacoes').innerText = `${ativacoes}x`;
+            document.getElementById('resCusto\u2019') = `400 Ryos`; // Mantém o custo fixo de 400 Ryos por treino do Guy
+            document.getElementById('resCusto').innerText = `400 Ryos`;
+        }
+
         function obterWebhookUrl(tipo) {
             const chaveDb = CHAVES_WEBHOOK[tipo];
             return supabaseClient
@@ -1733,6 +1871,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             verificarPermissaoAdmin();
             carregarMembros();
             carregarMidias();
+            calcularTreinoGuy();
 
             const membroIdNaUrl = queryParams.get('membroId');
             if (membroIdNaUrl) {
@@ -1862,7 +2001,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        // FUNÇÃO DE LIMPEZA TOTAL APÓS O RELATÓRIO DE DOMINGO
         async function limparPrintsAposRelatorioDomingo() {
             try {
                 const { data: solicitacoes, error } = await supabaseClient
@@ -2819,7 +2957,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         const modalRecompensa = document.getElementById('modalRecompensa');
 
-        // VALIDAÇÃO INDIVIDUAL DE 24 HORAS CORRIGIDA E BLINDADA
         function tentarAbrirRecompensa() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
@@ -2829,7 +2966,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // Verifica o último envio INDIVIDUAL deste usuário específico no banco
             supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('created_at, data_envio')
@@ -2892,7 +3028,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // NOVA DUPLA CHECAGEM ANTES DE EFETIVAR O INSERT NO BANCO
             supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('created_at, data_envio')
@@ -3061,7 +3196,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             let qtdAnexos = arquivoInput.files ? arquivoInput.files.length : 0;
             if (qtdAnexos > 0) {
-                camposEmbed.push({ name: "🖼️ Evidências Anexadas", value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`, inline: false });
+                camposEmbed.push({ name: "🖼️️ Evidências Anexadas", value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`, inline: false });
             }
 
             const payloadDiscord = {
