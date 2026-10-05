@@ -2965,10 +2965,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
+            // SEGURANÇA: Validação direta no banco (ignora envios Negados)
             supabaseClient
                 .from('solicitacoes_recompensa')
-                .select('created_at, data_envio')
+                .select('created_at, data_envio, status')
                 .eq('discord_id', userId)
+                .neq('status', 'Negado')
                 .order('id', { ascending: false })
                 .limit(1)
                 .then(({ data: ultimosEnvios }) => {
@@ -3027,10 +3029,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
+            // DUPLA SEGURANÇA NO ENVIO: Impede bypass via F5 / manipulação seletiva
             supabaseClient
                 .from('solicitacoes_recompensa')
-                .select('created_at, data_envio')
+                .select('created_at, data_envio, status')
                 .eq('discord_id', userId)
+                .neq('status', 'Negado')
                 .order('id', { ascending: false })
                 .limit(1)
                 .then(({ data: ultimosEnvios }) => {
@@ -3274,6 +3278,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (event.target == modalRecompensa) fecharModalRecompensa();
             if (event.target == modalSorteio) fecharSorteio();
             if (event.target == modalDetalhesMembro) fecharModalDetalhesMembro();
+            if5 = event.target == modalMotivoNegacao; // mantido seguro
             if (event.target == modalMotivoNegacao) fecharModalNegacao();
             if (event.target == modalNotificacoesAdmin) fecharPainelNotificacoes();
         }
