@@ -306,7 +306,7 @@
             border-radius: 10px;
             padding: 35px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            max-width: 700px;
+            max-width: 750px;
             margin: 0 auto;
         }
 
@@ -338,12 +338,12 @@
 
         .calc-result-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: repeat(4, 1fr);
             gap: 15px;
         }
 
-        @media(max-width: 600px) {
-            .calc-result-grid { grid-template-columns: 1fr; }
+        @media(max-width: 768px) {
+            .calc-result-grid { grid-template-columns: repeat(2, 1fr); }
         }
 
         .calc-stat-item {
@@ -1264,10 +1264,20 @@
         <h2 class="section-title">Calculadora de Treino (NPC Guy)</h2>
         <div class="calculator-card">
             <p style="color: var(--text-muted); font-size: 0.95rem; text-align: center; margin-bottom: 25px; line-height: 1.5;">
-                O NPC Guy treina Genins (Taijutsu, Ninjutsu e Mentor) cobrando <b>400 Ryos</b> por treino e dobrando o ganho de pontos (de 1 em 1 para 2 em 2). Calcule o seu tempo total, quantas ativações da sua habilidade cabem e o custo!
+                O NPC Guy treina Genins (Taijutsu, Ninjutsu e Mentor) cobrando <b>400 Ryos</b> por treino e dobrando o ganho de pontos (de 1 em 1 para 2 em 2). Insira quanto você tem e quanto quer alcançar para calcular os custos e o tempo!
             </p>
 
             <div class="calculator-grid">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="calcAtual">Valor Atual (Ex: 800):</label>
+                    <input type="number" id="calcAtual" min="0" value="800" oninput="calcularTreinoGuy()">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="calcMeta">Meta / Valor Desejado (Ex: 3000):</label>
+                    <input type="number" id="calcMeta" min="0" value="3000" oninput="calcularTreinoGuy()">
+                </div>
+
                 <div class="form-group" style="margin-bottom: 15px;">
                     <label for="calcBonusTempo">Bônus de Tempo (Cartas do Guy):</label>
                     <select id="calcBonusTempo" onchange="calcularTreinoGuy()">
@@ -1288,16 +1298,20 @@
                 <h3>📊 Resultado do Planejamento</h3>
                 <div class="calc-result-grid">
                     <div class="calc-stat-item">
+                        <span>Falta Upar</span>
+                        <strong id="resFalta">0 pts</strong>
+                    </div>
+                    <div class="calc-stat-item">
                         <span>Tempo Total</span>
-                        <strong id="resTempoTotal">10 min</strong>
+                        <strong id="resTempoTotal">0 min</strong>
                     </div>
                     <div class="calc-stat-item">
-                        <span>Ativações da Habilidade</span>
-                        <strong id="resAtivacoes">120x</strong>
+                        <span>Treinos (Guy)</span>
+                        <strong id="resTreinos">0x</strong>
                     </div>
                     <div class="calc-stat-item">
-                        <span>Custo com o Guy</span>
-                        <strong id="resCusto">400 Ryos</strong>
+                        <span>Custo Total</span>
+                        <strong id="resCusto">0 Ryos</strong>
                     </div>
                 </div>
             </div>
@@ -1534,7 +1548,7 @@ A CADA 5 MISSÕES CONCLUÍDAS
 RECOMPENSA: 1.000 RYOS (Acumulativo de 5 em 5: 5 = 1k, 10 = 2k, 15 = 3k...)
 
 <b>⚠️ REGRA DE INTERVALO OBRIGATÓRIA (24 HORAS)</b>
-Cada membro só pode enviar um novo pedido de Missão Kage <b>a cada 24 horas exatas</b> após o seu último envio. O sistema bloqueia automaticamente novas solicitações antes desse período!
+Cada membro só pode enviar um novo pedido de Missão Kage <b>a cada 24 horas exatas</b> após o seu último envio aprovado/pendente. Se for negado, você pode reenviar na mesma hora!
 
 <b>COMO COMPROVAR?</b>
 Para cada missão realizada, ANTES DE FINALIZÁ-LA, você deverá: 
@@ -1788,24 +1802,32 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const itensPorPagina = 8;
         let salvandoMembroEmAndamento = false;
 
-        // CALCULADORA DO GUY
+        // CALCULADORA DO GUY (COM BASE NO ATUAL, META E 2 PONTOS POR ATIVAÇÃO)
         function calcularTreinoGuy() {
-            const minutos = parseInt(document.getElementById('calcBonusTempo').value) || 10;
+            const atual = parseInt(document.getElementById('calcAtual').value) || 0;
+            const meta = parseInt(document.getElementById('calcMeta').value) || 0;
+            const minutosTreino = parseInt(document.getElementById('calcBonusTempo').value) || 10;
             const cooldown = parseFloat(document.getElementById('calcCooldown').value) || 1;
 
-            if (cooldown <= 0) {
-                document.getElementById('resTempoTotal').innerText = `${minutos} min`;
-                document.getElementById('resAtivacoes').innerText = `0x`;
-                document.getElementById('resCusto').innerText = `400 Ryos`;
-                return;
-            }
+            const pontosFaltando = Math.max(0, meta - atual);
+            
+            // O Guy dobra o ganho de pontos (2 pontos por ativação)
+            const totalAtivacoesNecessarias = Math.ceil(pontosFaltando / 2);
 
-            const segundosTotais = minutos * 60;
-            const ativacoes = Math.floor(segundosTotais / cooldown);
+            // Quantas ativações cabem em 1 treino completo com o Guy
+            const segundosPorTreino = minutosTreino * 60;
+            const ativacoesPorSessao = cooldown > 0 ? Math.floor(segundosPorTreino / cooldown) : 1;
 
-            document.getElementById('resTempoTotal').innerText = `${minutos} min`;
-            document.getElementById('resAtivacoes').innerText = `${ativacoes}x`;
-            document.getElementById('resCusto').innerText = `400 Ryos`;
+            // Quantas sessões de treino com o Guy (pagamentos de 400 Ryos) vai precisar
+            const sessoesGuy = ativacoesPorSessao > 0 ? Math.ceil(totalAtivacoesNecessarias / ativacoesPorSessao) : 0;
+            
+            const custoTotal = sessoesGuy * 400;
+            const tempoTotalMinutos = sessoesGuy * minutosTreino;
+
+            document.getElementById('resFalta').innerText = `${pontosFaltando} pts`;
+            document.getElementById('resTempoTotal').innerText = `${tempoTotalMinutos} min`;
+            document.getElementById('resTreinos').innerText = `${sessoesGuy}x (Guy)`;
+            document.getElementById('resCusto').innerText = `${custoTotal} Ryos`;
         }
 
         function obterWebhookUrl(tipo) {
@@ -2965,7 +2987,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // SEGURANÇA: Validação direta no banco (ignora envios Negados)
+            // SEGURANÇA: Validação no banco ignorando status 'Negado'
             supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('created_at, data_envio, status')
@@ -3029,7 +3051,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            // DUPLA SEGURANÇA NO ENVIO: Impede bypass via F5 / manipulação seletiva
+            // DUPLA SEGURANÇA NO ENVIO: Impede bypass via F5 / manipulação
             supabaseClient
                 .from('solicitacoes_recompensa')
                 .select('created_at, data_envio, status')
@@ -3278,7 +3300,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (event.target == modalRecompensa) fecharModalRecompensa();
             if (event.target == modalSorteio) fecharSorteio();
             if (event.target == modalDetalhesMembro) fecharModalDetalhesMembro();
-            if5 = event.target == modalMotivoNegacao; // mantido seguro
             if (event.target == modalMotivoNegacao) fecharModalNegacao();
             if (event.target == modalNotificacoesAdmin) fecharPainelNotificacoes();
         }
