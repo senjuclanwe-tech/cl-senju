@@ -1805,6 +1805,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             document.getElementById('resTempoTotal').innerText = `${minutos} min`;
             document.getElementById('resAtivacoes').innerText = `${ativacoes}x`;
+            document.getElementById('resCusto\u2019') = `400 Ryos`; // Mantém o custo fixo de 400 Ryos por treino do Guy
             document.getElementById('resCusto').innerText = `400 Ryos`;
         }
 
@@ -2419,43 +2420,439 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 printsHtml += `</div>`;
                             }
 
-                            let botoesAcaoAdmin = '';
+                            let botaoAcao = '';
                             if (eAdmin && sol.status === 'Pendente') {
-                                botoesAcaoAdmin = `
-                                    <div style="margin-top: 15px; display: flex; gap: 10px; border-top: 1px dashed rgba(194,155,56,0.3); padding-top: 12px;">
-                                        <button onclick="aprovarRecompensa(${sol.id})" style="flex: 1; background: #248046; color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;">✅ Aprovar (${valorTotalRyos} Ryos)</button>
-                                        <button onclick="abrirModalNegacao(${sol.id})" style="flex: 1; background: var(--senju-red); color: white; border: none; padding: 8px; border-radius: 4px; font-weight: bold; cursor: pointer;">❌ Negar</button>
+                                botaoAcao = `
+                                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px;">
+                                        <button onclick="negarRecompensa(${sol.id})" class="btn-discord-login" style="background-color: var(--senju-red); display: inline-block; width: auto; padding: 8px 14px;">❌ Negar</button>
+                                        <button onclick="confirmarPagamentoRecompensa(${sol.id})" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
                                     </div>
                                 `;
                             }
 
-                            let motivoNegacaoHtml = '';
-                            if (sol.status === 'Negado' && sol.motivo_negacao) {
-                                motivoNegacaoHtml = `<p style="color: var(--senju-red); font-size: 0.85rem; margin-top: 5px;"><b>Motivo:</b> ${sol.motivo_negacao}</p>`;
-                            }
+                            let corStatus = 'var(--senju-gold)';
+                            if (sol.status === 'Pago') corStatus = '#248046';
+                            if (sol.status === 'Negado') corStatus = 'var(--senju-red)';
 
                             html += `
-                                <div style="background: rgba(15,8,5,0.7); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                        <span style="font-size: 0.85rem; color: var(--text-muted);">ID Pedido: #${sol.id}</span>
-                                        <span style="font-weight: bold; color: ${sol.status === 'Pago' ? '#248046' : (sol.status === 'Negado' ? 'var(--senju-red)' : 'var(--senju-gold)')};">${statusExibicao}</span>
-                                    </div>
-                                    <p><b>Missões Contadas:</b> ${sol.qtd_missoes} missões (${blocosCompletos} bloco(s) = <b>${valorTotalRyos} Ryos</b>)</p>
+                                <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                                    <p><b>Data do Envio:</b> ${sol.data_envio}</p>
+                                    <p><b>Prints Enviados:</b> ${sol.qtd_missoes}</p>
+                                    <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span> (${blocosCompletos} bloco(s) de 5)</p>
                                     ${avisoSobraHtml}
+                                    <p style="margin-top: 6px;"><b>Status:</b> <span style="color: ${corStatus}; font-weight: bold;">${statusExibicao}</span></p>
                                     ${printsHtml}
-                                    ${motivoNegacaoHtml}
-                                    ${botoesAcaoAdmin}
+                                    ${botaoAcao}
                                 </div>
                             `;
                         });
 
-                        conteudo.innerHTML = html;
+                        if (!html) {
+                            conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Nenhuma solicitação ativa ou recente no momento.</p>`;
+                        } else {
+                            conteudo.innerHTML = html;
+                        }
                     });
             });
         }
 
         function fecharModalDetalhesMembro() {
             modalDetalhesMembro.style.display = 'none';
+        }
+
+        function confirmarPagamentoRecompensa(solicitacaoId) {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                if (!confirm("Deseja confirmar a aprovação?")) return;
+
+                supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoId).single().then(({ data: solData }) => {
+                    const dataHoje = new Date().toISOString().split('T')[0];
+                    supabaseClient
+                        .from('solicitacoes_recompensa')
+                        .update({ status: 'Pago', data_pagamento: dataHoje })
+                        .eq('id', solicitacaoId)
+                        .then(({ error }) => {
+                            if (error) {
+                                mostrarAviso('Erro ao atualizar pagamento.', 'erro');
+                                return;
+                            }
+
+                            if (solData && solData.discord_id) {
+                                const blocosCompletos = Math.floor(solData.qtd_missoes / 5);
+                                const ryosCalculados = blocosCompletos * 1000;
+
+                                const payload = {
+                                    content: `<@${solData.discord_id}> ✅ **MISSÃO DO KAGE APROVADA!** O teu pedido de ${solData.qtd_missoes} prints foi verificado e aprovado.\n\n💰 **Recompensa deste lote:** **${ryosCalculados} Ryos** (${blocosCompletos} bloco(s) de 5).\n🏃‍♂️ **Próximo passo:** Procure o responsável pelo pagamento das missões para resgatar os teus Ryos!`
+                                };
+                                fetch(WEBHOOK_APROVADO, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(payload)
+                                }).catch(err => console.error(err));
+                            }
+
+                            mostrarAviso('Aprovação confirmada! O aviso foi enviado no Discord.');
+                            fecharModalDetalhesMembro();
+                            carregarMembros();
+                        });
+                });
+            });
+        }
+
+        let solicitacaoIdParaNegar = null;
+        const modalMotivoNegacao = document.getElementById('modalMotivoNegacao');
+
+        function negarRecompensa(solicitacaoId) {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                solicitacaoIdParaNegar = solicitacaoId;
+                document.getElementById('textoMotivoNegacao').value = '';
+                modalMotivoNegacao.style.display = 'flex';
+            });
+        }
+
+        function fecharModalNegacao() {
+            modalMotivoNegacao.style.display = 'none';
+            solicitacaoIdParaNegar = null;
+        }
+
+        function enviarNegacaoComMotivo() {
+            if (!solicitacaoIdParaNegar) return;
+
+            const motivo = document.getElementById('textoMotivoNegacao').value.trim();
+            if (!motivo) {
+                mostrarAviso('Escreva o motivo da negação!', 'erro');
+                return;
+            }
+
+            const btnConfirmar = document.getElementById('btnConfirmarNegacao');
+            btnConfirmar.disabled = true;
+            btnConfirmar.innerText = "Enviando...";
+
+            supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoIdParaNegar).single().then(({ data: solData }) => {
+                const dataHoje = new Date().toISOString().split('T')[0];
+                supabaseClient
+                    .from('solicitacoes_recompensa')
+                    .update({ status: 'Negado', data_pagamento: dataHoje })
+                    .eq('id', solicitacaoIdParaNegar)
+                    .then(({ error }) => {
+                        if (error) {
+                            mostrarAviso('Erro ao negar solicitação.', 'erro');
+                            btnConfirmar.disabled = false;
+                            btnConfirmar.innerText = "Confirmar Negação";
+                            return;
+                        }
+
+                        if (solData && solData.discord_id) {
+                            const payload = {
+                                content: `<@${solData.discord_id}> ❌ **MISSÃO KAGE NEGADA.** O teu pedido de recompensa foi rejeitado.\n\n💬 **Motivo:** ${motivo}`
+                            };
+                            fetch(WEBHOOK_NEGADO, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(payload)
+                            }).catch(err => console.error(err));
+                        }
+
+                        mostrarAviso('Solicitação negada com sucesso!');
+                        fecharModalNegacao();
+                        fecharModalDetalhesMembro();
+                        carregarMembros();
+
+                        btnConfirmar.disabled = false;
+                        btnConfirmar.innerText = "Confirmar Negação";
+                    });
+            });
+        }
+
+        const modalMembro = document.getElementById('modalMembro');
+        
+        function abrirModalMembro() {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                document.getElementById('tituloModalMembro').innerText = "Cadastrar Membro no Clã";
+                document.getElementById('btnSalvarMembroTexto').innerText = "Cadastrar Membro";
+                document.getElementById('formMembro').reset();
+                document.getElementById('idMembroEdicao').value = "";
+                modalMembro.style.display = 'flex';
+            });
+        }
+
+        function abrirModalEditarMembro(id) {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                supabaseClient.from('membros').select('*').eq('id', id).single().then(({ data: membro }) => {
+                    if (!membro) return;
+
+                    document.getElementById('tituloModalMembro').innerText = "Editar Membro do Clã";
+                    document.getElementById('btnSalvarMembroTexto').innerText = "Salvar Alterações";
+                    
+                    document.getElementById('idMembroEdicao').value = membro.id;
+                    document.getElementById('nomeJogoMembro').value = membro.nome_jogo;
+                    document.getElementById('idMembroDiscord').value = membro.discord_id;
+                    
+                    let gradBanco = membro.graduacao || "";
+                    if (gradBanco.toLowerCase().includes('jounin') || gradBanco.toLowerCase().includes('じょうにん')) document.getElementById('graduacaoMembro').value = "Jounin";
+                    else if (gradBanco.toLowerCase().includes('chunin') || gradBanco.toLowerCase().includes('ちゅうにん')) document.getElementById('graduacaoMembro').value = "Chunin";
+                    else if (gradBanco.toLowerCase().includes('genin') || gradBanco.toLowerCase().includes('元仁')) document.getElementById('graduacaoMembro').value = "Genin";
+                    else document.getElementById('graduacaoMembro').value = "Estudante";
+
+                    let cargoBanco = membro.cargo_especial || "";
+                    if (cargoBanco.toLowerCase().includes('líder') || cargoBanco.toLowerCase().includes('leader')) document.getElementById('cargoEspecialMembro').value = "Líder";
+                    else if (cargoBanco.toLowerCase().includes('braço direito') || cargoBanco.toLowerCase().includes('sub')) document.getElementById('cargoEspecialMembro').value = "Braço Direito";
+                    else document.getElementById('cargoEspecialMembro').value = "";
+
+                    let trabBanco = membro.trabalho || "";
+                    if (trabBanco.toLowerCase().includes('medico') || trabBanco.toLowerCase().includes('médico')) document.getElementById('trabalhoMembro').value = "Médico(a)";
+                    else if (trabBanco.toLowerCase().includes('professor')) document.getElementById('trabalhoMembro').value = "Professor(a)";
+                    else if (trabBanco.toLowerCase().includes('policial')) document.getElementById('trabalhoMembro').value = "Policial";
+                    else if (trabBanco.toLowerCase().includes('anbu')) document.getElementById('trabalhoMembro').value = "Anbu";
+                    else document.getElementById('trabalhoMembro').value = "";
+
+                    document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
+                    modalMembro.style.display = 'flex';
+                });
+            });
+        }
+
+        function fecharModalMembro() { 
+            modalMembro.style.display = 'none'; 
+            document.getElementById('formMembro').reset(); 
+        }
+
+        function salvarMembro(event) {
+            event.preventDefault();
+            if (salvandoMembroEmAndamento) return;
+
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                const idEdicao = document.getElementById('idMembroEdicao').value;
+                const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
+                const discord_id = document.getElementById('idMembroDiscord').value.trim();
+                const graduacaoSelect = document.getElementById('graduacaoMembro').value;
+                const cargoEspecialSelect = document.getElementById('cargoEspecialMembro').value;
+                const trabalho = document.getElementById('trabalhoMembro').value;
+                const e_admin = document.getElementById('checkAdminMembro').checked;
+
+                let graduacao = graduacaoSelect;
+                if (graduacaoSelect === "Estudante") graduacao = "Estudante [ 学 生 ]";
+                if (graduacaoSelect === "Genin") graduacao = "Genin [ 元仁 ]";
+                if (graduacaoSelect === "Chunin") graduacao = "Chunin [ ちゅうにん ]";
+                if (graduacaoSelect === "Jounin") graduacao = "Jounin [ じょうにん ]";
+
+                let cargo_especial = cargoEspecialSelect;
+                if (cargoEspecialSelect === "Líder") cargo_especial = "Líder Senju [ 千住リーダー ]";
+                if (cargoEspecialSelect === "Braço Direito") cargo_especial = "Braço Direito [ 千住サブリーダー ]";
+
+                const idExistente = listaMembrosCache.find(m => m.discord_id === discord_id && m.id != idEdicao);
+                if (idExistente) {
+                    mostrarAviso(`Já existe um membro cadastrado com esse ID (${idExistente.nome_jogo}).`, 'erro');
+                    return;
+                }
+
+                salvandoMembroEmAndamento = true;
+                const btnSubmit = document.getElementById('btnSalvarMembroTexto');
+                const textoOriginalBtn = btnSubmit.innerText;
+                btnSubmit.disabled = true;
+                btnSubmit.innerText = "Salvando...";
+
+                if (idEdicao === "") {
+                    supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }]).then(({ error }) => {
+                        if (error) {
+                            mostrarAviso('Erro ao cadastrar membro: ' + error.message, 'erro');
+                            salvandoMembroEmAndamento = false;
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerText = textoOriginalBtn;
+                            return;
+                        }
+                        mostrarAviso(`Membro ${nome_jogo} cadastrado com sucesso!`);
+                        concluirSalvamentoMembro();
+                    });
+                } else {
+                    supabaseClient.from('membros').update({ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }).eq('id', idEdicao).then(({ error }) => {
+                        if (error) {
+                            mostrarAviso('Erro ao atualizar membro: ' + error.message, 'erro');
+                            salvandoMembroEmAndamento = false;
+                            btnSubmit.disabled = false;
+                            btnSubmit.innerText = textoOriginalBtn;
+                            return;
+                        }
+                        mostrarAviso(`Membro ${nome_jogo} atualizado com sucesso!`);
+                        concluirSalvamentoMembro();
+                    });
+                }
+
+                function concluirSalvamentoMembro() {
+                    carregarMembros();
+                    fecharModalMembro();
+                    verificarPermissaoAdmin();
+                    salvandoMembroEmAndamento = false;
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerText = textoOriginalBtn;
+                }
+            });
+        }
+
+        function excluirMembro(id) {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                if (confirm(`Tem certeza que deseja remover este membro do clã?`)) {
+                    supabaseClient.from('membros').delete().eq('id', id).then(({ error }) => {
+                        if (error) {
+                            mostrarAviso('Erro ao excluir: ' + error.message, 'erro');
+                            return;
+                        }
+                        carregarMembros();
+                        mostrarAviso(`Membro removido com sucesso!`);
+                    });
+                }
+            });
+        }
+
+        function carregarMidias() {
+            const secaoFotos = document.getElementById('secao-fotos');
+            const secaoVideos = document.getElementById('secao-videos');
+            if(!secaoFotos || !secaoVideos) return;
+            
+            supabaseClient.from('midias').select('*').order('id', { ascending: false }).then(({ data: midias }) => {
+                secaoFotos.innerHTML = '';
+                secaoVideos.innerHTML = '';
+
+                if (!midias || midias.length === 0) {
+                    secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
+                    secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
+                    return;
+                }
+
+                const userId = localStorage.getItem('discord_user_id');
+                obterAdminsAutorizados().then(adminsAtuais => {
+                    const eAdminLogado = userId && adminsAtuais.includes(userId);
+                    let qtdFotos = 0;
+                    let qtdVideos = 0;
+
+                    midias.forEach(m => {
+                        const mediaCard = document.createElement('div');
+                        mediaCard.className = 'media-card';
+
+                        let botoesAdminHtml = '';
+                        if (eAdminLogado) {
+                            botoesAdminHtml = `
+                                <div class="admin-buttons-card">
+                                    <button class="btn-card-action btn-excluir-midia" onclick="excluirMidia(${m.id})" title="Excluir Mídia">&times;</button>
+                                </div>
+                            `;
+                        }
+
+                        if (m.tipo === 'foto') {
+                            qtdFotos++;
+                            mediaCard.innerHTML = `
+                                ${botoesAdminHtml}
+                                <div class="media-preview" onclick="abrirModalZoom('${m.url}', '${m.titulo.replace(/'/g, "\\'")}')">
+                                    <img src="${m.url}" alt="${m.titulo}" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
+                                </div>
+                                <div class="media-info">
+                                    <h4>${m.titulo}</h4>
+                                </div>
+                            `;
+                            secaoFotos.appendChild(mediaCard);
+                        } else {
+                            qtdVideos++;
+                            mediaCard.innerHTML = `
+                                ${botoesAdminHtml}
+                                <div class="media-preview">
+                                    <iframe src="${m.url}" frameborder="0" allowfullscreen loading="lazy"></iframe>
+                                </div>
+                                <div class="media-info">
+                                    <h4>${m.titulo}</h4>
+                                </div>
+                            `;
+                            secaoVideos.appendChild(mediaCard);
+                        }
+                    });
+
+                    if (qtdFotos === 0) secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
+                    if (qtdVideos === 0) secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
+                });
+            });
+        }
+
+        function adicionarMidia(event) {
+            event.preventDefault();
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                const tipo = document.getElementById('tipoMidia').value;
+                const titulo = document.getElementById('tituloMidia').value;
+                const url = document.getElementById('urlMidia').value;
+                const autor = localStorage.getItem('discord_username') || 'Liderança';
+
+                supabaseClient.from('midias').insert([{ tipo, titulo, url, autor }]).then(({ error }) => {
+                    if (error) {
+                        mostrarAviso('Erro ao publicar mídia: ' + error.message, 'erro');
+                        return;
+                    }
+
+                    mostrarAviso(`Mídia "${titulo}" publicada com sucesso!`);
+                    fecharModalAdmin();
+                    document.getElementById('formAdmin').reset();
+                    carregarMidias();
+                });
+            });
+        }
+
+        function excluirMidia(id) {
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+
+                if (confirm(`Tem certeza que deseja remover esta mídia do álbum?`)) {
+                    supabaseClient.from('midias').delete().eq('id', id).then(({ error }) => {
+                        if (error) {
+                            mostrarAviso('Erro ao excluir mídia: ' + error.message, 'erro');
+                            return;
+                        }
+                        carregarMidias();
+                        mostrarAviso(`Mídia removida com sucesso!`);
+                    });
+                }
+            });
         }
 
         function abrirModalZoom(url, titulo) {
@@ -2468,72 +2865,82 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('modalZoom').style.display = 'none';
         }
 
+        const modalSorteio = document.getElementById('modalSorteio');
+
         function abrirSorteio() {
-            document.getElementById('modalSorteio').style.display = 'flex';
-            document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
-            document.getElementById('btnGirar').disabled = false;
-            carregarWebhookNoPopup('sorteio');
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado! Apenas administradores podem acessar o sorteio.', 'erro');
+                    return;
+                }
+
+                modalSorteio.style.display = 'flex';
+                document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
+                document.getElementById('btnGirar').disabled = false;
+                carregarWebhookNoPopup('sorteio');
+            });
         }
 
-        function fecharSorteio() {
-            document.getElementById('modalSorteio').style.display = 'none';
-        }
+        function fecharSorteio() { modalSorteio.style.display = 'none'; }
 
         function iniciarSorteio() {
-            const elegiveis = listaMembrosCache.filter(m => {
-                const cargo = (m.cargo_especial || "").toLowerCase();
-                return !cargo.includes('líder') && !cargo.includes('braço direito') && !cargo.includes('leader');
-            });
-
-            if (elegiveis.length === 0) {
-                mostrarAviso('Não há membros elegíveis para o sorteio!', 'erro');
-                return;
-            }
-
             const btnGirar = document.getElementById('btnGirar');
             const textoRoleta = document.getElementById('textoRoleta');
             btnGirar.disabled = true;
 
-            let contador = 0;
-            const intervalo = setInterval(() => {
-                const sorteadoTemp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
-                textoRoleta.innerText = sorteadoTemp.nome_jogo;
-                contador++;
-
-                if (contador > 15) {
-                    clearInterval(intervalo);
-                    const vencedor = elegiveis[Math.floor(Math.random() * elegiveis.length)];
-                    textoRoleta.innerText = `🎉 ${vencedor.nome_jogo} 🎉`;
+            supabaseClient.from('membros').select('*').then(({ data: membros, error }) => {
+                if (error || !membros || membros.length === 0) {
+                    mostrarAviso("Erro ao carregar membros para o sorteio.", 'erro');
                     btnGirar.disabled = false;
-
-                    enviarWebhookSorteio(vencedor);
+                    return;
                 }
-            }, 100);
+
+                const elegiveis = membros.filter(m => {
+                    const cargo = (m.cargo_especial || "").toLowerCase();
+                    if (cargo.includes('líder') || cargo.includes('braço direito') || cargo.includes('sub')) return false;
+                    if (m.nome_jogo.toLowerCase().includes('tobirama') || m.nome_jogo.toLowerCase().includes('hayai')) return false;
+                    return true;
+                });
+
+                if (elegiveis.length === 0) {
+                    textoRoleta.innerText = "Nenhum membro elegível encontrado!";
+                    btnGirar.disabled = false;
+                    return;
+                }
+
+                let contador = 0;
+                let maxRodadas = 25;
+                let intervalo = setInterval(() => {
+                    let aleatorioTemp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+                    textoRoleta.innerText = aleatorioTemp.nome_jogo;
+                    contador++;
+
+                    if (contador >= maxRodadas) {
+                        clearInterval(intervalo);
+                        let vencedor = elegiveis[Math.floor(Math.random() * elegiveis.length)];
+                        textoRoleta.innerHTML = `🏆 GANHADOR: <span style="color: #fff; text-shadow: 0 0 10px var(--senju-red);">${vencedor.nome_jogo}</span>! 🏆`;
+                        enviarResultadoSorteioDiscord(vencedor);
+                        btnGirar.disabled = false;
+                    }
+                }, 100);
+            });
         }
 
-        function enviarWebhookSorteio(vencedor) {
+        function enviarResultadoSorteioDiscord(vencedor) {
+            let mencaoDiscord = vencedor.discord_id ? `<@${vencedor.discord_id}>` : vencedor.nome_jogo;
             const payload = {
                 content: "@everyone",
                 embeds: [
                     {
-                        title: "🎲 RESULTADO DO SORTEIO DO CLÃ",
-                        description: `O shinobi sorteado e vencedor foi **${vencedor.nome_jogo}**!`,
-                        color: 9017830,
+                        title: "🎲 SORTEIO DO CLÃ SENJU REALIZADO! 🎲",
+                        description: "A roleta girou e o destino escolheu o grande vencedor desta rodada!",
+                        color: 12713992,
                         fields: [
-                            {
-                                name: "👤 Vencedor",
-                                value: `<@${vencedor.discord_id}> (${vencedor.nome_jogo})`,
-                                inline: true
-                            },
-                            {
-                                name: "🛡️ Graduação",
-                                value: vencedor.graduacao,
-                                inline: true
-                            }
+                            { name: "🏆 Vencedor da Rodada", value: `**${vencedor.nome_jogo}** (${mencaoDiscord})`, inline: false },
+                            { name: "📜 Próximo Passo", value: "Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio.", inline: false }
                         ],
-                        footer: {
-                            text: "Clã Senju • A Vontade do Fogo"
-                        },
+                        footer: { text: "Clã Senju • A Vontade do Fogo" },
                         timestamp: new Date().toISOString()
                     }
                 ]
@@ -2544,595 +2951,348 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
-                }).catch(err => console.error("Erro webhook sorteio:", err));
+                }).catch(err => console.error(err));
             });
         }
+
+        const modalRecompensa = document.getElementById('modalRecompensa');
 
         function tentarAbrirRecompensa() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
 
             if (!userId) {
-                mostrarAviso('Você precisa entrar com o Discord primeiro!', 'erro');
-                logarComDiscord();
-                return;
-            }
-
-            document.getElementById('nomeDiscordRecompensa').value = username;
-            document.getElementById('modalRecompensa').style.display = 'flex';
-            carregarWebhookNoPopup('recompensa');
-        }
-
-        function fecharModalRecompensa() {
-            document.getElementById('modalRecompensa').style.display = 'none';
-        }
-
-        function enviarRecompensa(event) {
-            event.preventDefault();
-            const btn = document.getElementById('btnEnviarRecompensa');
-            btn.disabled = true;
-            btn.innerText = "Enviando solicitações...";
-
-            const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
-            const discordUser = document.getElementById('nomeDiscordRecompensa').value;
-            const discordId = localStorage.getItem('discord_user_id');
-            const inputFiles = document.getElementById('fotosRecompensa');
-            const arquivos = inputFiles.files;
-
-            if (arquivos.length === 0) {
-                mostrarAviso('Selecione pelo menos um print!', 'erro');
-                btn.disabled = false;
-                btn.innerText = "Solicitar Recompensa";
+                mostrarAviso('Você precisa entrar com o Discord no topo da página!', 'erro');
                 return;
             }
 
             supabaseClient
                 .from('solicitacoes_recompensa')
-                .select('*')
-                .eq('discord_id', discordId)
+                .select('created_at, data_envio')
+                .eq('discord_id', userId)
                 .order('id', { ascending: false })
                 .limit(1)
-                .then(async ({ data: ultimaSol }) => {
-                    if (ultimaSol && ultimaSol.length > 0) {
-                        const ultimaData = new Date(ultimaSol[0].created_at || ultimaSol[0].data_envio);
+                .then(({ data: ultimosEnvios }) => {
+                    if (ultimosEnvios && ultimosEnvios.length > 0) {
+                        const ultimoEnvio = ultimosEnvios[0];
+                        const dataEnvioStr = ultimoEnvio.created_at || ultimoEnvio.data_envio;
+                        const ultimaData = new Date(dataEnvioStr);
                         const agora = new Date();
                         const diferencaHoras = (agora - ultimaData) / (1000 * 60 * 60);
 
                         if (diferencaHoras < 24) {
                             const horasRestantes = Math.ceil(24 - diferencaHoras);
-                            mostrarAviso(`⚠️ Você já enviou um pedido recentemente! Aguarde cerca de ${horasRestantes}h para enviar novamente.`, 'erro');
-                            btn.disabled = false;
-                            btn.innerText = "Solicitar Recompensa";
+                            const horarioLiberacao = new Date(ultimaData.getTime() + (24 * 60 * 60 * 1000));
+                            const horarioFormatado = horarioLiberacao.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                            mostrarAviso(`⏳ Calma shinobi! Você já enviou uma Missão Kage recentemente. Poderá enviar outra daqui a cerca de ${horasRestantes}h (às ${horarioFormatado}).`, 'erro');
+                            return;
+                        }
+                    }
+
+                    supabaseClient.from('membros').select('*').then(({ data: membros }) => {
+                        const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
+                        obterAdminsAutorizados().then(adminsAtuais => {
+                            const eAdmin = adminsAtuais.includes(userId);
+
+                            if (!membroEncontrado && !eAdmin) {
+                                mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
+                                return;
+                            }
+
+                            document.getElementById('nomeDiscordRecompensa').value = username;
+                            document.getElementById('nomeJogoRecompensa').value = membroEncontrado ? membroEncontrado.nome_jogo : "";
+                            modalRecompensa.style.display = 'flex';
+                            carregarWebhookNoPopup('recompensa');
+                        });
+                    });
+                });
+        }
+
+        function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
+
+        function enviarRecompensa(event) {
+            event.preventDefault();
+            const btnEnviar = document.getElementById('btnEnviarRecompensa');
+            btnEnviar.disabled = true;
+            btnEnviar.innerText = "Enviando prints para o storage...";
+
+            const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
+            const nomeDiscord = document.getElementById('nomeDiscordRecompensa').value.trim();
+            const arquivoInput = document.getElementById('fotosRecompensa');
+            const userId = localStorage.getItem('discord_user_id');
+
+            if (!arquivoInput.files || arquivoInput.files.length === 0) {
+                mostrarAviso('Selecione pelo menos um print!', 'erro');
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Solicitar Recompensa";
+                return;
+            }
+
+            supabaseClient
+                .from('solicitacoes_recompensa')
+                .select('created_at, data_envio')
+                .eq('discord_id', userId)
+                .order('id', { ascending: false })
+                .limit(1)
+                .then(({ data: ultimosEnvios }) => {
+                    if (ultimosEnvios && ultimosEnvios.length > 0) {
+                        const ultimoEnvio = ultimosEnvios[0];
+                        const dataEnvioStr = ultimoEnvio.created_at || ultimoEnvio.data_envio;
+                        const ultimaData = new Date(dataEnvioStr);
+                        const agora = new Date();
+                        const diferencaHoras = (agora - ultimaData) / (1000 * 60 * 60);
+
+                        if (diferencaHoras < 24) {
+                            mostrarAviso('❌ Operação negada! O limite é de 1 envio a cada 24 horas.', 'erro');
+                            btnEnviar.disabled = false;
+                            btnEnviar.innerText = "Solicitar Recompensa";
                             fecharModalRecompensa();
                             return;
                         }
                     }
 
-                    let caminhosImagens = [];
-                    for (let i = 0; i < arquivos.length; i++) {
-                        let arquivo = arquivos[i];
-                        let nomeArquivoUnico = `${discordId}_${Date.now()}_${i}_${arquivo.name}`;
+                    const qtdMissoes = arquivoInput.files.length;
+                    let urlsImagens = [];
+                    let promessasUpload = [];
+
+                    for (let i = 0; i < arquivoInput.files.length; i++) {
+                        const arquivo = arquivoInput.files[i];
+                        const nomeArquivoUnico = `${userId}_${Date.now()}_${i}_${arquivo.name}`;
                         
-                        const { data: uploadData, error: uploadError } = await supabaseClient.storage
+                        let p = supabaseClient.storage
                             .from('recompensas-prints')
-                            .upload(nomeArquivoUnico, arquivo);
-
-                        if (uploadError) {
-                            console.error("Erro upload print:", uploadError);
-                            continue;
-                        }
-
-                        const { data: publicUrlData } = supabaseClient.storage
-                            .from('recompensas-prints')
-                            .getPublicUrl(nomeArquivoUnico);
-
-                        if (publicUrlData && publicUrlData.publicUrl) {
-                            caminhosImagens.push(publicUrlData.publicUrl);
-                        }
+                            .upload(nomeArquivoUnico, arquivo)
+                            .then(({ data: uploadData, error: uploadError }) => {
+                                if (uploadError) throw uploadError;
+                                const { data: publicUrlData } = supabaseClient.storage
+                                    .from('recompensas-prints')
+                                    .getPublicUrl(nomeArquivoUnico);
+                                if (publicUrlData && publicUrlData.publicUrl) {
+                                    urlsImagens.push(publicUrlData.publicUrl);
+                                }
+                            });
+                        promessasUpload.push(p);
                     }
 
-                    if (caminhosImagens.length === 0) {
-                        mostrarAviso('Erro ao fazer upload dos prints.', 'erro');
-                        btn.disabled = false;
-                        btn.innerText = "Solicitar Recompensa";
-                        return;
-                    }
+                    Promise.all(promessasUpload)
+                        .then(() => {
+                            const dataHoje = new Date().toISOString().split('T')[0];
+                            const timestampCompleto = new Date().toISOString();
 
-                    const qtdMissoes = caminhosImagens.length;
-
-                    supabaseClient
-                        .from('solicitacoes_recompensa')
-                        .insert([
-                            {
-                                discord_id: discordId,
+                            return supabaseClient.from('solicitacoes_recompensa').insert([{
+                                discord_id: userId,
                                 nome_jogo: nomeJogo,
-                                nome_discord: discordUser,
                                 qtd_missoes: qtdMissoes,
-                                caminhos_imagens: caminhosImagens,
+                                caminhos_imagens: urlsImagens,
                                 status: 'Pendente',
-                                data_envio: new Date().toISOString()
-                            }
-                        ])
-                        .select()
-                        .then(({ data: novaSol, error: insertError }) => {
-                            if (insertError) {
-                                throw insertError;
-                            }
+                                data_envio: dataHoje,
+                                created_at: timestampCompleto
+                            }]).select().single();
+                        })
+                        .then(({ data: novaSolicitacao, error: dbError }) => {
+                            if (dbError) throw dbError;
 
-                            const solId = novaSol && novaSol[0] ? novaSol[0].id : 'Novo';
-                            const blocosCompletos = Math.floor(qtdMissoes / 5);
-                            const valorRyos = blocosCompletos * 1000;
+                            return supabaseClient.from('membros').select('id').eq('discord_id', userId).single().then(({ data: dadosMembro }) => {
+                                const membroIdInterno = dadosMembro ? dadosMembro.id : '';
+                                const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
 
-                            const camposEmbed = [
-                                { name: "👤 Nome no Jogo", value: nomeJogo, inline: true },
-                                { name: "💬 Discord", value: `<@${discordId}>`, inline: true },
-                                { name: "📊 Missões Informadas", value: `${qtdMissoes} prints (${blocosCompletos} bloco(s) = **${valorRyos} Ryos**)`, inline: false }
-                            ];
+                                const blocosCompletos = Math.floor(qtdMissoes / 5);
+                                const ryosCalculados = blocosCompletos * 1000;
+                                let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
 
-                            const payload = {
-                                content: `<@&1324155836585021510> Nova solicitação de Missão Kage enviada!`,
-                                embeds: [
-                                    {
-                                        title: `💰 SOLICITAÇÃO DE MISSÃO KAGE (#${solId})`,
-                                        description: `O shinobi **${nomeJogo}** enviou comprovação de missões para resgate de Ryos.`,
-                                        color: 3066993,
-                                        fields: camposEmbed,
-                                        image: { url: caminhosImagens[0] },
-                                        footer: { text: "Clã Senju • Sistema de Recompensas" },
-                                        timestamp: new Date().toISOString()
-                                    }
-                                ]
-                            };
+                                const payloadDiscord = {
+                                    content: `💰 **SOLICITAÇÃO DE MISSÃO KAGE**`,
+                                    embeds: [
+                                        {
+                                            title: "Nova Solicitação de Missão Kage Pendente",
+                                            color: 12713992,
+                                            fields: [
+                                                { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
+                                                { name: "Prints Enviados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true },
+                                                { name: "🔍 Ação do Admin", value: `[Verificar Fotos](${urlPainelAdm})`, inline: false }
+                                            ],
+                                            timestamp: new Date().toISOString()
+                                        }
+                                    ]
+                                };
 
-                            obterWebhookUrl('recompensa').then(webhookUrl => {
-                                fetch(webhookUrl, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(payload)
-                                })
-                                .then(() => {
-                                    mostrarAviso('Solicitação enviada com sucesso!');
-                                    fecharModalRecompensa();
-                                    document.getElementById('formRecompensa').reset();
-                                })
-                                .finally(() => {
-                                    btn.disabled = false;
-                                    btn.innerText = "Solicitar Recompensa";
+                                obterWebhookUrl('recompensa').then(webhookUrl => {
+                                    fetch(webhookUrl, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify(payloadDiscord)
+                                    }).catch(err => console.error(err));
                                 });
+
+                                mostrarAviso(`Solicitação de ${qtdMissoes} prints enviada com sucesso!`);
+                                fecharModalRecompensa();
+                                document.getElementById('formRecompensa').reset();
+                                btnEnviar.disabled = false;
+                                btnEnviar.innerText = "Solicitar Recompensa";
                             });
                         })
                         .catch(err => {
                             console.error(err);
-                            mostrarAviso('Erro ao registrar solicitação no banco.', 'erro');
-                            btn.disabled = false;
-                            btn.innerText = "Solicitar Recompensa";
+                            mostrarAviso("Erro ao processar envio de prints.", 'erro');
+                            btnEnviar.disabled = false;
+                            btnEnviar.innerText = "Solicitar Recompensa";
                         });
                 });
         }
 
-        function aprovarRecompensa(idSolicitacao) {
-            const dataPagamentoStr = new Date().toLocaleDateString('pt-BR');
-            supabaseClient
-                .from('solicitacoes_recompensa')
-                .update({ status: 'Pago', data_pagamento: dataPagamentoStr })
-                .eq('id', idSolicitacao)
-                .select()
-                .then(({ data, error }) => {
-                    if (error || !data || data.length === 0) {
-                        mostrarAviso('Erro ao aprovar recompensa.', 'erro');
-                        return;
-                    }
-
-                    const sol = data[0];
-                    const blocos = Math.floor(sol.qtd_missoes / 5);
-                    const ryos = blocos * 1000;
-
-                    mostrarAviso('Recompensa aprovada e marcada como Paga!');
-                    fecharModalDetalhesMembro();
-
-                    const payload = {
-                        content: `<@${sol.discord_id}>`,
-                        embeds: [
-                            {
-                                title: "✅ RECOMPENSA DE MISSÃO KAGE APROVADA!",
-                                description: `Parabéns, **${sol.nome_jogo}**! O seu pedido de recompensa foi verificado e **APROVADO** pelo comando!`,
-                                color: 248046,
-                                fields: [
-                                    { name: "💰 Recompensa Paga", value: `**${ryos} Ryos** (${sol.qtd_missoes} missões)`, inline: true },
-                                    { name: "🛡️ Status", value: `Pago em ${dataPagamentoStr}`, inline: true }
-                                ],
-                                footer: { text: "Clã Senju • A Vontade do Fogo" },
-                                timestamp: new Date().toISOString()
-                            }
-                        ]
-                    };
-
-                    fetch(WEBHOOK_APROVADO, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).catch(err => console.error("Erro webhook aprovado:", err));
-                });
-        }
-
-        let idSolNegacaoAtual = null;
-        function abrirModalNegacao(idSolicitacao) {
-            idSolNegacaoAtual = idSolicitacao;
-            document.getElementById('textoMotivoNegacao').value = '';
-            document.getElementById('modalMotivoNegacao').style.display = 'flex';
-        }
-
-        function fecharModalNegacao() {
-            document.getElementById('modalMotivoNegacao').style.display = 'none';
-            idSolNegacaoAtual = null;
-        }
-
-        function enviarNegacaoComMotivo() {
-            if (!idSolNegacaoAtual) return;
-            const motivo = document.getElementById('textoMotivoNegacao').value.trim() || "Prints não atenderam aos requisitos.";
-
-            const dataNegacaoStr = new Date().toLocaleDateString('pt-BR');
-            supabaseClient
-                .from('solicitacoes_recompensa')
-                .update({ status: 'Negado', motivo_negacao: motivo, data_pagamento: dataNegacaoStr })
-                .eq('id', idSolNegacaoAtual)
-                .select()
-                .then(({ data, error }) => {
-                    if (error || !data || data.length === 0) {
-                        mostrarAviso('Erro ao negar recompensa.', 'erro');
-                        return;
-                    }
-
-                    const sol = data[0];
-                    mostrarAviso('Solicitação negada.');
-                    fecharModalNegacao();
-                    fecharModalDetalhesMembro();
-
-                    const payload = {
-                        content: `<@${sol.discord_id}>`,
-                        embeds: [
-                            {
-                                title: "❌ RECOMPENSA DE MISSÃO KAGE NEGADA",
-                                description: `Olá, **${sol.nome_jogo}**. Infelizmente sua solicitação de recompensa foi **NEGADA** pelo comando.`,
-                                color: 14315776,
-                                fields: [
-                                    { name: "⚠️ Motivo", value: motivo, inline: false }
-                                ],
-                                footer: { text: "Clã Senju • A Vontade do Fogo" },
-                                timestamp: new Date().toISOString()
-                            }
-                        ]
-                    };
-
-                    fetch(WEBHOOK_NEGADO, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).catch(err => console.error("Erro webhook negado:", err));
-                });
-        }
-
+        const modalRelatorio = document.getElementById('modalRelatorio');
+        
         function tentarAbrirRelatorio() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
 
             if (!userId) {
-                mostrarAviso('Você precisa entrar com o Discord primeiro!', 'erro');
-                logarComDiscord();
+                mostrarAviso('Você precisa entrar com o Discord no topo da página!', 'erro');
                 return;
             }
 
-            document.getElementById('nomeDiscord').value = username;
-            document.getElementById('modalRelatorio').style.display = 'flex';
-            carregarWebhookNoPopup('relatorio');
-        }
+            supabaseClient.from('membros').select('*').then(({ data: membros }) => {
+                const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
+                obterAdminsAutorizados().then(adminsAtuais => {
+                    const eAdmin = adminsAtuais.includes(userId);
 
-        function fecharModalRelatorio() {
-            document.getElementById('modalRelatorio').style.display = 'none';
-        }
-
-        function enviarRelatorio(event) {
-            event.preventDefault();
-            const btn = document.getElementById('btnEnviarRelatorio');
-            btn.disabled = true;
-            btn.innerText = "Enviando relatório...";
-
-            const nomeJogo = document.getElementById('nomeJogo').value.trim();
-            const discordUser = document.getElementById('nomeDiscord').value;
-            const texto = document.getElementById('textoRelatorio').value.trim();
-            const linkVideo = document.getElementById('linkVideo').value.trim();
-            const discordId = localStorage.getItem('discord_user_id');
-            const inputFiles = document.getElementById('fotosRelatorio');
-            const arquivos = inputFiles.files;
-
-            let caminhosImagens = [];
-
-            const prosseguirEnvio = async () => {
-                if (arquivos.length > 0) {
-                    for (let i = 0; i < arquivos.length; i++) {
-                        let arquivo = arquivos[i];
-                        let nomeArquivoUnico = `relatorio_${discordId}_${Date.now()}_${i}_${arquivo.name}`;
-                        
-                        const { data: uploadData, error: uploadError } = await supabaseClient.storage
-                            .from('recompensas-prints')
-                            .upload(nomeArquivoUnico, arquivo);
-
-                        if (!uploadError) {
-                            const { data: publicUrlData } = supabaseClient.storage
-                                .from('recompensas-prints')
-                                .getPublicUrl(nomeArquivoUnico);
-
-                            if (publicUrlData && publicUrlData.publicUrl) {
-                                caminhosImagens.push(publicUrlData.publicUrl);
-                            }
-                        }
-                    }
-                }
-
-                let camposEmbed = [
-                    { name: "👤 Shinobi", value: nomeJogo, inline: true },
-                    { name: "💬 Discord", value: `<@${discordId}>`, inline: true },
-                    { name: "📋 Descrição da Missão", value: texto, inline: false }
-                ];
-
-                if (linkVideo) {
-                    camposEmbed.push({ name: "🎥 Vídeo da Missão", value: linkVideo, inline: false });
-                }
-
-                const payload = {
-                    content: "@everyone Novo Relatório de Missão Registrado!",
-                    embeds: [
-                        {
-                            title: "📋 RELATÓRIO DE MISSÃO SHINOBI",
-                            description: `O shinobi **${nomeJogo}** registrou um novo relatório de operações do clã.`,
-                            color: 12713992,
-                            fields: camposEmbed,
-                            image: caminhosImagens.length > 0 ? { url: caminhosImagens[0] } : undefined,
-                            footer: { text: "Clã Senju • A Vontade do Fogo" },
-                            timestamp: new Date().toISOString()
-                        }
-                    ]
-                };
-
-                obterWebhookUrl('relatorio').then(webhookUrl => {
-                    fetch(webhookUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    })
-                    .then(() => {
-                        mostrarAviso('Relatório enviado com sucesso!');
-                        fecharModalRelatorio();
-                        document.getElementById('formRelatorio').reset();
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        mostrarAviso('Erro ao enviar relatório.', 'erro');
-                    })
-                    .finally(() => {
-                        btn.disabled = false;
-                        btn.innerText = "Enviar Relatório";
-                    });
-                });
-            };
-
-            prosseguirEnvio();
-        }
-
-        function abrirModalAdmin() {
-            document.getElementById('modalAdmin').style.display = 'flex';
-        }
-
-        function fecharModalAdmin() {
-            document.getElementById('modalAdmin').style.display = 'none';
-        }
-
-        function adicionarMidia(event) {
-            event.preventDefault();
-            const tipo = document.getElementById('tipoMidia').value;
-            const titulo = document.getElementById('tituloMidia').value.trim();
-            const url = document.getElementById('urlMidia').value.trim();
-
-            supabaseClient
-                .from('midias')
-                .insert([{ tipo, titulo, url }])
-                .then(({ error }) => {
-                    if (error) {
-                        mostrarAviso('Erro ao publicar mídia.', 'erro');
+                    if (!membroEncontrado && !eAdmin) {
+                        mostrarAviso('Acesso negado! Apenas membros registrados podem enviar.', 'erro');
                         return;
                     }
-                    mostrarAviso('Mídia publicada com sucesso!');
-                    fecharModalAdmin();
-                    document.getElementById('formAdmin').reset();
-                    carregarMidias();
-                });
-        }
 
-        function carregarMidias() {
-            supabaseClient.from('midias').select('*').order('id', { ascending: false }).then(({ data: midias, error }) => {
-                const secaoFotos = document.getElementById('secao-fotos');
-                const secaoVideos = document.getElementById('secao-videos');
-
-                if (error || !midias || midias.length === 0) {
-                    if(secaoFotos) secaoFotos.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>';
-                    if(secaoVideos) secaoVideos.innerHTML = '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>';
-                    return;
-                }
-
-                let fotosHtml = '';
-                let videosHtml = '';
-
-                const userId = localStorage.getItem('discord_user_id');
-                obterAdminsAutorizados().then(adminsAtuais => {
-                    const eAdminLogado = userId && adminsAtuais.includes(userId);
-
-                    midias.forEach(m => {
-                        let botaoExcluir = eAdminLogado ? `
-                            <div class="admin-buttons-card" style="top: 10px; right: 10px;">
-                                <button class="btn-card-action btn-excluir-midia" onclick="excluirMidia(${m.id})" title="Excluir Mídia">&times;</button>
-                            </div>
-                        ` : '';
-
-                        if (m.tipo === 'foto') {
-                            fotosHtml += `
-                                <div class="media-card">
-                                    ${botaoExcluir}
-                                    <div class="media-preview" onclick="abrirModalZoom('${m.url}', '${m.titulo.replace(/'/g, "\\'")}')">
-                                        <img src="${m.url}" alt="${m.titulo}" loading="lazy">
-                                    </div>
-                                    <div class="media-info">
-                                        <h4>${m.titulo}</h4>
-                                        <p>Registro fotográfico das operações do Clã Senju.</p>
-                                    </div>
-                                </div>
-                            `;
-                        } else {
-                            let embedUrl = m.url;
-                            if (m.url.includes('youtube.com/watch?v=')) {
-                                embedUrl = m.url.replace('watch?v=', 'embed/');
-                            } else if (m.url.includes('youtu.be/')) {
-                                embedUrl = m.url.replace('youtu.be/', 'www.youtube.com/embed/');
-                            }
-
-                            videosHtml += `
-                                <div class="media-card">
-                                    ${botaoExcluir}
-                                    <div class="media-preview">
-                                        <iframe src="${embedUrl}" title="${m.titulo}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-                                    </div>
-                                    <div class="media-info">
-                                        <h4>${m.titulo}</h4>
-                                        <p>Confronto ou momento épico gravado.</p>
-                                    </div>
-                                </div>
-                            `;
-                        }
-                    });
-
-                    if (secaoFotos) secaoFotos.innerHTML = fotosHtml || '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>';
-                    if (secaoVideos) secaoVideos.innerHTML = videosHtml || '<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>';
+                    document.getElementById('nomeDiscord').value = username;
+                    document.getElementById('nomeJogo').value = membroEncontrado ? membroEncontrado.nome_jogo : "";
+                    modalRelatorio.style.display = 'flex';
+                    carregarWebhookNoPopup('relatorio');
                 });
             });
         }
 
-        function excluirMidia(id) {
-            if (confirm("Tem certeza que deseja excluir esta mídia?")) {
-                supabaseClient.from('midias').delete().eq('id', id).then(({ error }) => {
-                    if (error) {
-                        mostrarAviso('Erro ao excluir mídia.', 'erro');
-                        return;
-                    }
-                    mostrarAviso('Mídia excluída com sucesso!');
-                    carregarMidias();
-                });
+        function fecharModalRelatorio() { modalRelatorio.style.display = 'none'; }
+
+        function enviarRelatorio(event) {
+            event.preventDefault();
+            const btnEnviar = document.getElementById('btnEnviarRelatorio');
+            btnEnviar.disabled = true;
+            btnEnviar.innerText = "Enviando relatório...";
+
+            const nomeJogo = document.getElementById('nomeJogo').value.trim();
+            const nomeDiscord = document.getElementById('nomeDiscord').value.trim();
+            const textoRelatorio = document.getElementById('textoRelatorio').value.trim();
+            const arquivoInput = document.getElementById('fotosRelatorio');
+            const linkVideo = document.getElementById('linkVideo').value.trim();
+            const userId = localStorage.getItem('discord_user_id');
+            let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
+
+            let camposEmbed = [
+                { name: "👤 Shinobi", value: `**${nomeJogo}** (${mencaoDiscord})`, inline: true },
+                { name: "📋 Descrição da Missão", value: textoRelatorio, inline: false }
+            ];
+
+            if (linkVideo) {
+                camposEmbed.push({ name: "🎥 Vídeo de Comprovação", value: linkVideo, inline: false });
             }
+
+            let qtdAnexos = arquivoInput.files ? arquivoInput.files.length : 0;
+            if (qtdAnexos > 0) {
+                camposEmbed.push({ name: "🖼️️ Evidências Anexadas", value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`, inline: false });
+            }
+
+            const payloadDiscord = {
+                embeds: [
+                    {
+                        title: "📜 NOVO RELATÓRIO DE MISSÃO REGISTRADO",
+                        description: "Um shinobi concluiu sua tarefa e enviou o relatório para análise do comando.",
+                        color: 12713992,
+                        fields: camposEmbed,
+                        footer: { text: "Clã Senju • A Vontade do Fogo" },
+                        timestamp: new Date().toISOString()
+                    }
+                ]
+            };
+
+            const formData = new FormData();
+            formData.append('payload_json', JSON.stringify(payloadDiscord));
+
+            if (arquivoInput.files && arquivoInput.files.length > 0) {
+                for (let i = 0; i < arquivoInput.files.length; i++) {
+                    formData.append(`files[${i}]`, arquivoInput.files[i]);
+                }
+            }
+
+            obterWebhookUrl('relatorio').then(webhookUrl => {
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (response.ok) {
+                        mostrarAviso(`Relatório enviado com sucesso, ${nomeJogo}!`);
+                        fecharModalRelatorio();
+                        document.getElementById('formRelatorio').reset();
+                    } else {
+                        mostrarAviso('Erro ao enviar relatório.', 'erro');
+                    }
+                })
+                .catch(() => mostrarAviso('Erro de conexão.', 'erro'))
+                .finally(() => {
+                    let segundosRestantes = 5;
+                    btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
+                    let intervalo = setInterval(() => {
+                        segundosRestantes--;
+                        if (segundosRestantes > 0) {
+                            btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
+                        } else {
+                            clearInterval(intervalo);
+                            btnEnviar.disabled = false;
+                            btnEnviar.innerText = "Enviar Relatório";
+                        }
+                    }, 1000);
+                });
+            });
         }
 
-        function mudarAba(aba, event) {
+        const modalAdmin = document.getElementById('modalAdmin');
+        
+        function abrirModalAdmin() { 
+            const userId = localStorage.getItem('discord_user_id');
+            obterAdminsAutorizados().then(adminsAtuais => {
+                if (!userId || !adminsAtuais.includes(userId)) {
+                    mostrarAviso('Acesso negado!', 'erro');
+                    return;
+                }
+                modalAdmin.style.display = 'flex'; 
+            });
+        }
+
+        function fecharModalAdmin() { modalAdmin.style.display = 'none'; }
+
+        window.onclick = function(event) {
+            if (event.target == modalRelatorio) fecharModalRelatorio();
+            if (event.target == modalAdmin) fecharModalAdmin();
+            if (event.target == modalMembro) fecharModalMembro();
+            if (event.target == modalRecompensa) fecharModalRecompensa();
+            if (event.target == modalSorteio) fecharSorteio();
+            if (event.target == modalDetalhesMembro) fecharModalDetalhesMembro();
+            if (event.target == modalMotivoNegacao) fecharModalNegacao();
+            if (event.target == modalNotificacoesAdmin) fecharPainelNotificacoes();
+        }
+
+        function mudarAba(tipo, event) {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
-            const botoesTab = document.querySelectorAll('.tab-btn');
+            const botoes = document.querySelectorAll('.tab-btn');
 
-            botoesTab.forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            botoes.forEach(btn => btn.classList.remove('active'));
+            event.currentTarget.classList.add('active');
 
-            if (aba === 'fotos') {
+            if (tipo === 'fotos') {
                 secaoFotos.style.display = 'grid';
                 secaoVideos.style.display = 'none';
             } else {
                 secaoFotos.style.display = 'none';
                 secaoVideos.style.display = 'grid';
-            }
-        }
-
-        function abrirModalMembro() {
-            document.getElementById('idMembroEdicao').value = '';
-            document.getElementById('tituloModalMembro').innerText = "Cadastrar Membro no Clã";
-            document.getElementById('btnSalvarMembroTexto').innerText = "Cadastrar Membro";
-            document.getElementById('formMembro').reset();
-            document.getElementById('modalMembro').style.display = 'flex';
-        }
-
-        function abrirModalEditarMembro(id) {
-            const membro = listaMembrosCache.find(m => m.id === id);
-            if (!membro) return;
-
-            document.getElementById('idMembroEdicao').value = membro.id;
-            document.getElementById('nomeJogoMembro').value = membro.nome_jogo;
-            document.getElementById('idMembroDiscord').value = membro.discord_id;
-            document.getElementById('graduacaoMembro').value = membro.graduacao;
-            document.getElementById('cargoEspecialMembro').value = membro.cargo_especial || '';
-            document.getElementById('trabalhoMembro').value = membro.trabalho || '';
-            document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
-
-            document.getElementById('tituloModalMembro').innerText = "Editar Membro";
-            document.getElementById('btnSalvarMembroTexto').innerText = "Salvar Alterações";
-            document.getElementById('modalMembro').style.display = 'flex';
-        }
-
-        function fecharModalMembro() {
-            document.getElementById('modalMembro').style.display = 'none';
-        }
-
-        function salvarMembro(event) {
-            event.preventDefault();
-            if (salvandoMembroEmAndamento) return;
-            salvandoMembroEmAndamento = true;
-
-            const idEdicao = document.getElementById('idMembroEdicao').value;
-            const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
-            const discord_id = document.getElementById('idMembroDiscord').value.trim();
-            const graduacao = document.getElementById('graduacaoMembro').value;
-            const cargo_especial = document.getElementById('cargoEspecialMembro').value;
-            const trabalho = document.getElementById('trabalhoMembro').value;
-            const e_admin = document.getElementById('checkAdminMembro').checked;
-
-            const dadosMembro = {
-                nome_jogo,
-                discord_id,
-                graduacao,
-                cargo_especial: cargo_especial ? cargo_especial : null,
-                trabalho: trabalho ? trabalho : null,
-                e_admin
-            };
-
-            let operacao;
-            if (idEdicao) {
-                operacao = supabaseClient.from('membros').update(dadosMembro).eq('id', idEdicao);
-            } else {
-                operacao = supabaseClient.from('membros').insert([dadosMembro]);
-            }
-
-            operacao.then(({ error }) => {
-                salvandoMembroEmAndamento = false;
-                if (error) {
-                    console.error("Erro ao salvar membro:", error);
-                    mostrarAviso('Erro ao salvar membro. Verifique os dados.', 'erro');
-                    return;
-                }
-
-                mostrarAviso(idEdicao ? 'Membro atualizado com sucesso!' : 'Membro cadastrado com sucesso!');
-                fecharModalMembro();
-                carregarMembros();
-                verificarPermissaoAdmin();
-            }).catch(err => {
-                salvandoMembroEmAndamento = false;
-                console.error("Erro inesperado:", err);
-                mostrarAviso('Erro inesperado ao salvar.', 'erro');
-            });
-        }
-
-        function excluirMembro(id) {
-            if (confirm("Tem certeza que deseja remover este membro do clã?")) {
-                supabaseClient.from('membros').delete().eq('id', id).then(({ error }) => {
-                    if (error) {
-                        mostrarAviso('Erro ao excluir membro.', 'erro');
-                        return;
-                    }
-                    mostrarAviso('Membro excluído com sucesso!');
-                    carregarMembros();
-                    verificarPermissaoAdmin();
-                });
             }
         }
     </script>
