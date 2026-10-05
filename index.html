@@ -1805,7 +1805,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             document.getElementById('resTempoTotal').innerText = `${minutos} min`;
             document.getElementById('resAtivacoes').innerText = `${ativacoes}x`;
-            document.getElementById('resCusto\u2019') = `400 Ryos`; // Mantém o custo fixo de 400 Ryos por treino do Guy
             document.getElementById('resCusto').innerText = `400 Ryos`;
         }
 
@@ -3196,7 +3195,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             let qtdAnexos = arquivoInput.files ? arquivoInput.files.length : 0;
             if (qtdAnexos > 0) {
-                camposEmbed.push({ name: "🖼️️ Evidências Anexadas", value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`, inline: false });
+                camposEmbed.push({ name: "🖼 Evidências Anexadas", value: `${qtdAnexos} print(s) enviado(s) em anexo abaixo.`, inline: false });
             }
 
             const payloadDiscord = {
