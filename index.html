@@ -1628,10 +1628,53 @@
         <img src="https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png" alt="Símbolo Clã Senju">
     </div>
 
-    <!-- HERO SECTION -->
-    <section id="inicio" class="hero">
-        <h1>Onde a Folha Dança, há o <span>Fogo</span></h1>
-        <p>A raiz que sustenta Konoha sob a liderança implacável e estratégica do Nidaime. Força, tática e união.</p>
+    <!-- HERO SECTION
+         A arte original fica no próprio repositório do GitHub.
+         Não depende de Postimages e não é ampliada além da resolução original. -->
+    <section id="inicio" class="hero senju-hero-v2 senju-hero-local" aria-label="Clã Senju">
+        <img
+            class="senju-hero-local-image"
+            src="./assets/senju-hero.png"
+            alt="Clã Senju - A vontade do fogo ainda arde"
+            width="1280"
+            height="289"
+            decoding="async"
+            fetchpriority="high"
+        >
+    </section>
+
+    <section class="senju-stats-strip" aria-label="Resumo do clã">
+        <div class="senju-stat-card">
+            <span class="senju-stat-icon">👥</span>
+            <div>
+                <strong id="dashboard-membros">0</strong>
+                <span>Membros do Clã</span>
+            </div>
+        </div>
+
+        <div class="senju-stat-card">
+            <span class="senju-stat-icon">📸</span>
+            <div>
+                <strong id="dashboard-fotos">0</strong>
+                <span>Fotos das Missões</span>
+            </div>
+        </div>
+
+        <div class="senju-stat-card">
+            <span class="senju-stat-icon">🎥</span>
+            <div>
+                <strong id="dashboard-videos">0</strong>
+                <span>Vídeos e Confrontos</span>
+            </div>
+        </div>
+
+        <div class="senju-stat-card">
+            <span class="senju-stat-icon">💰</span>
+            <div>
+                <strong>MISSÃO</strong>
+                <span>Recompensas Kage</span>
+            </div>
+        </div>
     </section>
 
     <!-- LIDERANÇA -->
@@ -2820,6 +2863,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 if (contadorMembros) {
                     contadorMembros.textContent = listaMembrosCache.length;
                     contadorMembros.title = `${listaMembrosCache.length} membro(s) no clã`;
+                    const dashboardMembros = document.getElementById('dashboard-membros');
+                    if (dashboardMembros) dashboardMembros.textContent = listaMembrosCache.length;
                 }
 
                 renderizarPaginaMembros();
@@ -3304,6 +3349,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 document.getElementById('contador-fotos').textContent = fotosCache.length;
                 document.getElementById('contador-videos').textContent = videosCache.length;
 
+                const dashboardFotos = document.getElementById('dashboard-fotos');
+                const dashboardVideos = document.getElementById('dashboard-videos');
+                if (dashboardFotos) dashboardFotos.textContent = fotosCache.length;
+                if (dashboardVideos) dashboardVideos.textContent = videosCache.length;
+
                 obterAdminsAutorizados().then(adminsAtuais => {
                     const userId = localStorage.getItem('discord_user_id');
                     adminMidiasAtual = !!(userId && adminsAtuais.includes(userId));
@@ -3317,6 +3367,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 videosCache = [];
                 document.getElementById('contador-fotos').textContent = '0';
                 document.getElementById('contador-videos').textContent = '0';
+                const dashboardFotos = document.getElementById('dashboard-fotos');
+                const dashboardVideos = document.getElementById('dashboard-videos');
+                if (dashboardFotos) dashboardFotos.textContent = '0';
+                if (dashboardVideos) dashboardVideos.textContent = '0';
                 renderizarPaginaMidia('fotos');
                 renderizarPaginaMidia('videos');
             });
@@ -3991,4 +4045,1179 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         height: 210px;
     }
 }
+
+        /* =========================================================
+           IDENTIDADE VISUAL SENJU V2
+           Camadas visuais adicionadas sem alterar a lógica do site.
+           ========================================================= */
+
+        :root {
+            --senju-black: #090604;
+            --senju-panel: #110a06;
+            --senju-panel-2: #160d07;
+            --senju-gold-soft: #e0bd63;
+            --senju-gold-dim: rgba(194,155,56,.28);
+            --senju-red-dark: #7d1212;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 50% -12%, rgba(194,155,56,.10), transparent 34%),
+                radial-gradient(circle at 4% 70%, rgba(111,26,12,.10), transparent 30%),
+                linear-gradient(135deg, #0c0704 0%, #130a06 48%, #080504 100%);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: -1;
+            opacity: .20;
+            background-image:
+                linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.012) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: linear-gradient(to bottom, black, transparent 88%);
+        }
+
+        header {
+            height: 72px;
+            padding: 0 22px;
+            background:
+                linear-gradient(180deg, rgba(8,5,3,.99), rgba(17,9,5,.97));
+            border-bottom-color: rgba(194,155,56,.50);
+            box-shadow: 0 10px 35px rgba(0,0,0,.55);
+        }
+
+        .logo {
+            background: linear-gradient(145deg, rgba(194,155,56,.10), rgba(255,255,255,.018));
+            border-color: rgba(194,155,56,.30);
+            box-shadow:
+                inset 0 0 24px rgba(194,155,56,.035),
+                0 0 25px rgba(0,0,0,.20);
+        }
+
+        .header-identity {
+            opacity: .94;
+        }
+
+        .identity-text {
+            color: rgba(232,215,175,.88);
+            letter-spacing: 2px;
+        }
+
+        .senju-sidebar {
+            width: 292px;
+            padding: 22px 15px 20px;
+            background:
+                radial-gradient(circle at 15% 8%, rgba(194,155,56,.11), transparent 27%),
+                radial-gradient(circle at 90% 92%, rgba(125,18,18,.07), transparent 26%),
+                linear-gradient(180deg, rgba(10,6,4,.995), rgba(13,7,4,.995));
+            border-right-color: rgba(194,155,56,.34);
+        }
+
+        .sidebar-head {
+            padding: 7px 8px 20px;
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            letter-spacing: 2.8px;
+        }
+
+        .sidebar-section-label {
+            color: rgba(224,189,99,.70);
+            letter-spacing: 1.9px;
+        }
+
+        .sidebar-link {
+            min-height: 46px;
+            border-radius: 10px;
+            font-size: .90rem;
+        }
+
+        .sidebar-link:hover {
+            transform: translateX(3px);
+            box-shadow: inset 3px 0 0 rgba(194,155,56,.48);
+        }
+
+        .admin-sidebar-list {
+            border-color: rgba(194,155,56,.18);
+            background: linear-gradient(145deg, rgba(194,155,56,.035), rgba(0,0,0,.10));
+            padding: 5px;
+        }
+
+        .banner-topo {
+            display: none;
+        }
+
+        .senju-hero-v2 {
+            position: relative;
+            max-width: 1220px;
+            min-height: 305px;
+            margin: 104px auto 22px;
+            padding: 42px 55px;
+            display: grid;
+            grid-template-columns: 250px 1fr 100px;
+            align-items: center;
+            gap: 28px;
+            text-align: left;
+            overflow: hidden;
+            border: 1px solid rgba(194,155,56,.48);
+            border-radius: 13px;
+            background:
+                radial-gradient(circle at 15% 50%, rgba(194,155,56,.12), transparent 25%),
+                radial-gradient(circle at 83% 25%, rgba(125,18,18,.18), transparent 30%),
+                linear-gradient(110deg, rgba(5,3,2,.98), rgba(27,12,7,.90) 52%, rgba(9,5,3,.98));
+            box-shadow:
+                0 24px 55px rgba(0,0,0,.58),
+                inset 0 0 50px rgba(194,155,56,.025);
+        }
+
+        .senju-hero-v2::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(105deg, transparent 0%, rgba(194,155,56,.04) 45%, transparent 75%);
+            pointer-events: none;
+        }
+
+        .senju-hero-emblem {
+            width: 220px;
+            height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 1px solid rgba(194,155,56,.25);
+            background: radial-gradient(circle, rgba(194,155,56,.08), rgba(0,0,0,.25) 68%);
+            box-shadow: inset 0 0 35px rgba(194,155,56,.07), 0 0 35px rgba(0,0,0,.35);
+        }
+
+        .senju-hero-emblem img {
+            width: 82%;
+            height: 82%;
+            object-fit: contain;
+            filter: drop-shadow(0 12px 18px rgba(0,0,0,.72));
+        }
+
+        .senju-hero-copy {
+            position: relative;
+            z-index: 1;
+        }
+
+        .senju-kicker {
+            display: inline-block;
+            margin-bottom: 12px;
+            color: var(--senju-gold-soft);
+            font-size: .70rem;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+        }
+
+        .senju-hero-copy h1 {
+            margin: 0 0 4px;
+            font-family: 'Cinzel', serif;
+            font-size: clamp(2.6rem, 5vw, 4.3rem);
+            line-height: .98;
+            letter-spacing: 4px;
+            color: #f4e9d2;
+            text-shadow: 0 5px 25px rgba(0,0,0,.7);
+        }
+
+        .senju-hero-copy h1 span {
+            color: var(--senju-red);
+            text-shadow: 0 0 20px rgba(217,20,20,.30);
+        }
+
+        .senju-hero-copy h2 {
+            margin: 14px 0 14px;
+            color: #d9b55c;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            letter-spacing: 2px;
+        }
+
+        .senju-hero-copy p {
+            max-width: 670px;
+            color: #cfc3b5;
+            font-family: 'MedievalSharp', cursive;
+            font-size: 1.04rem;
+            line-height: 1.55;
+        }
+
+        .senju-hero-line {
+            width: min(460px, 80%);
+            height: 1px;
+            margin: 18px 0 9px;
+            background: linear-gradient(90deg, rgba(194,155,56,.75), transparent);
+        }
+
+        .senju-hero-copy small {
+            color: rgba(224,189,99,.64);
+            letter-spacing: 1.8px;
+            font-size: .72rem;
+            text-transform: uppercase;
+        }
+
+        .senju-hero-mark {
+            align-self: center;
+            justify-self: end;
+            color: rgba(194,155,56,.22);
+            font-family: serif;
+            font-size: 7rem;
+            line-height: 1;
+            text-shadow: 0 0 35px rgba(194,155,56,.12);
+        }
+
+        .senju-stats-strip {
+            width: min(1180px, calc(100% - 40px));
+            margin: 0 auto 16px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 13px;
+        }
+
+        .senju-stat-card {
+            min-height: 88px;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 15px 17px;
+            border: 1px solid rgba(194,155,56,.34);
+            border-radius: 10px;
+            background:
+                linear-gradient(145deg, rgba(25,13,7,.92), rgba(10,6,4,.92));
+            box-shadow: 0 12px 28px rgba(0,0,0,.34), inset 0 0 25px rgba(194,155,56,.018);
+            transition: transform .2s ease, border-color .2s ease;
+        }
+
+        .senju-stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(194,155,56,.58);
+        }
+
+        .senju-stat-icon {
+            width: 43px;
+            height: 43px;
+            flex: 0 0 43px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            border: 1px solid rgba(194,155,56,.28);
+            background: rgba(194,155,56,.07);
+            font-size: 1.2rem;
+        }
+
+        .senju-stat-card strong {
+            display: block;
+            color: #f4e5c5;
+            font-family: 'Cinzel', serif;
+            font-size: 1.35rem;
+            line-height: 1.1;
+        }
+
+        .senju-stat-card div span {
+            display: block;
+            margin-top: 4px;
+            color: #8f8377;
+            font-size: .72rem;
+            letter-spacing: .4px;
+        }
+
+        .container {
+            max-width: 1180px;
+            padding: 54px 20px;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            letter-spacing: 1px;
+            color: #eee2ca;
+        }
+
+        .section-title::after {
+            width: 72px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--senju-gold), transparent);
+        }
+
+        .leader-card,
+        .calculator-card,
+        .media-card,
+        .member-card {
+            background:
+                linear-gradient(145deg, rgba(25,13,7,.92), rgba(10,6,4,.94));
+            border-color: rgba(194,155,56,.28);
+            box-shadow: 0 15px 32px rgba(0,0,0,.38), inset 0 0 25px rgba(194,155,56,.015);
+        }
+
+        .gallery-nav {
+            margin-bottom: 22px;
+        }
+
+        .tab-btn {
+            border-radius: 9px;
+            min-height: 42px;
+        }
+
+        .media-card {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .media-info {
+            background: linear-gradient(180deg, rgba(19,10,6,.96), rgba(9,5,3,.98));
+        }
+
+        .pagination-container {
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-page {
+            border-radius: 8px;
+        }
+
+        @media (max-width: 900px) {
+            .senju-hero-v2 {
+                grid-template-columns: 170px 1fr;
+                padding: 34px 30px;
+            }
+
+            .senju-hero-emblem {
+                width: 155px;
+                height: 155px;
+            }
+
+            .senju-hero-mark {
+                display: none;
+            }
+
+            .senju-stats-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 650px) {
+            .senju-hero-v2 {
+                margin-top: 82px;
+                min-height: 0;
+                grid-template-columns: 1fr;
+                padding: 28px 22px;
+                text-align: center;
+            }
+
+            .senju-hero-emblem {
+                width: 145px;
+                height: 145px;
+                margin: 0 auto;
+            }
+
+            .senju-kicker {
+                font-size: .60rem;
+                letter-spacing: 1.4px;
+            }
+
+            .senju-hero-copy h1 {
+                font-size: 2.35rem;
+            }
+
+            .senju-hero-copy h2 {
+                font-size: .82rem;
+            }
+
+            .senju-hero-line {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .senju-stats-strip {
+                width: calc(100% - 24px);
+                grid-template-columns: 1fr 1fr;
+                gap: 9px;
+            }
+
+            .senju-stat-card {
+                min-height: 78px;
+                padding: 11px;
+                gap: 9px;
+            }
+
+            .senju-stat-icon {
+                width: 35px;
+                height: 35px;
+                flex-basis: 35px;
+                font-size: 1rem;
+            }
+
+            .senju-stat-card strong {
+                font-size: 1.05rem;
+            }
+
+            .senju-stat-card div span {
+                font-size: .63rem;
+            }
+        }
+
+
+        /* =========================================================
+           SENJU VISUAL SYSTEM V3
+           O restante da página agora segue a mesma linguagem do hero.
+           ========================================================= */
+
+        main {
+            position: relative;
+        }
+
+        main > .container {
+            position: relative;
+            max-width: 1180px;
+            margin: 34px auto;
+            padding: 34px 28px 38px;
+            border: 1px solid rgba(194,155,56,.20);
+            border-radius: 14px;
+            background:
+                linear-gradient(145deg, rgba(20,10,6,.90), rgba(9,5,3,.94));
+            box-shadow:
+                0 20px 50px rgba(0,0,0,.35),
+                inset 0 1px 0 rgba(255,255,255,.018);
+            overflow: hidden;
+        }
+
+        main > .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(194,155,56,.65), transparent);
+            opacity: .75;
+        }
+
+        main > .container::after {
+            content: '✦';
+            position: absolute;
+            right: 22px;
+            top: 16px;
+            color: rgba(194,155,56,.18);
+            font-size: 1.1rem;
+        }
+
+        main > .container + .container {
+            margin-top: 24px;
+        }
+
+        .section-title {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin: 0 0 27px;
+            padding-bottom: 15px;
+            font-family: 'Cinzel', serif;
+            font-size: clamp(1.45rem, 2.2vw, 2rem);
+            letter-spacing: 1.2px;
+            color: #f0e1c2;
+        }
+
+        .section-title::before {
+            content: '葉';
+            display: inline-grid;
+            place-items: center;
+            width: 34px;
+            height: 34px;
+            margin-right: 9px;
+            border: 1px solid rgba(194,155,56,.32);
+            border-radius: 8px;
+            color: rgba(224,189,99,.82);
+            background: rgba(194,155,56,.055);
+            font-size: .95rem;
+            opacity: .9;
+        }
+
+        .section-title::after {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 110px;
+            height: 1px;
+            margin: 0;
+            background: linear-gradient(90deg, rgba(194,155,56,.75), transparent);
+        }
+
+        /* COMANDO */
+        #sobre {
+            background:
+                radial-gradient(circle at 85% 10%, rgba(125,18,18,.08), transparent 25%),
+                linear-gradient(145deg, rgba(20,10,6,.94), rgba(9,5,3,.96));
+        }
+
+        .leadership-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 0;
+        }
+
+        .leader-card {
+            position: relative;
+            min-height: 180px;
+            padding: 26px 28px 24px;
+            text-align: left;
+            border: 1px solid rgba(194,155,56,.28);
+            border-radius: 11px;
+            background:
+                linear-gradient(135deg, rgba(30,15,8,.96), rgba(12,7,4,.96));
+            box-shadow: inset 0 0 30px rgba(194,155,56,.018);
+            transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+        }
+
+        .leader-card::before {
+            content: '千';
+            position: absolute;
+            right: 18px;
+            top: 10px;
+            color: rgba(194,155,56,.08);
+            font-size: 4.5rem;
+            line-height: 1;
+        }
+
+        .leader-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(194,155,56,.52);
+            box-shadow: 0 15px 30px rgba(0,0,0,.28);
+        }
+
+        .leader-card h3 {
+            position: relative;
+            margin-bottom: 7px;
+            font-size: 1.25rem;
+            color: #f1dfbd;
+        }
+
+        .leader-card .cargo {
+            display: inline-block;
+            padding: 4px 9px;
+            border: 1px solid rgba(217,20,20,.28);
+            border-radius: 999px;
+            background: rgba(125,18,18,.12);
+            color: #d99a8f;
+            font-size: .70rem;
+            letter-spacing: .7px;
+            text-transform: uppercase;
+        }
+
+        .leader-card p {
+            position: relative;
+            max-width: 650px;
+            margin-top: 18px;
+            line-height: 1.65;
+            color: #93877b;
+        }
+
+        /* MEMBROS */
+        .members-controls-wrapper {
+            padding: 13px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(194,155,56,.16);
+            border-radius: 10px;
+            background: rgba(194,155,56,.025);
+        }
+
+        .search-box-container input {
+            height: 42px;
+            border-radius: 8px;
+            background: rgba(6,4,3,.72);
+            border-color: rgba(194,155,56,.25);
+        }
+
+        .members-grid {
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .member-card {
+            min-height: 145px;
+            padding: 17px;
+            border: 1px solid rgba(194,155,56,.20);
+            border-radius: 10px;
+            background:
+                linear-gradient(145deg, rgba(24,12,7,.92), rgba(9,5,3,.96));
+            box-shadow: 0 10px 22px rgba(0,0,0,.22);
+        }
+
+        .member-card:hover {
+            border-color: rgba(194,155,56,.55);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,.32);
+        }
+
+        .member-card h4 {
+            color: #ead9b9;
+        }
+
+        .section-counter {
+            box-shadow: inset 0 0 12px rgba(194,155,56,.05);
+        }
+
+        /* GALERIA */
+        #galeria {
+            background:
+                radial-gradient(circle at 10% 0%, rgba(194,155,56,.055), transparent 28%),
+                linear-gradient(145deg, rgba(20,10,6,.94), rgba(9,5,3,.96));
+        }
+
+        .admin-controls-media {
+            margin-bottom: 18px;
+        }
+
+        .gallery-nav {
+            width: fit-content;
+            max-width: 100%;
+            margin: 0 auto 22px;
+            padding: 5px;
+            border: 1px solid rgba(194,155,56,.18);
+            border-radius: 10px;
+            background: rgba(0,0,0,.20);
+        }
+
+        .tab-btn {
+            border: 1px solid transparent;
+            background: transparent;
+        }
+
+        .tab-btn.active {
+            box-shadow: 0 7px 22px rgba(194,155,56,.16);
+        }
+
+        .gallery-grid {
+            max-width: 1100px;
+        }
+
+        .media-card {
+            border-color: rgba(194,155,56,.22);
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(24,12,7,.96), rgba(9,5,3,.98));
+        }
+
+        .media-card:hover {
+            border-color: rgba(194,155,56,.52);
+            box-shadow: 0 15px 28px rgba(0,0,0,.32);
+        }
+
+        .media-info h4 {
+            color: #e8d8bb;
+        }
+
+        /* CALCULADORA */
+        #calculadora {
+            background:
+                radial-gradient(circle at 50% 0%, rgba(194,155,56,.07), transparent 30%),
+                linear-gradient(145deg, rgba(20,10,6,.94), rgba(9,5,3,.96));
+        }
+
+        .calculator-card {
+            max-width: 920px;
+            padding: 30px;
+            border: 1px solid rgba(194,155,56,.28);
+            border-radius: 12px;
+            background: linear-gradient(145deg, rgba(27,14,8,.94), rgba(9,5,3,.96));
+            box-shadow: 0 18px 35px rgba(0,0,0,.32);
+        }
+
+        .calculator-grid {
+            gap: 14px;
+        }
+
+        .calculator-card input,
+        .calculator-card select {
+            border-radius: 8px;
+            background: rgba(5,3,2,.72);
+            border-color: rgba(194,155,56,.24);
+        }
+
+        .calc-result-box {
+            margin-top: 18px;
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(194,155,56,.08), rgba(125,18,18,.035));
+        }
+
+        /* PAGINAÇÃO E CONTADORES */
+        .pagination-container {
+            padding-top: 4px;
+        }
+
+        .btn-page {
+            min-width: 110px;
+            border-radius: 8px;
+            background: rgba(194,155,56,.055);
+            border-color: rgba(194,155,56,.28);
+        }
+
+        .page-indicator {
+            min-width: 105px;
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid rgba(194,155,56,.14);
+            border-radius: 8px;
+            color: #a99a87;
+            background: rgba(0,0,0,.16);
+        }
+
+        /* ESCONDE A BORDA DE CONTAINER NO MOBILE PARA NÃO PESAR */
+        @media (max-width: 1000px) {
+            .members-grid {
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            main > .container {
+                width: calc(100% - 20px);
+                margin: 18px auto;
+                padding: 26px 17px 30px;
+                border-radius: 11px;
+            }
+
+            .leadership-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .members-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .gallery-nav {
+                width: 100%;
+                display: flex;
+            }
+
+            .tab-btn {
+                flex: 1;
+                min-width: 0;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .members-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+            }
+
+            .section-title::before {
+                width: 30px;
+                height: 30px;
+                font-size: .82rem;
+            }
+
+            .calculator-card {
+                padding: 20px 15px;
+            }
+        }
+
+
+        /* =========================================================
+           SENJU V4 - PROFUNDIDADE VISUAL
+           Daqui para baixo a identidade continua até o fim da página:
+           História, modais, painéis administrativos e rodapé.
+           ========================================================= */
+
+        /* HISTÓRIA: transforma a seção em uma verdadeira linha do tempo */
+        .historia-wrapper {
+            position: relative;
+            margin-top: 28px;
+            padding: 48px 20px 70px;
+            background:
+                radial-gradient(circle at 50% 5%, rgba(194,155,56,.08), transparent 25%),
+                linear-gradient(180deg, rgba(13,7,4,.98), rgba(8,5,3,1));
+            border-top: 1px solid rgba(194,155,56,.28);
+            border-bottom: 1px solid rgba(194,155,56,.28);
+            overflow: hidden;
+        }
+
+        .historia-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            background: linear-gradient(
+                180deg,
+                transparent,
+                rgba(194,155,56,.35) 10%,
+                rgba(194,155,56,.18) 90%,
+                transparent
+            );
+            pointer-events: none;
+        }
+
+        .historia-wrapper > .container {
+            max-width: 1180px;
+            margin: 0 auto 30px;
+            padding: 0 28px 24px;
+            background: transparent;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .historia-wrapper > .container::before,
+        .historia-wrapper > .container::after {
+            display: none;
+        }
+
+        .historia-container {
+            position: relative;
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        .historia-bloco {
+            position: relative;
+            width: calc(50% - 32px);
+            min-height: 190px;
+            margin: 0 0 30px 0;
+            padding: 14px;
+            display: flex;
+            align-items: stretch;
+            gap: 0;
+            border: 1px solid rgba(194,155,56,.25);
+            border-radius: 12px;
+            background:
+                linear-gradient(145deg, rgba(26,13,7,.96), rgba(9,5,3,.98));
+            box-shadow:
+                0 18px 32px rgba(0,0,0,.35),
+                inset 0 0 24px rgba(194,155,56,.018);
+            transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+        }
+
+        .historia-bloco:nth-child(even) {
+            margin-left: calc(50% + 32px);
+        }
+
+        .historia-bloco::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 11px;
+            height: 11px;
+            border: 2px solid #0b0704;
+            border-radius: 50%;
+            background: #d6ae51;
+            box-shadow: 0 0 0 4px rgba(194,155,56,.10), 0 0 18px rgba(194,155,56,.25);
+            transform: translateY(-50%);
+            z-index: 3;
+        }
+
+        .historia-bloco:nth-child(odd)::before {
+            right: -39px;
+        }
+
+        .historia-bloco:nth-child(even)::before {
+            left: -39px;
+        }
+
+        .historia-bloco:hover {
+            transform: translateY(-3px);
+            border-color: rgba(194,155,56,.52);
+            box-shadow:
+                0 22px 40px rgba(0,0,0,.42),
+                0 0 28px rgba(194,155,56,.045);
+        }
+
+        .historia-imagem {
+            flex: 0 0 235px;
+            height: 165px;
+            border: 1px solid rgba(194,155,56,.34);
+            border-radius: 8px;
+            box-shadow: inset 0 0 18px rgba(0,0,0,.35);
+        }
+
+        .historia-imagem img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform .35s ease, filter .35s ease;
+        }
+
+        .historia-bloco:hover .historia-imagem img {
+            transform: scale(1.035);
+            filter: brightness(1.06);
+        }
+
+        .historia-texto {
+            padding: 8px 16px;
+            align-self: center;
+        }
+
+        .historia-texto h3 {
+            margin-bottom: 10px;
+            color: #ead9b9;
+            font-family: 'Cinzel', serif;
+            font-size: 1.05rem;
+        }
+
+        .historia-texto p {
+            color: #978a7b;
+            line-height: 1.65;
+            font-size: .88rem;
+        }
+
+        /* RODAPÉ, caso exista */
+        footer {
+            position: relative;
+            margin-top: 0;
+            padding: 34px 24px;
+            border-top: 1px solid rgba(194,155,56,.26);
+            background:
+                radial-gradient(circle at 50% 0%, rgba(194,155,56,.06), transparent 32%),
+                linear-gradient(180deg, #0b0604, #060403);
+            color: #827568;
+            text-align: center;
+        }
+
+        footer::before {
+            content: '✦  SENJU CLAN  •  VONTADE DO FOGO  •  千  ✦';
+            display: block;
+            margin-bottom: 10px;
+            color: rgba(224,189,99,.60);
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+
+        /* MODAIS: deixam de parecer caixas antigas e viram parte da interface */
+        .modal-overlay {
+            background: rgba(2,1,1,.82);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            border: 1px solid rgba(194,155,56,.50);
+            border-radius: 13px;
+            background:
+                radial-gradient(circle at 90% 0%, rgba(125,18,18,.10), transparent 28%),
+                linear-gradient(145deg, rgba(22,11,6,.985), rgba(8,5,3,.99));
+            box-shadow:
+                0 30px 80px rgba(0,0,0,.72),
+                inset 0 1px 0 rgba(255,255,255,.025);
+        }
+
+        .modal-header {
+            border-bottom-color: rgba(194,155,56,.18);
+        }
+
+        .modal-header h2,
+        .modal-header h3 {
+            color: #eedfbe;
+            font-family: 'Cinzel', serif;
+        }
+
+        .modal-footer {
+            border-top-color: rgba(194,155,56,.15);
+        }
+
+        .modal-content input,
+        .modal-content select,
+        .modal-content textarea {
+            border-color: rgba(194,155,56,.22);
+            background: rgba(4,3,2,.72);
+            border-radius: 8px;
+        }
+
+        .modal-content input:focus,
+        .modal-content select:focus,
+        .modal-content textarea:focus {
+            border-color: rgba(224,189,99,.65);
+            box-shadow: 0 0 0 3px rgba(194,155,56,.07);
+            outline: none;
+        }
+
+        .modal-zoom-content {
+            border-color: rgba(194,155,56,.45);
+            background: #080504;
+            box-shadow: 0 30px 90px rgba(0,0,0,.80);
+        }
+
+        .modal-zoom-title {
+            color: #ecdcb9;
+        }
+
+        /* PAINÉIS DE ADMINISTRAÇÃO */
+        .recompensas-info-box,
+        .aviso-expiracao-painel {
+            border-color: rgba(194,155,56,.25);
+            border-radius: 9px;
+            background:
+                linear-gradient(145deg, rgba(194,155,56,.055), rgba(0,0,0,.12));
+        }
+
+        .admin-panel,
+        .admin-card,
+        .painel-admin,
+        .painel-recompensas,
+        .painel-avisos,
+        .painel-sorteio {
+            border-color: rgba(194,155,56,.24);
+            border-radius: 11px;
+            background:
+                linear-gradient(145deg, rgba(24,12,7,.96), rgba(8,5,3,.98));
+            box-shadow: 0 18px 35px rgba(0,0,0,.36);
+        }
+
+        /* Tabelas administrativas, quando presentes */
+        table {
+            border-color: rgba(194,155,56,.18);
+            background: rgba(8,5,3,.40);
+        }
+
+        th {
+            color: #e3c77f;
+            background: rgba(194,155,56,.055);
+            border-bottom-color: rgba(194,155,56,.22);
+        }
+
+        td {
+            color: #b0a294;
+            border-bottom-color: rgba(194,155,56,.10);
+        }
+
+        tr:hover td {
+            background: rgba(194,155,56,.025);
+        }
+
+        /* BOTÕES: mesma linguagem visual em áreas que ainda usavam o estilo antigo */
+        button,
+        .btn {
+            transition:
+                transform .18s ease,
+                border-color .18s ease,
+                box-shadow .18s ease,
+                filter .18s ease;
+        }
+
+        button:hover,
+        .btn:hover {
+            filter: brightness(1.06);
+        }
+
+        /* separadores longos da página */
+        hr {
+            border: 0;
+            height: 1px;
+            margin: 34px 0;
+            background: linear-gradient(90deg, transparent, rgba(194,155,56,.28), transparent);
+        }
+
+        @media (max-width: 900px) {
+            .historia-wrapper::before {
+                left: 18px;
+            }
+
+            .historia-bloco,
+            .historia-bloco:nth-child(even) {
+                width: calc(100% - 38px);
+                margin-left: 38px;
+            }
+
+            .historia-bloco:nth-child(odd)::before,
+            .historia-bloco:nth-child(even)::before {
+                left: -27px;
+                right: auto;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .historia-wrapper {
+                padding: 34px 10px 48px;
+            }
+
+            .historia-wrapper > .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+
+            .historia-bloco,
+            .historia-bloco:nth-child(even) {
+                width: calc(100% - 25px);
+                margin-left: 25px;
+                display: block;
+                padding: 11px;
+            }
+
+            .historia-imagem {
+                width: 100%;
+                height: 190px;
+            }
+
+            .historia-texto {
+                padding: 16px 7px 7px;
+            }
+
+            .historia-bloco:nth-child(odd)::before,
+            .historia-bloco:nth-child(even)::before {
+                left: -18px;
+                width: 9px;
+                height: 9px;
+            }
+        }
+
+
+        /* =========================================================
+           HERO SENJU - ARTE ORIGINAL LOCAL (GITHUB PAGES)
+           A imagem é exibida proporcionalmente para preservar nitidez.
+           ========================================================= */
+        .senju-hero-local {
+            display: block !important;
+            width: min(1280px, calc(100% - 24px));
+            max-width: 1280px;
+            min-height: 0 !important;
+            height: auto !important;
+            margin: 104px auto 22px;
+            padding: 0 !important;
+            overflow: hidden;
+            border: 1px solid rgba(194,155,56,.48);
+            border-radius: 12px;
+            background: #080504 !important;
+            box-shadow: 0 24px 55px rgba(0,0,0,.58), 0 0 35px rgba(194,155,56,.035);
+            grid-template-columns: none !important;
+        }
+
+        .senju-hero-local::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            box-shadow: inset 0 0 35px rgba(0,0,0,.22);
+        }
+
+        .senju-hero-local-image {
+            display: block;
+            width: 100%;
+            height: auto;
+            max-width: 1280px;
+            margin: 0;
+            padding: 0;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        @media (max-width: 650px) {
+            .senju-hero-local {
+                width: calc(100% - 16px);
+                margin-top: 78px;
+                border-radius: 9px;
+            }
+        }
+
 </style>
