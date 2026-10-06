@@ -71,170 +71,444 @@
             to { opacity: 0; transform: translateY(-10px); }
         }
 
-        /* HEADER / MENU ORGANIZADO */
+        /* =========================================================
+           MENU SENJU - SIDEBAR RETRÁTIL
+           Não depende da quantidade de botões administrativos.
+           ========================================================= */
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 3%;
-            background-color: rgba(26, 14, 8, 0.98);
-            border-bottom: 2px solid var(--senju-gold);
             position: fixed;
-            width: 100%;
             top: 0;
+            left: 0;
+            width: 100%;
+            height: 68px;
             z-index: 1000;
-            gap: 15px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 0 18px;
+            background:
+                linear-gradient(180deg, rgba(15, 8, 5, 0.985), rgba(24, 11, 7, 0.975));
+            border-bottom: 1px solid rgba(194, 155, 56, 0.72);
+            box-shadow: 0 7px 28px rgba(0,0,0,0.42);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        header::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 2px;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(194,155,56,0.45),
+                var(--senju-gold),
+                rgba(194,155,56,0.45),
+                transparent
+            );
+            opacity: 0.65;
+            pointer-events: none;
+        }
+
+        .menu-toggle {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(194,155,56,0.34);
+            border-radius: 9px;
+            background: rgba(194,155,56,0.055);
+            color: #f1dfaa;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: transform .2s ease, background .2s ease, border-color .2s ease;
+        }
+
+        .menu-toggle:hover {
+            transform: translateY(-1px);
+            background: rgba(194,155,56,0.13);
+            border-color: rgba(194,155,56,0.72);
         }
 
         .logo {
+            position: relative;
+            z-index: 1;
             font-family: 'Cinzel', serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--text-main);
-            letter-spacing: 2px;
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: #f5eee8;
+            letter-spacing: 2.5px;
             white-space: nowrap;
+            padding: 8px 14px;
+            border: 1px solid rgba(194,155,56,0.22);
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(194,155,56,0.07), rgba(255,255,255,0.015));
+            box-shadow: inset 0 0 18px rgba(194,155,56,0.03);
+        }
+
+        .logo::before {
+            content: '✦';
+            color: rgba(194,155,56,0.72);
+            font-size: 0.62rem;
+            margin-right: 7px;
+            vertical-align: 3px;
         }
 
         .logo span {
             color: var(--senju-red);
-            text-shadow: 0 0 10px rgba(217, 20, 20, 0.5);
+            text-shadow: 0 0 10px rgba(217,20,20,0.42);
         }
 
-        nav ul {
+        .header-spacer {
+            flex: 1;
+        }
+
+        .header-identity {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
             display: flex;
-            list-style: none;
-            gap: 8px;
             align-items: center;
-            flex-wrap: wrap;
-        }
-
-        nav a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 0.88rem;
-            transition: color 0.3s;
-            cursor: pointer;
-            padding: 5px 8px;
+            justify-content: center;
+            gap: 13px;
+            pointer-events: none;
             white-space: nowrap;
+            opacity: .82;
         }
 
-        nav a:hover {
-            color: var(--senju-red);
+        .identity-text {
+            color: rgba(224, 204, 159, 0.78);
+            font-family: 'Cinzel', serif;
+            font-size: .72rem;
+            font-weight: 800;
+            letter-spacing: 1.65px;
+            text-shadow: 0 0 12px rgba(194,155,56,0.10);
         }
 
-        /* BOTÕES DE AÇÃO DO MENU UNIFORMES E LIMPOS */
-        .btn-nav-base {
-            padding: 6px 12px;
-            border-radius: 4px;
+        .identity-text b {
+            color: rgba(194,155,56,0.52);
             font-weight: 700;
-            font-size: 0.85rem;
-            transition: transform 0.2s, opacity 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            text-decoration: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            padding: 0 3px;
         }
 
-        .btn-nav-base:hover {
-            transform: translateY(-2px);
-            opacity: 0.95;
+        .identity-line {
+            width: 42px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(194,155,56,0.50));
         }
 
-        .btn-nav-sorteio {
-            background-color: #8a2be2;
-            color: #fff !important;
-            display: none;
+        .identity-line:last-child {
+            background: linear-gradient(90deg, rgba(194,155,56,0.50), transparent);
         }
 
-        .btn-nav-semanal {
-            background: rgba(194, 155, 56, 0.15);
-            border: 1px solid var(--senju-gold);
-            color: var(--senju-gold) !important;
-            display: none;
-        }
-        .btn-nav-semanal:hover {
-            background: var(--senju-gold);
-            color: #0f0805 !important;
+        .admin-section-title {
+            color: #d8a944;
         }
 
-        .btn-nav-calculadora {
-            background-color: #ff8c00;
-            color: #fff !important;
+        .admin-section-title::before {
+            content: '⚔ ';
+            color: rgba(217,20,20,0.72);
         }
 
-        .btn-nav-recompensa {
-            background-color: #2e8b57;
-            color: #fff !important;
+        .admin-sidebar-list {
+            padding: 3px;
+            border: 1px solid rgba(194,155,56,0.13);
+            border-radius: 11px;
+            background: rgba(194,155,56,0.025);
         }
 
-        .btn-nav-relatorio {
-            background-color: var(--senju-gold);
-            color: #0f0805 !important;
-        }
-
-        /* LOGIN DISCRETO NO TOPO */
         .auth-container {
             display: flex;
             align-items: center;
-            gap: 10px;
+            justify-content: flex-end;
+            gap: 8px;
             white-space: nowrap;
-        }
-
-        .btn-discord-login {
-            background-color: #5865F2;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: background-color 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn-discord-login:hover {
-            background-color: #4752C4;
-        }
-
-        .btn-logout {
-            background-color: #d91414;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: none;
-            transition: background-color 0.2s;
-        }
-
-        .btn-logout:hover {
-            background-color: #b01010;
         }
 
         .user-status {
             color: var(--senju-gold);
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.82rem;
+            font-weight: 700;
+            max-width: 145px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        /* BANNER DO SÍMBOLO */
+        .btn-discord-login {
+            background: linear-gradient(135deg, #5865F2, #6975f4);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.10);
+            padding: 8px 13px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 700;
+            transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 13px rgba(0,0,0,0.25);
+        }
+
+        .btn-discord-login:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.07);
+            box-shadow: 0 7px 18px rgba(0,0,0,0.34);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #bd1515, #e02020);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 7px 11px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 0.76rem;
+            font-weight: 700;
+            display: none;
+        }
+
+        /* A gaveta lateral fica fora do fluxo e nunca comprime o conteúdo. */
+        .senju-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 286px;
+            z-index: 2000;
+            padding: 22px 14px 18px;
+            overflow-y: auto;
+            background:
+                radial-gradient(circle at 20% 8%, rgba(194,155,56,0.09), transparent 28%),
+                linear-gradient(180deg, rgba(21,10,6,0.99), rgba(13,7,5,0.995));
+            border-right: 1px solid rgba(194,155,56,0.38);
+            box-shadow: 14px 0 45px rgba(0,0,0,0.58);
+            transform: translateX(-105%);
+            transition: transform .28s cubic-bezier(.22,.61,.36,1);
+        }
+
+        .senju-sidebar.open {
+            transform: translateX(0);
+        }
+
+        .sidebar-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 4px 7px 18px;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(194,155,56,0.20);
+        }
+
+        .sidebar-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.16rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #f5eee8;
+        }
+
+        .sidebar-title span {
+            color: var(--senju-red);
+        }
+
+        .sidebar-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(194,155,56,0.25);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.025);
+            color: #e9d9b7;
+            font-size: 1.15rem;
+            cursor: pointer;
+        }
+
+        .sidebar-close:hover {
+            background: rgba(217,20,20,0.13);
+            border-color: rgba(217,20,20,0.5);
+        }
+
+        .sidebar-section-label {
+            padding: 14px 10px 6px;
+            color: rgba(194,155,56,0.66);
+            font-size: .67rem;
+            font-weight: 800;
+            letter-spacing: 1.6px;
+            text-transform: uppercase;
+        }
+
+        .sidebar-list {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .sidebar-list li {
+            margin: 3px 0;
+        }
+
+        .sidebar-link {
+            position: relative;
+            width: 100%;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 9px 12px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: #d7cec7;
+            background: transparent;
+            text-decoration: none;
+            font-size: .88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+            box-sizing: border-box;
+        }
+
+        .sidebar-link .sidebar-icon {
+            width: 23px;
+            text-align: center;
+            font-size: 1.02rem;
+            flex: 0 0 23px;
+        }
+
+        .sidebar-link:hover {
+            color: #fff;
+            background: rgba(194,155,56,0.075);
+            border-color: rgba(194,155,56,0.17);
+            transform: translateX(2px);
+        }
+
+        .sidebar-link.primary:hover {
+            background: linear-gradient(90deg, rgba(194,155,56,0.13), rgba(194,155,56,0.035));
+            border-color: rgba(194,155,56,0.28);
+        }
+
+        .sidebar-divider {
+            height: 1px;
+            margin: 13px 9px;
+            background: linear-gradient(90deg, transparent, rgba(194,155,56,0.30), transparent);
+        }
+
+        /* Ações especiais */
+        .sidebar-link.action-sorteio {
+            color: #f0d7ff;
+            background: linear-gradient(90deg, rgba(118,32,204,0.17), transparent);
+        }
+
+        .sidebar-link.action-resumo {
+            color: #e1bd58;
+            background: linear-gradient(90deg, rgba(194,155,56,0.12), transparent);
+        }
+
+        .sidebar-link.action-kage {
+            color: #bdf0ce;
+            background: linear-gradient(90deg, rgba(37,139,83,0.18), transparent);
+        }
+
+        .sidebar-link.action-relatorio {
+            color: #f1d37a;
+            background: linear-gradient(90deg, rgba(180,134,29,0.14), transparent);
+        }
+
+        .sidebar-link.action-sorteio:hover {
+            background: rgba(118,32,204,0.27);
+        }
+
+        .sidebar-link.action-resumo:hover,
+        .sidebar-link.action-relatorio:hover {
+            background: rgba(194,155,56,0.20);
+        }
+
+        .sidebar-link.action-kage:hover {
+            background: rgba(37,139,83,0.27);
+        }
+
+        /* Os IDs continuam sendo os mesmos para o JavaScript de permissões.
+           A visibilidade passa a controlar o item inteiro. */
+        #navBtnSorteio,
+        #navBtnSemanal {
+            display: none;
+        }
+
+        .sidebar-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1999;
+            background: rgba(0,0,0,0.48);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity .25s ease, visibility .25s ease;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+        }
+
+        .sidebar-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* O conteúdo continua começando abaixo do header, sem reservar espaço lateral. */
         .banner-topo {
             width: 100%;
             max-width: 500px;
-            margin: 110px auto 10px auto;
+            margin: 94px auto 10px auto;
             padding: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
             background: transparent;
         }
+
+        @media (max-width: 650px) {
+            header {
+                height: 62px;
+                padding: 0 10px;
+            }
+
+            .logo {
+                font-size: 1.02rem;
+                letter-spacing: 1.7px;
+                padding: 7px 9px;
+            }
+
+            .menu-toggle {
+                width: 38px;
+                height: 38px;
+                flex-basis: 38px;
+            }
+
+            .header-identity {
+                display: none;
+            }
+
+            .user-status {
+                display: none;
+            }
+
+            .btn-discord-login {
+                padding: 7px 9px;
+                font-size: .73rem;
+            }
+
+            .senju-sidebar {
+                width: min(286px, 86vw);
+            }
+
+            .banner-topo {
+                margin-top: 83px;
+            }
+        }
+
 
         .banner-topo img {
             width: 100%;
@@ -667,6 +941,74 @@
             font-size: 0.95rem;
         }
 
+        /* CONTADORES DE MEMBROS E MÍDIA */
+        .section-counter {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 28px;
+            padding: 3px 9px;
+            margin-left: 8px;
+            border: 1px solid rgba(194,155,56,0.35);
+            border-radius: 999px;
+            background: rgba(194,155,56,0.08);
+            color: var(--senju-gold);
+            font-family: Arial, sans-serif;
+            font-size: .72em;
+            font-weight: 800;
+            vertical-align: middle;
+            box-shadow: inset 0 0 10px rgba(194,155,56,0.03);
+        }
+
+        .media-pagination {
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+
+        .media-count-label {
+            display: block;
+            position: relative;
+            clear: both;
+            width: 100%;
+            box-sizing: border-box;
+            margin: 16px 0 4px;
+            padding: 0 10px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: .82rem;
+            line-height: 1.4;
+            z-index: 2;
+        }
+
+        .media-count-label:empty {
+            display: none;
+        }
+
+        .gallery-grid + .media-count-label {
+            min-height: 20px;
+        }
+
+        .media-pagination {
+            clear: both;
+            position: relative;
+            z-index: 2;
+            margin-top: 14px;
+        }
+
+        .tab-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            padding: 2px 7px;
+            margin-left: 5px;
+            border-radius: 999px;
+            background: rgba(194,155,56,0.13);
+            border: 1px solid rgba(194,155,56,0.24);
+            color: var(--senju-gold);
+            font-size: .78em;
+        }
+
         /* ÁLBUM / GALERIA DE MÍDIA */
         .gallery-nav {
             display: flex;
@@ -695,8 +1037,14 @@
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            align-items: stretch;
+            width: 100%;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
         }
 
         .media-card {
@@ -724,6 +1072,10 @@
             font-size: 0.9rem;
             border-bottom: 1px solid rgba(194, 155, 56, 0.2);
             cursor: pointer;
+            min-height: 190px;
+            max-height: 250px;
+            overflow: hidden;
+        }
         }
 
         .media-preview img, .media-preview iframe {
@@ -731,6 +1083,24 @@
             height: 100%;
             object-fit: cover;
             cursor: pointer;
+        }
+
+        .media-preview img,
+        .media-preview iframe {
+            display: block;
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+        }
+
+        .media-preview img {
+            cursor: zoom-in;
+            transition: transform .25s ease, filter .25s ease;
+        }
+
+        .media-preview:hover img {
+            transform: scale(1.025);
+            filter: brightness(1.04);
         }
 
         .media-info {
@@ -1117,21 +1487,8 @@
             font-weight: 600;
         }
 
-        @media (max-width: 950px) {
-            header {
-                flex-direction: column;
-                padding: 10px;
-                gap: 8px;
-            }
-            nav ul {
-                justify-content: center;
-            }
-            .banner-topo {
-                margin-top: 150px;
-            }
-        }
-
         @media (max-width: 768px) {
+
             .hero h1 { font-size: 2rem; }
             .historia-bloco {
                 flex-direction: column;
@@ -1157,28 +1514,114 @@
 
     <!-- MENU / HEADER -->
     <header>
+        <button class="menu-toggle" id="senjuMenuToggle" type="button"
+                onclick="toggleSenjuMenu()" aria-label="Abrir menu" aria-expanded="false">
+            ☰
+        </button>
+
         <div class="logo">CLÃ <span>SENJU</span></div>
-        <nav>
-            <ul>
-                <li><a href="#inicio">Início</a></li>
-                <li><a href="#sobre">Liderança</a></li>
-                <li><a href="#membros">Membros</a></li>
-                <li><a href="#galeria">Álbuns</a></li>
-                <li><a href="#calculadora">Calculadora</a></li>
-                <li><a href="#historia">História</a></li>
-                <li><a onclick="abrirSorteio()" class="btn-nav-base btn-nav-sorteio" id="navBtnSorteio">🎲 Sorteio</a></li>
-                <li><a onclick="enviarRelatorioSemanalWebhook()" class="btn-nav-base btn-nav-semanal" id="navBtnSemanal" title="Enviar Relatório Semanal (Apenas Domingo)">📊 Resumo</a></li>
-                <li><a onclick="tentarAbrirRecompensa()" class="btn-nav-base btn-nav-recompensa">💰 Missão Kage</a></li>
-                <li><a onclick="tentarAbrirRelatorio()" class="btn-nav-base btn-nav-relatorio">📋 Relatório</a></li>
-            </ul>
-        </nav>
-        <!-- Login Discreto no Canto Superior -->
+
+        <div class="header-spacer"></div>
+
+        <div class="header-identity" aria-label="Identidade do clã">
+            <span class="identity-line"></span>
+            <span class="identity-text">SENJU CLAN <b>//</b> NARUTO WORLD EVOLUTION</span>
+            <span class="identity-line"></span>
+        </div>
+
+        <div class="header-spacer"></div>
+
         <div class="auth-container">
             <span id="status-usuario" class="user-status"></span>
             <button id="btn-logout" class="btn-logout" onclick="deslogarDiscord()">Sair</button>
             <button id="btn-login" class="btn-discord-login" onclick="logarComDiscord()">🎮 Entrar Discord</button>
         </div>
     </header>
+
+    <div class="sidebar-backdrop" id="senjuSidebarBackdrop" onclick="fecharSenjuMenu()"></div>
+
+    <aside class="senju-sidebar" id="senjuSidebar" aria-label="Menu principal">
+        <div class="sidebar-head">
+            <div class="sidebar-title">CLÃ <span>SENJU</span></div>
+            <button class="sidebar-close" type="button" onclick="fecharSenjuMenu()" aria-label="Fechar menu">×</button>
+        </div>
+
+        <div class="sidebar-section-label">Navegação</div>
+        <ul class="sidebar-list">
+            <li>
+                <a class="sidebar-link primary" href="#inicio" onclick="fecharSenjuMenu()">
+                    <span class="sidebar-icon">🏠</span><span>Início</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link primary" href="#sobre" onclick="fecharSenjuMenu()">
+                    <span class="sidebar-icon">👑</span><span>Liderança</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link primary" href="#membros" onclick="fecharSenjuMenu()">
+                    <span class="sidebar-icon">👥</span><span>Membros</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link primary" href="#galeria" onclick="fecharSenjuMenu()">
+                    <span class="sidebar-icon">🖼️</span><span>Álbuns</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link primary" href="#calculadora" onclick="fecharSenjuMenu()">
+                    <span class="sidebar-icon">🧮</span><span>Calculadora</span>
+                </a>
+            </li>
+            <li>
+                <a class="sidebar-link primary" href="#historia" onclick="fecharSenjuMenu()">
+                    <span class="sidebar-icon">📜</span><span>História</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label">Ações do Clã</div>
+
+        <ul class="sidebar-list">
+            <li>
+                <a onclick="tentarAbrirRecompensa(); fecharSenjuMenu()"
+                   class="sidebar-link action-kage">
+                    <span class="sidebar-icon">💰</span><span>Missão Kage</span>
+                </a>
+            </li>
+
+            <li>
+                <a onclick="tentarAbrirRelatorio(); fecharSenjuMenu()"
+                   class="sidebar-link action-relatorio">
+                    <span class="sidebar-icon">📋</span><span>Relatório</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-section-label admin-section-title">Administrador</div>
+
+        <ul class="sidebar-list admin-sidebar-list">
+            <li>
+                <a onclick="abrirSorteio(); fecharSenjuMenu()"
+                   class="sidebar-link action-sorteio"
+                   id="navBtnSorteio">
+                    <span class="sidebar-icon">🎲</span><span>Sorteio</span>
+                </a>
+            </li>
+
+            <li>
+                <a onclick="enviarRelatorioSemanalWebhook(); fecharSenjuMenu()"
+                   class="sidebar-link action-resumo"
+                   id="navBtnSemanal"
+                   title="Enviar Relatório Semanal (Apenas Domingo)">
+                    <span class="sidebar-icon">📊</span><span>Resumo</span>
+                </a>
+            </li>
+        </ul>
+
+    </aside>
 
     <!-- BANNER DO SÍMBOLO -->
     <div class="banner-topo">
@@ -1210,7 +1653,7 @@
 
     <!-- SEÇÃO DE MEMBROS -->
     <div class="container" id="membros">
-        <h2 class="section-title">Membros do Clã</h2>
+        <h2 class="section-title">Membros do Clã <span id="contador-membros" class="section-counter">0</span></h2>
         
         <!-- Barra de Busca e Botão Adicionar -->
         <div class="members-controls-wrapper">
@@ -1244,18 +1687,34 @@
 
         <!-- Abas de Navegação (Fotos / Vídeos) -->
         <div class="gallery-nav">
-            <button class="tab-btn active" onclick="mudarAba('fotos', event)">📸 Fotos das Missões</button>
-            <button class="tab-btn" onclick="mudarAba('videos', event)">🎥 Vídeos e Confrontos</button>
+            <button class="tab-btn active" onclick="mudarAba('fotos', event)">
+                📸 Fotos das Missões <span id="contador-fotos" class="tab-count">0</span>
+            </button>
+            <button class="tab-btn" onclick="mudarAba('videos', event)">
+                🎥 Vídeos e Confrontos <span id="contador-videos" class="tab-count">0</span>
+            </button>
         </div>
 
         <!-- Seção de Fotos -->
         <div id="secao-fotos" class="gallery-grid">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando fotos...</p>
         </div>
+        <div id="info-paginacao-fotos" class="media-count-label"></div>
+        <div id="paginacao-fotos" class="pagination-container media-pagination" style="display:none;">
+            <button class="btn-page" id="btnFotosAnterior" onclick="mudarPaginaMidia('fotos', -1)">◀ Anterior</button>
+            <span id="indicadorFotos" class="page-indicator">Página 1 de 1</span>
+            <button class="btn-page" id="btnFotosProxima" onclick="mudarPaginaMidia('fotos', 1)">Próxima ▶</button>
+        </div>
 
         <!-- Seção de Vídeos -->
         <div id="secao-videos" class="gallery-grid" style="display: none;">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>
+        </div>
+        <div id="info-paginacao-videos" class="media-count-label" style="display:none;"></div>
+        <div id="paginacao-videos" class="pagination-container media-pagination" style="display:none;">
+            <button class="btn-page" id="btnVideosAnterior" onclick="mudarPaginaMidia('videos', -1)">◀ Anterior</button>
+            <span id="indicadorVideos" class="page-indicator">Página 1 de 1</span>
+            <button class="btn-page" id="btnVideosProxima" onclick="mudarPaginaMidia('videos', 1)">Próxima ▶</button>
         </div>
     </div>
 
@@ -1577,6 +2036,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 <div class="form-group">
                     <label for="fotosRecompensa">Prints das Missões (Selecione todos os prints segurando Ctrl):</label>
                     <input type="file" id="fotosRecompensa" accept="image/*" multiple required>
+                    <div id="avisoFotosRecompensa" style="margin-top: 8px; padding: 9px 11px; border-left: 3px solid rgba(194,155,56,0.75); background: rgba(194,155,56,0.07); color: var(--text-muted); font-size: 0.78rem; border-radius: 4px;">
+                        ℹ️ Apenas blocos completos de 5 prints são contabilizados. Prints excedentes serão descartados e não serão armazenados.
+                    </div>
                 </div>
 
                 <div class="modal-footer">
@@ -1771,6 +2233,56 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
     <!-- SCRIPTS -->
     <script>
+
+        /* MENU LATERAL SENJU */
+        function abrirSenjuMenu() {
+            const sidebar = document.getElementById('senjuSidebar');
+            const backdrop = document.getElementById('senjuSidebarBackdrop');
+            const toggle = document.getElementById('senjuMenuToggle');
+
+            if (!sidebar || !backdrop) return;
+
+            sidebar.classList.add('open');
+            backdrop.classList.add('show');
+            document.body.classList.add('senju-menu-open');
+
+            if (toggle) {
+                toggle.setAttribute('aria-expanded', 'true');
+                toggle.innerHTML = '✕';
+            }
+        }
+
+        function fecharSenjuMenu() {
+            const sidebar = document.getElementById('senjuSidebar');
+            const backdrop = document.getElementById('senjuSidebarBackdrop');
+            const toggle = document.getElementById('senjuMenuToggle');
+
+            if (!sidebar || !backdrop) return;
+
+            sidebar.classList.remove('open');
+            backdrop.classList.remove('show');
+            document.body.classList.remove('senju-menu-open');
+
+            if (toggle) {
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.innerHTML = '☰';
+            }
+        }
+
+        function toggleSenjuMenu() {
+            const sidebar = document.getElementById('senjuSidebar');
+            if (sidebar && sidebar.classList.contains('open')) {
+                fecharSenjuMenu();
+            } else {
+                abrirSenjuMenu();
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') fecharSenjuMenu();
+        });
+
+
         const SUPABASE_URL = "https://lloekbdprngyhoqtrykv.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxsb2VrYmRwcm5neWhvcXRyeWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTg5MDUsImV4cCI6MjEwNjE5NDkwNX0.ZMddhSZ1Al8Mc0bqErgmv7WBd6omFAhkA8d1b2818Bo";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1801,6 +2313,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         let paginaAtual = 1;
         const itensPorPagina = 8;
         let salvandoMembroEmAndamento = false;
+
+        // Paginação da galeria
+        let fotosCache = [];
+        let videosCache = [];
+        let paginaFotos = 1;
+        let paginaVideos = 1;
+        const fotosPorPagina = 12;
+        const videosPorPagina = 6;
+        let adminMidiasAtual = false;
 
         // CALCULADORA DO GUY (COM BASE NO ATUAL, META E 2 PONTOS POR ATIVAÇÃO)
         function calcularTreinoGuy() {
@@ -2294,6 +2815,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 membrosFiltradosCache = [...listaMembrosCache];
                 paginaAtual = 1;
+
+                const contadorMembros = document.getElementById('contador-membros');
+                if (contadorMembros) {
+                    contadorMembros.textContent = listaMembrosCache.length;
+                    contadorMembros.title = `${listaMembrosCache.length} membro(s) no clã`;
+                }
+
                 renderizarPaginaMembros();
             });
         }
@@ -2429,7 +2957,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                             let avisoSobraHtml = '';
                             if (missoesExcedentes > 0) {
-                                avisoSobraHtml = `<p style="font-size: 0.8rem; color: var(--senju-gold); margin-top: 2px;">ℹ ${missoesExcedentes} print(s) além do bloco serão acumulados para a próxima solicitação.</p>`;
+                                avisoSobraHtml = `<div style="font-size: 0.8rem; color: var(--senju-gold); margin-top: 8px; padding: 9px 10px; border-left: 3px solid var(--senju-gold); background: rgba(194,155,56,0.08); border-radius: 4px;">
+                                    ℹ️ Esta solicitação possui ${missoesExcedentes} print(s) além dos blocos completos de 5. Esses prints excedentes <b>não serão contabilizados, não geram Ryos e não serão acumulados para a próxima solicitação</b>.
+                                </div>`;
                             }
 
                             let printsHtml = '';
@@ -2763,68 +3293,133 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function carregarMidias() {
             const secaoFotos = document.getElementById('secao-fotos');
             const secaoVideos = document.getElementById('secao-videos');
-            if(!secaoFotos || !secaoVideos) return;
-            
-            supabaseClient.from('midias').select('*').order('id', { ascending: false }).then(({ data: midias }) => {
-                secaoFotos.innerHTML = '';
-                secaoVideos.innerHTML = '';
+            if (!secaoFotos || !secaoVideos) return;
 
-                if (!midias || midias.length === 0) {
-                    secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
-                    secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
-                    return;
+            supabaseClient.from('midias').select('*').order('id', { ascending: false }).then(({ data: midias }) => {
+                fotosCache = (midias || []).filter(m => m.tipo === 'foto');
+                videosCache = (midias || []).filter(m => m.tipo !== 'foto');
+                paginaFotos = 1;
+                paginaVideos = 1;
+
+                document.getElementById('contador-fotos').textContent = fotosCache.length;
+                document.getElementById('contador-videos').textContent = videosCache.length;
+
+                obterAdminsAutorizados().then(adminsAtuais => {
+                    const userId = localStorage.getItem('discord_user_id');
+                    adminMidiasAtual = !!(userId && adminsAtuais.includes(userId));
+
+                    renderizarPaginaMidia('fotos');
+                    renderizarPaginaMidia('videos');
+                });
+            }).catch(error => {
+                console.error('Erro ao carregar mídias:', error);
+                fotosCache = [];
+                videosCache = [];
+                document.getElementById('contador-fotos').textContent = '0';
+                document.getElementById('contador-videos').textContent = '0';
+                renderizarPaginaMidia('fotos');
+                renderizarPaginaMidia('videos');
+            });
+        }
+
+        function renderizarPaginaMidia(tipo) {
+            const isFotos = tipo === 'fotos';
+            const lista = isFotos ? fotosCache : videosCache;
+            const pagina = isFotos ? paginaFotos : paginaVideos;
+            const porPagina = isFotos ? fotosPorPagina : videosPorPagina;
+
+            const container = document.getElementById(isFotos ? 'secao-fotos' : 'secao-videos');
+            const paginacao = document.getElementById(isFotos ? 'paginacao-fotos' : 'paginacao-videos');
+            const indicador = document.getElementById(isFotos ? 'indicadorFotos' : 'indicadorVideos');
+            const anterior = document.getElementById(isFotos ? 'btnFotosAnterior' : 'btnVideosAnterior');
+            const proxima = document.getElementById(isFotos ? 'btnFotosProxima' : 'btnVideosProxima');
+            const info = document.getElementById(isFotos ? 'info-paginacao-fotos' : 'info-paginacao-videos');
+
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (!lista || lista.length === 0) {
+                container.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">${isFotos ? 'Nenhuma foto' : 'Nenhum vídeo'} cadastrado.</p>`;
+                if (paginacao) paginacao.style.display = 'none';
+                if (info) info.style.display = 'none';
+                return;
+            }
+
+            const totalPaginas = Math.ceil(lista.length / porPagina);
+            const paginaSegura = Math.min(Math.max(pagina, 1), totalPaginas);
+
+            if (isFotos) paginaFotos = paginaSegura;
+            else paginaVideos = paginaSegura;
+
+            const inicio = (paginaSegura - 1) * porPagina;
+            const itensPagina = lista.slice(inicio, inicio + porPagina);
+
+            itensPagina.forEach(m => {
+                const mediaCard = document.createElement('div');
+                mediaCard.className = 'media-card';
+
+                let botoesAdminHtml = '';
+                if (adminMidiasAtual) {
+                    botoesAdminHtml = `
+                        <div class="admin-buttons-card">
+                            <button class="btn-card-action btn-excluir-midia" onclick="excluirMidia(${m.id})" title="Excluir Mídia">&times;</button>
+                        </div>
+                    `;
                 }
 
-                const userId = localStorage.getItem('discord_user_id');
-                obterAdminsAutorizados().then(adminsAtuais => {
-                    const eAdminLogado = userId && adminsAtuais.includes(userId);
-                    let qtdFotos = 0;
-                    let qtdVideos = 0;
+                const tituloSeguro = String(m.titulo || '').replace(/'/g, "\\'");
+                if (isFotos) {
+                    mediaCard.innerHTML = `
+                        ${botoesAdminHtml}
+                        <div class="media-preview" onclick="abrirModalZoom('${m.url}', '${tituloSeguro}')">
+                            <img src="${m.url}" alt="${m.titulo || 'Foto do clã'}" loading="lazy"
+                                 onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
+                        </div>
+                        <div class="media-info">
+                            <h4>${m.titulo || 'Sem título'}</h4>
+                        </div>
+                    `;
+                } else {
+                    mediaCard.innerHTML = `
+                        ${botoesAdminHtml}
+                        <div class="media-preview">
+                            <iframe src="${m.url}" frameborder="0" allowfullscreen loading="lazy"></iframe>
+                        </div>
+                        <div class="media-info">
+                            <h4>${m.titulo || 'Sem título'}</h4>
+                        </div>
+                    `;
+                }
 
-                    midias.forEach(m => {
-                        const mediaCard = document.createElement('div');
-                        mediaCard.className = 'media-card';
-
-                        let botoesAdminHtml = '';
-                        if (eAdminLogado) {
-                            botoesAdminHtml = `
-                                <div class="admin-buttons-card">
-                                    <button class="btn-card-action btn-excluir-midia" onclick="excluirMidia(${m.id})" title="Excluir Mídia">&times;</button>
-                                </div>
-                            `;
-                        }
-
-                        if (m.tipo === 'foto') {
-                            qtdFotos++;
-                            mediaCard.innerHTML = `
-                                ${botoesAdminHtml}
-                                <div class="media-preview" onclick="abrirModalZoom('${m.url}', '${m.titulo.replace(/'/g, "\\'")}')">
-                                    <img src="${m.url}" alt="${m.titulo}" loading="lazy" onerror="this.onerror=null;this.src='https://i.postimg.cc/SRtPyBcc/Gemini-Generated-Image-yygk5kyygk5kyygk-(1).png';">
-                                </div>
-                                <div class="media-info">
-                                    <h4>${m.titulo}</h4>
-                                </div>
-                            `;
-                            secaoFotos.appendChild(mediaCard);
-                        } else {
-                            qtdVideos++;
-                            mediaCard.innerHTML = `
-                                ${botoesAdminHtml}
-                                <div class="media-preview">
-                                    <iframe src="${m.url}" frameborder="0" allowfullscreen loading="lazy"></iframe>
-                                </div>
-                                <div class="media-info">
-                                    <h4>${m.titulo}</h4>
-                                </div>
-                            `;
-                            secaoVideos.appendChild(mediaCard);
-                        }
-                    });
-
-                    if (qtdFotos === 0) secaoFotos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhuma foto cadastrada.</p>`;
-                    if (qtdVideos === 0) secaoVideos.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Nenhum vídeo cadastrado.</p>`;
-                });
+                container.appendChild(mediaCard);
             });
+
+            if (info) {
+                const fim = Math.min(inicio + itensPagina.length, lista.length);
+                info.textContent = `Mostrando ${inicio + 1}–${fim} de ${lista.length} ${isFotos ? 'fotos' : 'vídeos'}`;
+                info.style.display = 'block';
+            }
+
+            if (paginacao) {
+                paginacao.style.display = totalPaginas > 1 ? 'flex' : 'none';
+            }
+
+            if (indicador) indicador.textContent = `Página ${paginaSegura} de ${totalPaginas}`;
+            if (anterior) anterior.disabled = paginaSegura === 1;
+            if (proxima) proxima.disabled = paginaSegura === totalPaginas;
+        }
+
+        function mudarPaginaMidia(tipo, direcao) {
+            if (tipo === 'fotos') {
+                const total = Math.max(1, Math.ceil(fotosCache.length / fotosPorPagina));
+                paginaFotos = Math.min(Math.max(paginaFotos + direcao, 1), total);
+            } else {
+                const total = Math.max(1, Math.ceil(videosCache.length / videosPorPagina));
+                paginaVideos = Math.min(Math.max(paginaVideos + direcao, 1), total);
+            }
+
+            renderizarPaginaMidia(tipo);
         }
 
         function adicionarMidia(event) {
@@ -3033,11 +3628,40 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
 
+        document.getElementById('fotosRecompensa').addEventListener('change', function() {
+            const aviso = document.getElementById('avisoFotosRecompensa');
+            const total = this.files ? this.files.length : 0;
+
+            if (!total) {
+                aviso.innerHTML = 'ℹ️ Apenas blocos completos de 5 prints são contabilizados. Prints excedentes serão descartados e não serão armazenados.';
+                aviso.style.color = 'var(--text-muted)';
+                aviso.style.borderLeftColor = 'rgba(194,155,56,0.75)';
+                return;
+            }
+
+            const validos = Math.floor(total / 5) * 5;
+            const excedentes = total - validos;
+
+            if (validos < 5) {
+                aviso.innerHTML = `⚠️ Você selecionou <b>${total}</b> print(s). Selecione pelo menos 5 para formar um bloco completo.`;
+                aviso.style.color = '#ffb4a8';
+                aviso.style.borderLeftColor = 'var(--senju-red)';
+            } else if (excedentes > 0) {
+                aviso.innerHTML = `ℹ️ Você selecionou <b>${total}</b> prints. <b>${validos}</b> serão processados e <b>${excedentes}</b> serão descartados, sem contar para a recompensa e sem serem armazenados.`;
+                aviso.style.color = 'var(--senju-gold)';
+                aviso.style.borderLeftColor = 'var(--senju-gold)';
+            } else {
+                aviso.innerHTML = `✅ ${total} prints selecionados. Todos formam blocos completos e serão processados.`;
+                aviso.style.color = '#7ee2a8';
+                aviso.style.borderLeftColor = '#2e8b57';
+            }
+        });
+
         function enviarRecompensa(event) {
             event.preventDefault();
             const btnEnviar = document.getElementById('btnEnviarRecompensa');
             btnEnviar.disabled = true;
-            btnEnviar.innerText = "Enviando prints para o storage...";
+            btnEnviar.innerText = "Preparando prints...";
 
             const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
             const nomeDiscord = document.getElementById('nomeDiscordRecompensa').value.trim();
@@ -3049,6 +3673,26 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 btnEnviar.disabled = false;
                 btnEnviar.innerText = "Solicitar Recompensa";
                 return;
+            }
+
+            // Somente blocos completos de 5 são aceitos.
+            // Os excedentes são descartados imediatamente e nunca chegam ao Storage,
+            // banco de dados ou webhook. Ex.: 7 selecionados = 5 processados + 2 descartados.
+            const totalSelecionado = arquivoInput.files.length;
+            const qtdMissoes = Math.floor(totalSelecionado / 5) * 5;
+
+            if (qtdMissoes < 5) {
+                mostrarAviso('❌ Você precisa selecionar pelo menos 5 prints para formar um bloco completo de Missão Kage.', 'erro');
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Solicitar Recompensa";
+                return;
+            }
+
+            const quantidadeExcedente = totalSelecionado - qtdMissoes;
+            const arquivosValidos = Array.from(arquivoInput.files).slice(0, qtdMissoes);
+
+            if (quantidadeExcedente > 0) {
+                mostrarAviso(`ℹ️ ${totalSelecionado} prints selecionados: ${qtdMissoes} serão processados. ${quantidadeExcedente} print(s) excedente(s) serão descartados e não serão contabilizados nem armazenados.`, 'info');
             }
 
             // DUPLA SEGURANÇA NO ENVIO: Impede bypass via F5 / manipulação
@@ -3076,14 +3720,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         }
                     }
 
-                    const qtdMissoes = arquivoInput.files.length;
                     let urlsImagens = [];
                     let promessasUpload = [];
 
-                    for (let i = 0; i < arquivoInput.files.length; i++) {
-                        const arquivo = arquivoInput.files[i];
+                    // IMPORTANTE: apenas os arquivos do bloco completo são enviados.
+                    for (let i = 0; i < arquivosValidos.length; i++) {
+                        const arquivo = arquivosValidos[i];
                         const nomeArquivoUnico = `${userId}_${Date.now()}_${i}_${arquivo.name}`;
-                        
+
                         let p = supabaseClient.storage
                             .from('recompensas-prints')
                             .upload(nomeArquivoUnico, arquivo)
@@ -3121,7 +3765,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 const membroIdInterno = dadosMembro ? dadosMembro.id : '';
                                 const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
 
-                                const blocosCompletos = Math.floor(qtdMissoes / 5);
+                                const blocosCompletos = qtdMissoes / 5;
                                 const ryosCalculados = blocosCompletos * 1000;
                                 let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
 
@@ -3133,7 +3777,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                             color: 12713992,
                                             fields: [
                                                 { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
-                                                { name: "Prints Enviados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true },
+                                                { name: "Prints Processados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true },
+                                                ...(quantidadeExcedente > 0 ? [{
+                                                    name: "ℹ️ Prints Excedentes",
+                                                    value: `${quantidadeExcedente} print(s) excedente(s) foram descartados e não serão contabilizados.`,
+                                                    inline: false
+                                                }] : []),
                                                 { name: "🔍 Ação do Admin", value: `[Verificar Fotos](${urlPainelAdm})`, inline: false }
                                             ],
                                             timestamp: new Date().toISOString()
@@ -3149,7 +3798,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                     }).catch(err => console.error(err));
                                 });
 
-                                mostrarAviso(`Solicitação de ${qtdMissoes} prints enviada com sucesso!`);
+                                const mensagemSucesso = quantidadeExcedente > 0
+                                    ? `Solicitação enviada com ${qtdMissoes} prints válidos. ${quantidadeExcedente} print(s) excedente(s) foram descartados.`
+                                    : `Solicitação de ${qtdMissoes} prints enviada com sucesso!`;
+
+                                mostrarAviso(mensagemSucesso);
                                 fecharModalRecompensa();
                                 document.getElementById('formRecompensa').reset();
                                 btnEnviar.disabled = false;
@@ -3165,8 +3818,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        const modalRelatorio = document.getElementById('modalRelatorio');
-        
         function tentarAbrirRelatorio() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
@@ -3313,13 +3964,31 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             event.currentTarget.classList.add('active');
 
             if (tipo === 'fotos') {
+                paginaFotos = 1;
                 secaoFotos.style.display = 'grid';
                 secaoVideos.style.display = 'none';
+                renderizarPaginaMidia('fotos');
             } else {
+                paginaVideos = 1;
                 secaoFotos.style.display = 'none';
                 secaoVideos.style.display = 'grid';
+                renderizarPaginaMidia('videos');
             }
         }
     </script>
 </body>
 </html>
+
+<style>
+@media (max-width: 600px) {
+    .gallery-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .media-preview img,
+    .media-preview iframe {
+        height: 210px;
+    }
+}
+</style>
