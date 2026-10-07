@@ -2043,17 +2043,26 @@ RECOMPENSA: 1.000 RYOS (Acumulativo de 5 em 5: 5 = 1k, 10 = 2k, 15 = 3k...)
 Cada membro só pode enviar um novo pedido de Missão Kage <b>a cada 24 horas exatas</b> após o seu último envio aprovado/pendente. Se for negado, você pode reenviar na mesma hora!
 
 <b>COMO COMPROVAR?</b>
-Para cada missão realizada, ANTES DE FINALIZÁ-LA, você deverá: 
-• Tirar um print com o círculo vermelho da missão visível. 
-• Manter o comando "/timestamp" ativo e aparecendo na tela. 
+Para cada missão realizada, ANTES DE FINALIZÁ-LA, você deverá:
+• Tirar um print com o círculo vermelho da missão visível com o comando "/timestamp" ativado e com o comando "/rankmissoes" aparecendo na tela.
 • Selecione todos os prints das missões realizadas no botão abaixo. O sistema contará automaticamente quantas missões você fez.
 
+<b>CONFERÊNCIA DA CONTAGEM</b>
+A quantidade de missões comprovada precisa bater exatamente com o aumento mostrado no "/rankmissoes". Exemplo: se o primeiro print mostrar 100 missões e você enviar 10 prints de missões, o último print deverá mostrar exatamente 110 missões. Se a contagem não corresponder, o administrador poderá negar as missões.
+
 <b>ATENÇÃO</b>
-Prints sem o círculo vermelho da missão ou sem o "/timestamp" poderão não ser considerados como comprovação.
+Prints sem o círculo vermelho da missão, sem o comando "/timestamp" ativo ou sem o comando "/rankmissoes" visível poderão não ser considerados como comprovação.
 ━━━━━━━━━━━━━━━━━━━━ 
 <b>5 MISSÕES = 1.000 RYOS</b> 
 Faça suas missões. Registre seu progresso. Resgate sua recompensa. 
 <b>CLÃ SENJU</b> — O esforço de cada membro fortalece todo o clã.</div>
+
+            <figure class="missao-kage-tutorial">
+                <img src="https://i.postimg.cc/FKTFbX3g/tutorial.png"
+                     alt="Imagem tutorial da Missão Kage com exemplo das regras de comprovação"
+                     loading="lazy" decoding="async">
+                <figcaption>Tutorial visual da comprovação das missões.</figcaption>
+            </figure>
 
             <form id="formRecompensa" onsubmit="enviarRecompensa(event)">
                 <div class="form-group">
@@ -5799,6 +5808,35 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         @media (prefers-reduced-motion: reduce) {
             .modal-overlay, .modal-content, .toast, .toast::after { animation-duration: .01ms !important; }
             *, *::before, *::after { scroll-behavior: auto !important; }
+        }
+
+    
+
+        /* Tutorial visual dentro do pop-up Missão Kage */
+        .missao-kage-tutorial {
+            width: min(100%, 440px);
+            margin: 2px auto 22px;
+            padding: 11px;
+            border: 1px solid rgba(194,155,56,.28);
+            border-radius: 13px;
+            background: linear-gradient(145deg, rgba(194,155,56,.06), rgba(0,0,0,.16));
+            box-shadow: 0 12px 28px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.025);
+        }
+
+        .missao-kage-tutorial img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border: 1px solid rgba(194,155,56,.25);
+            border-radius: 8px;
+        }
+
+        .missao-kage-tutorial figcaption {
+            padding: 9px 4px 1px;
+            color: #a99b88;
+            font-size: .76rem;
+            line-height: 1.4;
+            text-align: center;
         }
 
     </style>
