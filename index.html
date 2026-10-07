@@ -2258,6 +2258,21 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         </div>
     </div>
 
+    <!-- DIÁLOGO DE CONFIRMAÇÃO TEMÁTICO -->
+    <div class="modal-overlay modal-confirmacao-overlay" id="modalConfirmacao" onclick="if (event.target === this) fecharModalConfirmacao(false)">
+        <div class="modal-content modal-confirmacao" role="alertdialog" aria-modal="true" aria-labelledby="tituloConfirmacao" aria-describedby="textoConfirmacao" tabindex="-1">
+            <button class="close-btn confirmacao-close" type="button" aria-label="Fechar" onclick="fecharModalConfirmacao(false)">&times;</button>
+            <div class="confirmacao-selo" aria-hidden="true">✦</div>
+            <p class="confirmacao-kicker">DECISÃO DO CLÃ</p>
+            <h2 id="tituloConfirmacao">Confirmar ação</h2>
+            <p id="textoConfirmacao" class="confirmacao-mensagem"></p>
+            <div class="modal-footer confirmacao-acoes">
+                <button type="button" class="btn-cancelar" onclick="fecharModalConfirmacao(false)">Voltar</button>
+                <button type="button" id="btnConfirmarAcao" class="btn-confirmar-acao" onclick="fecharModalConfirmacao(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- FOOTER -->
     <footer>
         <p>&copy; 2026 Clã Senju. Todos os direitos reservados. Sob o comando de Tobirama e do braço direito Hayai.</p>
@@ -2403,13 +2418,62 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
+        let callbackConfirmacaoPendente = null;
+
+        function solicitarConfirmacao({ titulo = 'Confirmar ação', mensagem = '', botao = 'Confirmar', tipo = 'padrao', aoConfirmar = null } = {}) {
+            const modal = document.getElementById('modalConfirmacao');
+            const painel = modal?.querySelector('.modal-confirmacao');
+            const botaoAcao = document.getElementById('btnConfirmarAcao');
+            if (!modal || !painel || !botaoAcao) return;
+
+            document.getElementById('tituloConfirmacao').textContent = titulo;
+            document.getElementById('textoConfirmacao').textContent = mensagem;
+            botaoAcao.textContent = botao;
+            botaoAcao.classList.toggle('perigo', tipo === 'perigo');
+            botaoAcao.classList.toggle('sucesso', tipo === 'sucesso');
+            callbackConfirmacaoPendente = aoConfirmar;
+            modal.style.display = 'flex';
+            requestAnimationFrame(() => painel.focus());
+        }
+
+        function fecharModalConfirmacao(confirmar = false) {
+            const modal = document.getElementById('modalConfirmacao');
+            if (modal) modal.style.display = 'none';
+            const callback = callbackConfirmacaoPendente;
+            callbackConfirmacaoPendente = null;
+            if (confirmar && typeof callback === 'function') callback();
+        }
+
+        document.addEventListener('keydown', event => {
+            const modal = document.getElementById('modalConfirmacao');
+            if (event.key === 'Escape' && modal?.style.display === 'flex') {
+                fecharModalConfirmacao(false);
+            }
+        });
+
         function mostrarAviso(mensagem, tipo = 'sucesso') {
             const container = document.getElementById('toast-container');
+            if (!container) return;
+
             const toast = document.createElement('div');
-            toast.className = `toast ${tipo === 'erro' ? 'erro' : ''}`;
-            toast.innerHTML = `<span>${tipo === 'erro' ? '⚠️' : '✨'}</span> <span>${mensagem}</span>`;
+            const icone = document.createElement('span');
+            const texto = document.createElement('span');
+            const erro = tipo === 'erro';
+
+            toast.className = `toast ${erro ? 'erro' : 'sucesso'}`;
+            toast.setAttribute('role', erro ? 'alert' : 'status');
+            toast.setAttribute('aria-live', erro ? 'assertive' : 'polite');
+            icone.className = 'toast-icone';
+            icone.setAttribute('aria-hidden', 'true');
+            icone.textContent = erro ? '!' : '✦';
+            texto.className = 'toast-texto';
+            texto.textContent = String(mensagem ?? '');
+            toast.append(icone, texto);
             container.appendChild(toast);
-            setTimeout(() => { toast.remove(); }, 3000);
+            window.setTimeout(() => {
+                toast.classList.add('saindo');
+                window.setTimeout(() => toast.remove(), 240);
+            }, 3000);
         }
 
         function logarComDiscord() {
@@ -3074,8 +3138,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     return;
                 }
 
-                if (!confirm("Deseja confirmar a aprovação?")) return;
-
+                solicitarConfirmacao({
+                    titulo: 'Aprovar recompensa?',
+                    mensagem: 'Deseja confirmar a aprovação desta solicitação? Essa ação atualizará o status e enviará o aviso ao membro.',
+                    botao: 'Aprovar solicitação',
+                    tipo: 'sucesso',
+                    aoConfirmar: () => {
                 supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoId).single().then(({ data: solData }) => {
                     const dataHoje = new Date().toISOString().split('T')[0];
                     supabaseClient
@@ -3123,6 +3191,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             fecharModalDetalhesMembro();
                             carregarMembros();
                         });
+                });
+                    }
                 });
             });
         }
@@ -3349,16 +3419,22 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     return;
                 }
 
-                if (confirm(`Tem certeza que deseja remover este membro do clã?`)) {
-                    supabaseClient.from('membros').delete().eq('id', id).then(({ error }) => {
-                        if (error) {
-                            mostrarAviso('Erro ao excluir: ' + error.message, 'erro');
-                            return;
-                        }
-                        carregarMembros();
-                        mostrarAviso(`Membro removido com sucesso!`);
-                    });
-                }
+                solicitarConfirmacao({
+                    titulo: 'Remover membro?',
+                    mensagem: 'Tem certeza de que deseja remover este membro do clã? Esta ação não pode ser desfeita.',
+                    botao: 'Remover membro',
+                    tipo: 'perigo',
+                    aoConfirmar: () => {
+                        supabaseClient.from('membros').delete().eq('id', id).then(({ error }) => {
+                            if (error) {
+                                mostrarAviso('Erro ao excluir: ' + error.message, 'erro');
+                                return;
+                            }
+                            carregarMembros();
+                            mostrarAviso('Membro removido com sucesso!');
+                        });
+                    }
+                });
             });
         }
 
@@ -3539,16 +3615,22 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     return;
                 }
 
-                if (confirm(`Tem certeza que deseja remover esta mídia do álbum?`)) {
-                    supabaseClient.from('midias').delete().eq('id', id).then(({ error }) => {
-                        if (error) {
-                            mostrarAviso('Erro ao excluir mídia: ' + error.message, 'erro');
-                            return;
-                        }
-                        carregarMidias();
-                        mostrarAviso(`Mídia removida com sucesso!`);
-                    });
-                }
+                solicitarConfirmacao({
+                    titulo: 'Remover mídia?',
+                    mensagem: 'Tem certeza de que deseja remover esta mídia do álbum? Esta ação não pode ser desfeita.',
+                    botao: 'Remover mídia',
+                    tipo: 'perigo',
+                    aoConfirmar: () => {
+                        supabaseClient.from('midias').delete().eq('id', id).then(({ error }) => {
+                            if (error) {
+                                mostrarAviso('Erro ao excluir mídia: ' + error.message, 'erro');
+                                return;
+                            }
+                            carregarMidias();
+                            mostrarAviso('Mídia removida com sucesso!');
+                        });
+                    }
+                });
             });
         }
 
@@ -5256,4 +5338,456 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         }
 
-</style>
+
+
+        /* SISTEMA DE POP-UPS SENJU — acabamento visual unificado */
+        #toast-container {
+            top: 84px;
+            right: clamp(14px, 2.4vw, 30px);
+            width: min(390px, calc(100vw - 28px));
+            gap: 11px;
+            pointer-events: none;
+        }
+
+        .toast {
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: none;
+            min-height: 64px;
+            padding: 14px 17px;
+            gap: 12px;
+            color: #f6efe2;
+            border: 1px solid rgba(220, 184, 92, .35);
+            border-left: 3px solid #d5ad50;
+            border-radius: 13px;
+            background:
+                radial-gradient(circle at 0 0, rgba(194,155,56,.13), transparent 42%),
+                linear-gradient(135deg, rgba(28,17,11,.98), rgba(13,8,6,.98));
+            box-shadow: 0 16px 42px rgba(0,0,0,.48), inset 0 1px 0 rgba(255,255,255,.035);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            animation: toastEntra .34s cubic-bezier(.2,.75,.25,1) both;
+            pointer-events: auto;
+        }
+
+        .toast::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: 2px;
+            transform-origin: left;
+            background: linear-gradient(90deg, rgba(220,184,92,.65), rgba(220,184,92,.05));
+            animation: toastProgresso 3s linear forwards;
+        }
+
+        .toast.erro {
+            border-color: rgba(217, 53, 53, .35);
+            border-left-color: #e14a42;
+        }
+
+        .toast.erro::after {
+            background: linear-gradient(90deg, rgba(225,74,66,.8), rgba(225,74,66,.05));
+        }
+
+        .toast-icone {
+            display: inline-grid;
+            place-items: center;
+            width: 29px;
+            height: 29px;
+            flex: 0 0 29px;
+            border: 1px solid rgba(220,184,92,.32);
+            border-radius: 9px;
+            color: #e7c66e;
+            background: rgba(194,155,56,.10);
+            font-size: .88rem;
+            font-weight: 900;
+        }
+
+        .toast.erro .toast-icone {
+            border-color: rgba(225,74,66,.38);
+            color: #ff8a80;
+            background: rgba(225,74,66,.10);
+        }
+
+        .toast-texto {
+            align-self: center;
+            color: #e7ded2;
+            font-size: .88rem;
+            font-weight: 600;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .toast.saindo {
+            opacity: 0;
+            transform: translateX(14px) scale(.98);
+            transition: opacity .22s ease, transform .22s ease;
+        }
+
+        .modal-overlay {
+            z-index: 4000;
+            padding: clamp(14px, 3vw, 30px);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            background:
+                radial-gradient(ellipse at 50% 38%, rgba(103,48,21,.16), transparent 48%),
+                rgba(4, 3, 3, .78);
+            backdrop-filter: blur(11px) saturate(.82);
+            -webkit-backdrop-filter: blur(11px) saturate(.82);
+            animation: overlayEntra .2s ease both;
+        }
+
+        .modal-content {
+            width: min(100%, 620px);
+            max-width: min(620px, 100%);
+            max-height: min(88vh, 900px);
+            padding: clamp(22px, 4vw, 34px);
+            overflow-x: hidden;
+            border: 1px solid rgba(218, 181, 86, .32);
+            border-radius: 18px;
+            color: #efe7da;
+            background:
+                radial-gradient(circle at 100% 0, rgba(134,29,23,.14), transparent 31%),
+                radial-gradient(circle at 0 100%, rgba(194,155,56,.055), transparent 34%),
+                linear-gradient(145deg, rgba(29,18,12,.99), rgba(12,8,6,.995) 72%);
+            box-shadow:
+                0 34px 100px rgba(0,0,0,.72),
+                0 0 0 1px rgba(255,255,255,.025),
+                inset 0 1px 0 rgba(255,255,255,.045);
+            animation: modalSobe .3s cubic-bezier(.2,.78,.25,1) both;
+            scrollbar-color: rgba(194,155,56,.45) rgba(0,0,0,.18);
+        }
+
+        .modal-content::-webkit-scrollbar { width: 8px; }
+        .modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,.18); border-radius: 8px; }
+        .modal-content::-webkit-scrollbar-thumb { background: rgba(194,155,56,.42); border: 2px solid transparent; background-clip: padding-box; border-radius: 8px; }
+
+        .modal-header {
+            gap: 16px;
+            margin: 0 0 23px;
+            padding: 0 0 17px;
+            border-bottom: 1px solid rgba(219,184,98,.17);
+        }
+
+        .modal-header h2,
+        .modal-header h3 {
+            color: #f1e4cb;
+            font-size: clamp(1.12rem, 3vw, 1.48rem);
+            font-weight: 800;
+            line-height: 1.3;
+            letter-spacing: .025em;
+            text-wrap: balance;
+        }
+
+        .close-btn {
+            display: inline-grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 36px;
+            border: 1px solid rgba(230,217,196,.10);
+            border-radius: 10px;
+            color: #b9ab98;
+            background: rgba(255,255,255,.035);
+            font-size: 1.5rem;
+            line-height: 1;
+            transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease;
+        }
+
+        .close-btn:hover {
+            transform: rotate(4deg);
+            border-color: rgba(217,67,57,.35);
+            color: #ff9a8e;
+            background: rgba(217,20,20,.11);
+        }
+
+        .form-group { margin-bottom: 18px; }
+
+        .form-group label {
+            margin-bottom: 8px;
+            color: #d6c9b7;
+            font-size: .86rem;
+            font-weight: 700;
+            letter-spacing: .012em;
+        }
+
+        .modal-content input:not([type="checkbox"]),
+        .modal-content input:not([type="file"]),
+        .modal-content select,
+        .modal-content textarea {
+            min-height: 45px;
+            padding: 11px 13px;
+            border: 1px solid rgba(194,155,56,.23);
+            border-radius: 10px;
+            color: #f4eee5;
+            background-color: rgba(5,4,3,.72);
+            box-shadow: inset 0 1px 2px rgba(0,0,0,.2);
+            font-size: .91rem;
+            transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        .modal-content input[type="file"] {
+            width: 100%;
+            min-height: 45px;
+            padding: 9px;
+            border: 1px solid rgba(194,155,56,.23);
+            border-radius: 10px;
+            color: #cfc2af;
+            background: rgba(5,4,3,.72);
+            font-size: .82rem;
+        }
+
+        .modal-content input[type="file"]::file-selector-button {
+            margin-right: 10px;
+            padding: 7px 11px;
+            border: 1px solid rgba(194,155,56,.28);
+            border-radius: 7px;
+            color: #f0dfb4;
+            background: rgba(194,155,56,.12);
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .modal-content input::placeholder,
+        .modal-content textarea::placeholder { color: #82766a; }
+
+        .modal-content input:focus,
+        .modal-content select:focus,
+        .modal-content textarea:focus {
+            border-color: rgba(224,189,99,.72);
+            outline: none;
+            background-color: rgba(10,7,5,.88);
+            box-shadow: 0 0 0 3px rgba(194,155,56,.10), 0 0 20px rgba(194,155,56,.055);
+        }
+
+        .modal-content input[readonly],
+        .modal-content input:disabled,
+        .modal-content select:disabled,
+        .modal-content textarea:disabled {
+            color: #c8a94f;
+            background-color: rgba(18,12,8,.9);
+        }
+
+        .modal-content select option { color: #f3eadb; background: #180f0a; }
+        .modal-content textarea { min-height: 102px; line-height: 1.55; resize: vertical; }
+
+        .checkbox-group {
+            gap: 12px;
+            border: 1px solid rgba(194,155,56,.20);
+            border-radius: 11px;
+            background: rgba(194,155,56,.055);
+        }
+
+        .checkbox-group label { color: #e8dfd2 !important; font-size: .87rem; }
+        .checkbox-group input[type="checkbox"] { accent-color: #c29b38; }
+
+        .modal-footer {
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 17px;
+            border-top: 1px solid rgba(219,184,98,.13);
+        }
+
+        .modal-footer button,
+        .modal-content .btn-discord-login,
+        .modal-content .btn-cancelar,
+        .webhook-btn-popup {
+            min-height: 42px;
+            padding: 10px 17px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: .84rem;
+            font-weight: 800;
+            letter-spacing: .01em;
+            transition: transform .18s ease, filter .18s ease, box-shadow .18s ease, border-color .18s ease;
+        }
+
+        .modal-content .btn-discord-login {
+            border: 1px solid rgba(255,255,255,.12);
+            box-shadow: 0 8px 19px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
+        }
+
+        .modal-content .btn-discord-login:hover,
+        .modal-footer button:hover,
+        .webhook-btn-popup:hover { transform: translateY(-1px); }
+
+        .modal-content .btn-cancelar {
+            border: 1px solid rgba(213,197,171,.20);
+            color: #cfc3b1;
+            background: rgba(255,255,255,.035);
+        }
+
+        .modal-content .btn-cancelar:hover {
+            border-color: rgba(213,197,171,.42);
+            color: #fff4e4;
+            background: rgba(255,255,255,.065);
+        }
+
+        .recompensas-info-box,
+        .aviso-expiracao-painel {
+            border-radius: 11px;
+            line-height: 1.65;
+        }
+
+        .webhook-admin-box {
+            border-top: 1px solid rgba(194,155,56,.16);
+        }
+
+        .webhook-input-popup:disabled,
+        .webhook-btn-popup:disabled { opacity: .48; }
+
+        .modal-zoom-content {
+            width: auto;
+            max-width: min(92vw, 1200px);
+            max-height: 90vh;
+            padding: 12px;
+            border: 1px solid rgba(218,181,86,.40);
+            border-radius: 16px;
+            background: linear-gradient(145deg, rgba(20,13,9,.98), rgba(7,5,4,.98));
+            box-shadow: 0 30px 90px rgba(0,0,0,.78), 0 0 35px rgba(194,155,56,.08);
+        }
+
+        .modal-zoom-content img {
+            border: 1px solid rgba(218,181,86,.38);
+            border-radius: 10px;
+        }
+
+        .modal-zoom-title {
+            max-width: 90vw;
+            margin: 13px 8px 5px;
+            color: #eddfbf;
+            font-size: clamp(1rem, 2.8vw, 1.2rem);
+        }
+
+        .modal-confirmacao-overlay { z-index: 4500; }
+
+        .modal-content.modal-confirmacao {
+            position: relative;
+            width: min(100%, 440px);
+            max-width: 440px;
+            padding: 32px;
+            overflow: visible;
+            text-align: center;
+        }
+
+        .modal-confirmacao::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 16%;
+            width: 68%;
+            height: 2px;
+            border-radius: 0 0 3px 3px;
+            background: linear-gradient(90deg, transparent, rgba(229,193,101,.9), transparent);
+        }
+
+        .confirmacao-close { position: absolute; top: 14px; right: 14px; }
+
+        .confirmacao-selo {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            margin: 3px auto 16px;
+            border: 1px solid rgba(224,189,99,.29);
+            border-radius: 15px;
+            color: #e7c66e;
+            background: linear-gradient(145deg, rgba(194,155,56,.15), rgba(194,155,56,.035));
+            box-shadow: 0 0 25px rgba(194,155,56,.07), inset 0 1px 0 rgba(255,255,255,.05);
+            font-size: 1.2rem;
+        }
+
+        .confirmacao-kicker {
+            margin-bottom: 8px;
+            color: rgba(218,181,86,.72);
+            font-family: 'Cinzel', serif;
+            font-size: .66rem;
+            font-weight: 800;
+            letter-spacing: .2em;
+        }
+
+        .modal-confirmacao h2 {
+            margin: 0 24px 10px;
+            color: #f2e6ce;
+            font-family: 'Cinzel', serif;
+            font-size: 1.25rem;
+            line-height: 1.35;
+        }
+
+        .confirmacao-mensagem {
+            margin: 0 auto;
+            max-width: 350px;
+            color: #b9ad9e;
+            font-size: .9rem;
+            line-height: 1.65;
+        }
+
+        .modal-footer.confirmacao-acoes {
+            justify-content: center;
+            margin-top: 24px;
+            padding-top: 19px;
+        }
+
+        .btn-confirmar-acao {
+            min-height: 42px;
+            padding: 10px 18px;
+            border: 1px solid rgba(220,184,92,.42);
+            border-radius: 10px;
+            color: #1b1208;
+            background: linear-gradient(135deg, #e3c46e, #b8882f);
+            box-shadow: 0 8px 20px rgba(194,155,56,.16), inset 0 1px 0 rgba(255,255,255,.28);
+            font: 800 .84rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: transform .18s ease, filter .18s ease, box-shadow .18s ease;
+        }
+
+        .btn-confirmar-acao:hover { transform: translateY(-1px); filter: brightness(1.06); }
+        .btn-confirmar-acao.perigo { border-color: rgba(244,116,103,.42); color: #fff5f3; background: linear-gradient(135deg, #c63b32, #8f201d); box-shadow: 0 8px 20px rgba(160,35,30,.2); }
+        .btn-confirmar-acao.sucesso { border-color: rgba(117,194,137,.36); color: #f3fff4; background: linear-gradient(135deg, #347d4e, #205536); box-shadow: 0 8px 20px rgba(35,105,59,.18); }
+
+        @keyframes overlayEntra { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes modalSobe { from { opacity: 0; transform: translateY(13px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes toastEntra { from { opacity: 0; transform: translateX(20px) scale(.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
+        @keyframes toastProgresso { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+        @media (max-width: 600px) {
+            #toast-container { top: 78px; right: 12px; width: calc(100vw - 24px); }
+            .toast { min-height: 58px; padding: 12px 14px; }
+            .modal-overlay { align-items: flex-end; padding: 12px; }
+            .modal-content {
+                width: 100%;
+                max-width: 100%;
+                max-height: min(88dvh, 900px);
+                padding: 22px 18px;
+                border-radius: 17px 17px 13px 13px;
+            }
+            .modal-header { margin-bottom: 19px; padding-bottom: 14px; }
+            .modal-footer { gap: 8px; }
+            .modal-footer button { flex: 1 1 auto; }
+            .modal-content.modal-confirmacao {
+                width: 100%;
+                max-width: 100%;
+                margin-top: auto;
+                padding: 29px 21px 22px;
+                border-radius: 18px;
+            }
+            .modal-zoom-content {
+                align-self: center;
+                width: auto;
+                max-width: calc(100vw - 24px);
+                padding: 9px;
+            }
+            .modal-zoom-content img { max-height: 73dvh; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .modal-overlay, .modal-content, .toast, .toast::after { animation-duration: .01ms !important; }
+            *, *::before, *::after { scroll-behavior: auto !important; }
+        }
+
+    </style>
