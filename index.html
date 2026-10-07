@@ -2267,7 +2267,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             <h2 id="tituloConfirmacao">Confirmar ação</h2>
             <p id="textoConfirmacao" class="confirmacao-mensagem"></p>
             <div class="modal-footer confirmacao-acoes">
-                <button type="button" class="btn-cancelar" onclick="fecharModalConfirmacao(false)">Voltar</button>
+                <button type="button" id="btnCancelarAcao" class="btn-cancelar" onclick="fecharModalConfirmacao(false)">Cancelar</button>
                 <button type="button" id="btnConfirmarAcao" class="btn-confirmar-acao" onclick="fecharModalConfirmacao(true)">Confirmar</button>
             </div>
         </div>
@@ -2420,7 +2420,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         let callbackConfirmacaoPendente = null;
 
-        function solicitarConfirmacao({ titulo = 'Confirmar ação', mensagem = '', botao = 'Confirmar', tipo = 'padrao', aoConfirmar = null } = {}) {
+        function solicitarConfirmacao({ titulo = 'Confirmar ação', mensagem = '', botao = 'Confirmar', cancelar = 'Cancelar', tipo = 'padrao', aoConfirmar = null } = {}) {
             const modal = document.getElementById('modalConfirmacao');
             const painel = modal?.querySelector('.modal-confirmacao');
             const botaoAcao = document.getElementById('btnConfirmarAcao');
@@ -2429,6 +2429,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('tituloConfirmacao').textContent = titulo;
             document.getElementById('textoConfirmacao').textContent = mensagem;
             botaoAcao.textContent = botao;
+            const botaoCancelar = document.getElementById('btnCancelarAcao');
+            if (botaoCancelar) botaoCancelar.textContent = cancelar;
             botaoAcao.classList.toggle('perigo', tipo === 'perigo');
             botaoAcao.classList.toggle('sucesso', tipo === 'sucesso');
             callbackConfirmacaoPendente = aoConfirmar;
@@ -2690,6 +2692,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     return;
                 }
 
+                solicitarConfirmacao({
+                    titulo: 'Enviar o resumo semanal?',
+                    mensagem: 'O relatório calcula somente as solicitações com status Pago desta semana; pendentes e negadas não entram na soma. Se confirmar, ele será publicado no Discord com menção a @everyone. Após o envio bem-sucedido, o sistema apaga os arquivos de prints e TODOS os registros da tabela de solicitações de recompensa, inclusive pendentes, negados e registros de outras semanas. Essa limpeza não pode ser desfeita.',
+                    botao: 'Enviar e limpar registros',
+                    cancelar: 'Não enviar',
+                    tipo: 'perigo',
+                    aoConfirmar: () => {
                 mostrarAviso('Calculando relatório semanal...');
 
                 const agora = new Date();
@@ -2711,7 +2720,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                         let missoesSemana = solicitacoes.filter(sol => {
                             const dataSol = new Date(sol.created_at || sol.data_envio);
-                            return dataSol >= inicioDaSemana && dataSol <= agora;
+                            return sol.status === 'Pago' && dataSol >= inicioDaSemana && dataSol <= agora;
                         });
 
                         if (missoesSemana.length === 0) {
@@ -2786,6 +2795,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             });
                         });
                     });
+                    }
+                });
             });
         }
 
