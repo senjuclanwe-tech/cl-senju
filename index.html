@@ -1890,22 +1890,54 @@
         </div>
     </div>
 
-    <!-- MODAL DE DETALHES/HISTÓRICO DE RECOMPENSAS DO MEMBRO -->
+    <!-- PERFIL DO MEMBRO: RECOMPENSAS E AVALIAÇÃO DE TREINO -->
     <div class="modal-overlay" id="modalDetalhesMembro">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 id="tituloDetalhesMembro">Painel de Recompensas do Membro</h2>
-                <button class="close-btn" onclick="fecharModalDetalhesMembro()">&times;</button>
-            </div>
-            
-            <div class="aviso-expiracao-painel">
-                <span>⏳ Informação:</span> Os prints e solicitações concluídas são limpos automaticamente após o envio do relatório de domingo.
+                <h2 id="tituloDetalhesMembro">Perfil do Membro</h2>
+                <button class="close-btn" onclick="fecharModalDetalhesMembro()" aria-label="Fechar perfil">&times;</button>
             </div>
 
-            <div id="conteudoDetalhesMembro" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
-                Carregando dados...
+            <div class="member-detail-tabs" role="tablist" aria-label="Seções do perfil do membro">
+                <button type="button" id="abaTabRecompensas" class="member-detail-tab active" role="tab" aria-selected="true" onclick="mudarAbaDetalhesMembro('recompensas', this)">🏆 Recompensas</button>
+                <button type="button" id="abaTabTreino" class="member-detail-tab" role="tab" aria-selected="false" onclick="mudarAbaDetalhesMembro('treino', this)">⚔ Avaliação de Treino</button>
             </div>
-            <div class="modal-footer">
+
+            <section id="painelAbaRecompensas" class="member-detail-panel" role="tabpanel">
+                <div class="aviso-expiracao-painel">
+                    <span>⏳ Informação:</span> Os prints e solicitações concluídas são limpos automaticamente após o envio do relatório de domingo.
+                </div>
+                <div id="conteudoDetalhesMembro" style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.6;">
+                    Carregando dados...
+                </div>
+            </section>
+
+            <section id="painelAbaTreino" class="member-detail-panel" role="tabpanel" style="display:none">
+                <div class="training-panel-intro">
+                    <span class="training-kicker">FORJA SUAS HABILIDADES</span>
+                    <p>Consulte os atributos do membro. Cada quadrado aceso representa 1 ponto, de um máximo de 10.</p>
+                </div>
+                <div id="conteudoAvaliacaoTreino" aria-live="polite"></div>
+                <form id="formAvaliacaoTreino" class="training-edit-form" onsubmit="salvarAvaliacaoTreino(event)" style="display:none">
+                    <div class="training-edit-heading">
+                        <h3>Editar atributos</h3>
+                        <p>Defina cada valor entre 0 e 10.</p>
+                    </div>
+                    <div class="training-input-grid">
+                        <div class="form-group"><label for="treinoTaijutsu">Taijutsu</label><input id="treinoTaijutsu" type="number" min="0" max="10" step="1" required></div>
+                        <div class="form-group"><label for="treinoNinjutsu">Ninjutsu</label><input id="treinoNinjutsu" type="number" min="0" max="10" step="1" required></div>
+                        <div class="form-group"><label for="treinoDefesa">Defesa</label><input id="treinoDefesa" type="number" min="0" max="10" step="1" required></div>
+                        <div class="form-group"><label for="treinoMovimentacao">Movimentação</label><input id="treinoMovimentacao" type="number" min="0" max="10" step="1" required></div>
+                        <div class="form-group"><label for="treinoGrupo">Grupo</label><input id="treinoGrupo" type="number" min="0" max="10" step="1" required></div>
+                    </div>
+                    <div class="modal-footer training-edit-actions">
+                        <button type="button" class="btn-cancelar" onclick="cancelarEdicaoAvaliacaoTreino()">Cancelar</button>
+                        <button type="submit" class="btn-discord-login training-save-button" id="btnSalvarAvaliacaoTreino">Salvar avaliação</button>
+                    </div>
+                </form>
+            </section>
+
+            <div class="modal-footer member-profile-footer">
                 <button type="button" class="btn-cancelar" onclick="fecharModalDetalhesMembro()">Fechar</button>
             </div>
         </div>
@@ -2259,6 +2291,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     </div>
                 </div>
 
+                <div class="form-group">
+                    <div class="checkbox-group evaluator-checkbox-group">
+                        <input type="checkbox" id="checkAvaliadorTreino">
+                        <label for="checkAvaliadorTreino">Conceder tag: Avaliador de Treino</label>
+                    </div>
+                    <small class="field-help">Permite editar somente os atributos de treinamento dos membros.</small>
+                </div>
+
                 <div class="modal-footer">
                     <button type="button" class="btn-cancelar" onclick="fecharModalMembro()">Cancelar</button>
                     <button type="submit" class="btn-discord-login" style="padding: 10px 20px;" id="btnSalvarMembroTexto">Cadastrar Membro</button>
@@ -2370,6 +2410,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         let paginaAtual = 1;
         const itensPorPagina = 8;
         let salvandoMembroEmAndamento = false;
+        let membroTreinoSelecionado = null;
+        let podeEditarAvaliacaoTreinoAtual = false;
 
         // Paginação da galeria
         let fotosCache = [];
@@ -3014,6 +3056,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                     let cargoEspecialHtml = m.cargo_especial ? `<div class="cargo-especial">${m.cargo_especial}</div>` : '';
                     let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">${m.trabalho}</div>` : '';
+                    let avaliadorTreinoHtml = m.e_avaliador_treino ? `<div class="avaliador-treino-tag">⚔ Avaliador de Treino</div>` : '';
 
                     card.innerHTML = `
                         ${botaoEsquerdaHtml}
@@ -3021,6 +3064,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         <h4>${m.nome_jogo}</h4>
                         ${cargoEspecialHtml}
                         ${trabalhoHtml}
+                        ${avaliadorTreinoHtml}
                         <div class="graduacao">${m.graduacao}</div>
                     `;
                     container.appendChild(card);
@@ -3061,87 +3105,245 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
 
-        function abrirDetalhesMembro(membro) {
-            const userId = localStorage.getItem('discord_user_id');
-            obterAdminsAutorizados().then(adminsAtuais => {
-                const eAdmin = userId && adminsAtuais.includes(userId);
+        function mudarAbaDetalhesMembro(aba, botao) {
+            const recompensas = document.getElementById('painelAbaRecompensas');
+            const treino = document.getElementById('painelAbaTreino');
+            const tabRecompensas = document.getElementById('abaTabRecompensas');
+            const tabTreino = document.getElementById('abaTabTreino');
+            const mostrarTreino = aba === 'treino';
 
-                document.getElementById('tituloDetalhesMembro').innerText = `Painel de Recompensas: ${membro.nome_jogo}`;
+            recompensas.style.display = mostrarTreino ? 'none' : 'block';
+            treino.style.display = mostrarTreino ? 'block' : 'none';
+            tabRecompensas.classList.toggle('active', !mostrarTreino);
+            tabTreino.classList.toggle('active', mostrarTreino);
+            tabRecompensas.setAttribute('aria-selected', String(!mostrarTreino));
+            tabTreino.setAttribute('aria-selected', String(mostrarTreino));
+        }
+
+        // Esta checagem controla a interface. A autorização definitiva no banco/RLS será configurada depois.
+        function obterPermissaoAvaliacaoTreino() {
+            const userId = localStorage.getItem('discord_user_id');
+            if (!userId) return Promise.resolve({ eAdmin: false, eAvaliador: false, autorizado: false });
+
+            const consultaAvaliador = supabaseClient
+                .from('membros')
+                .select('e_avaliador_treino')
+                .eq('discord_id', userId)
+                .maybeSingle();
+
+            return Promise.all([obterAdminsAutorizados(), consultaAvaliador])
+                .then(([adminsAtuais, resultadoAvaliador]) => {
+                    const eAdmin = adminsAtuais.includes(userId);
+                    const eAvaliador = !!resultadoAvaliador?.data?.e_avaliador_treino;
+                    return { eAdmin, eAvaliador, autorizado: eAdmin || eAvaliador };
+                })
+                .catch(error => {
+                    console.error('Erro ao verificar permissão de avaliação:', error);
+                    return { eAdmin: false, eAvaliador: false, autorizado: false };
+                });
+        }
+
+        function normalizarPontoTreino(valor) {
+            const numero = Number(valor);
+            if (!Number.isInteger(numero)) return 0;
+            return Math.max(0, Math.min(10, numero));
+        }
+
+        function renderizarAvaliacaoTreino(membro) {
+            const container = document.getElementById('conteudoAvaliacaoTreino');
+            if (!container || !membro) return;
+
+            const atributos = [
+                { chave: 'treino_taijutsu', nome: 'Taijutsu' },
+                { chave: 'treino_ninjutsu', nome: 'Ninjutsu' },
+                { chave: 'treino_defesa', nome: 'Defesa' },
+                { chave: 'treino_movimentacao', nome: 'Movimentação' },
+                { chave: 'treino_grupo', nome: 'Grupo' }
+            ];
+
+            const linhas = atributos.map((atributo, indice) => {
+                const pontos = normalizarPontoTreino(membro[atributo.chave]);
+                const quadrados = Array.from({ length: 10 }, (_, i) =>
+                    `<span class="training-square ${i < pontos ? 'aceso' : ''}" aria-hidden="true"></span>`
+                ).join('');
+                return `
+                    <div class="training-stat-row">
+                        <div class="training-stat-heading">
+                            <span class="training-stat-index">${String(indice + 1).padStart(2, '0')}</span>
+                            <span class="training-stat-name">${atributo.nome}</span>
+                            <strong class="training-stat-score">${pontos}<small>/10</small></strong>
+                        </div>
+                        <div class="training-squares" role="img" aria-label="${atributo.nome}: ${pontos} de 10 pontos">${quadrados}</div>
+                    </div>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="training-member-heading">
+                    <div><span class="training-kicker">AVALIAÇÃO DE TREINO</span><h3 class="training-member-name"></h3></div>
+                    ${podeEditarAvaliacaoTreinoAtual ? '<button type="button" class="training-edit-button" onclick="abrirEdicaoAvaliacaoTreino()">✎ Editar atributos</button>' : ''}
+                </div>
+                <div class="training-stat-list">${linhas}</div>
+                <div class="training-legend"><span><i class="training-legend-square aceso"></i> 1 ponto</span><span><i class="training-legend-square"></i> 0 ponto</span></div>`;
+            container.querySelector('.training-member-name').textContent = membro.nome_jogo || 'Membro do Clã';
+            document.getElementById('formAvaliacaoTreino').style.display = 'none';
+        }
+
+        function abrirEdicaoAvaliacaoTreino() {
+            if (!podeEditarAvaliacaoTreinoAtual || !membroTreinoSelecionado) {
+                mostrarAviso('Somente um Administrador ou Avaliador de Treino pode editar esses atributos.', 'erro');
+                return;
+            }
+
+            const campos = {
+                treinoTaijutsu: 'treino_taijutsu',
+                treinoNinjutsu: 'treino_ninjutsu',
+                treinoDefesa: 'treino_defesa',
+                treinoMovimentacao: 'treino_movimentacao',
+                treinoGrupo: 'treino_grupo'
+            };
+            Object.entries(campos).forEach(([id, chave]) => {
+                document.getElementById(id).value = normalizarPontoTreino(membroTreinoSelecionado[chave]);
+            });
+            document.getElementById('formAvaliacaoTreino').style.display = 'block';
+            document.getElementById('formAvaliacaoTreino').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function cancelarEdicaoAvaliacaoTreino() {
+            if (!membroTreinoSelecionado) return;
+            renderizarAvaliacaoTreino(membroTreinoSelecionado);
+        }
+
+        function salvarAvaliacaoTreino(event) {
+            event.preventDefault();
+            if (!membroTreinoSelecionado) return;
+
+            obterPermissaoAvaliacaoTreino().then(permissoes => {
+                if (!permissoes.autorizado) {
+                    podeEditarAvaliacaoTreinoAtual = false;
+                    mostrarAviso('Acesso negado. Esta ação é exclusiva para Avaliadores de Treino e Administradores.', 'erro');
+                    renderizarAvaliacaoTreino(membroTreinoSelecionado);
+                    return;
+                }
+
+                const campos = {
+                    treino_taijutsu: 'treinoTaijutsu',
+                    treino_ninjutsu: 'treinoNinjutsu',
+                    treino_defesa: 'treinoDefesa',
+                    treino_movimentacao: 'treinoMovimentacao',
+                    treino_grupo: 'treinoGrupo'
+                };
+                const atualizacao = {};
+                for (const [coluna, id] of Object.entries(campos)) {
+                    const valor = document.getElementById(id).value;
+                    const numero = Number(valor);
+                    if (valor === '' || !Number.isInteger(numero) || numero < 0 || numero > 10) {
+                        mostrarAviso('Cada atributo precisa ter um valor inteiro entre 0 e 10.', 'erro');
+                        return;
+                    }
+                    atualizacao[coluna] = numero;
+                }
+
+                const botaoSalvar = document.getElementById('btnSalvarAvaliacaoTreino');
+                botaoSalvar.disabled = true;
+                botaoSalvar.textContent = 'Salvando...';
+                supabaseClient.from('membros').update(atualizacao).eq('id', membroTreinoSelecionado.id)
+                    .then(({ error }) => {
+                        if (error) {
+                            console.error('Erro ao salvar avaliação de treino:', error);
+                            mostrarAviso('Não foi possível salvar. Confira se as colunas de treino já foram criadas no Supabase.', 'erro');
+                            return;
+                        }
+
+                        Object.assign(membroTreinoSelecionado, atualizacao);
+                        const indice = listaMembrosCache.findIndex(m => String(m.id) === String(membroTreinoSelecionado.id));
+                        if (indice >= 0) Object.assign(listaMembrosCache[indice], atualizacao);
+                        membrosFiltradosCache = listaMembrosCache.filter(m => membrosFiltradosCache.some(f => String(f.id) === String(m.id)));
+                        renderizarAvaliacaoTreino(membroTreinoSelecionado);
+                        carregarMembros();
+                        mostrarAviso('Avaliação de treino atualizada.');
+                    })
+                    .finally(() => {
+                        botaoSalvar.disabled = false;
+                        botaoSalvar.textContent = 'Salvar avaliação';
+                    });
+            });
+        }
+
+        function abrirDetalhesMembro(membro) {
+            if (!membro) return;
+            membroTreinoSelecionado = membro;
+            podeEditarAvaliacaoTreinoAtual = false;
+            document.getElementById('tituloDetalhesMembro').textContent = `Perfil do Membro: ${membro.nome_jogo || ''}`;
+            document.getElementById('conteudoDetalhesMembro').innerHTML = '<p class="member-history-loading">Buscando solicitações...</p>';
+            document.getElementById('conteudoAvaliacaoTreino').innerHTML = '<p class="member-history-loading">Carregando avaliação...</p>';
+            document.getElementById('formAvaliacaoTreino').style.display = 'none';
+            mudarAbaDetalhesMembro('recompensas', document.getElementById('abaTabRecompensas'));
+            modalDetalhesMembro.style.display = 'flex';
+
+            obterPermissaoAvaliacaoTreino().then(permissoes => {
+                podeEditarAvaliacaoTreinoAtual = permissoes.autorizado;
+                renderizarAvaliacaoTreino(membro);
+                const eAdmin = permissoes.eAdmin;
                 const conteudo = document.getElementById('conteudoDetalhesMembro');
-                conteudo.innerHTML = "<p>Buscando solicitações...</p>";
-                modalDetalhesMembro.style.display = 'flex';
 
                 supabaseClient
                     .from('solicitacoes_recompensa')
                     .select('*')
                     .eq('discord_id', membro.discord_id)
                     .order('id', { ascending: false })
-                    .then(({ data: solicitacoes }) => {
-                        if (!solicitacoes || solicitacoes.length === 0) {
-                            conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Este membro não possui solicitações de recompensa pendentes ou recentes.</p>`;
+                    .then(({ data: solicitacoes, error }) => {
+                        if (error || !solicitacoes || solicitacoes.length === 0) {
+                            conteudo.innerHTML = '<p class="member-history-empty">Este membro não possui solicitações de recompensa pendentes ou recentes.</p>';
                             return;
                         }
 
                         let html = '';
-
                         solicitacoes.forEach(sol => {
                             let statusExibicao = sol.status;
                             if ((sol.status === 'Pago' || sol.status === 'Negado') && sol.data_pagamento) {
                                 statusExibicao = `${sol.status} em ${sol.data_pagamento}`;
                             }
-
-                            const blocosCompletos = Math.floor(sol.qtd_missoes / 5);
+                            const blocosCompletos = Math.floor((Number(sol.qtd_missoes) || 0) / 5);
                             const valorTotalRyos = blocosCompletos * 1000;
-                            const missoesExcedentes = sol.qtd_missoes % 5;
+                            const missoesExcedentes = (Number(sol.qtd_missoes) || 0) % 5;
 
                             let avisoSobraHtml = '';
                             if (missoesExcedentes > 0) {
-                                avisoSobraHtml = `<div style="font-size: 0.8rem; color: var(--senju-gold); margin-top: 8px; padding: 9px 10px; border-left: 3px solid var(--senju-gold); background: rgba(194,155,56,0.08); border-radius: 4px;">
-                                    ℹ️ Esta solicitação possui ${missoesExcedentes} print(s) além dos blocos completos de 5. Esses prints excedentes <b>não serão contabilizados, não geram Ryos e não serão acumulados para a próxima solicitação</b>.
-                                </div>`;
+                                avisoSobraHtml = `<div class="member-reward-overflow">ℹ️ Esta solicitação possui ${missoesExcedentes} print(s) além dos blocos completos de 5. Esses prints excedentes <b>não serão contabilizados, não geram Ryos e não serão acumulados para a próxima solicitação</b>.</div>`;
                             }
 
                             let printsHtml = '';
                             if (sol.caminhos_imagens && sol.caminhos_imagens.length > 0) {
-                                printsHtml = `<div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">`;
+                                printsHtml = '<div class="member-reward-prints">';
                                 sol.caminhos_imagens.forEach(urlImg => {
-                                    printsHtml += `<a href="${urlImg}" target="_blank"><img src="${urlImg}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid var(--senju-gold);"></a>`;
+                                    const urlSegura = String(urlImg).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+                                    printsHtml += `<a href="${urlSegura}" target="_blank" rel="noopener noreferrer"><img src="${urlSegura}" alt="Print enviado pelo membro" loading="lazy"></a>`;
                                 });
-                                printsHtml += `</div>`;
+                                printsHtml += '</div>';
                             }
 
-                            let botaoAcao = '';
-                            if (eAdmin && sol.status === 'Pendente') {
-                                botaoAcao = `
-                                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 12px;">
-                                        <button onclick="negarRecompensa(${sol.id})" class="btn-discord-login" style="background-color: var(--senju-red); display: inline-block; width: auto; padding: 8px 14px;">❌ Negar</button>
-                                        <button onclick="confirmarPagamentoRecompensa(${sol.id})" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
-                                    </div>
-                                `;
-                            }
+                            const botaoAcao = eAdmin && sol.status === 'Pendente' ? `
+                                <div class="member-reward-actions">
+                                    <button onclick="negarRecompensa(${Number(sol.id)})" class="btn-discord-login" style="background-color: var(--senju-red); display: inline-block; width: auto; padding: 8px 14px;">❌ Negar</button>
+                                    <button onclick="confirmarPagamentoRecompensa(${Number(sol.id)})" class="btn-discord-login" style="background-color: #248046; display: inline-block; width: auto; padding: 8px 18px;">✅ Confirmar Pagamento</button>
+                                </div>` : '';
 
                             let corStatus = 'var(--senju-gold)';
-                            if (sol.status === 'Pago') corStatus = '#248046';
+                            if (sol.status === 'Pago') corStatus = '#55bd78';
                             if (sol.status === 'Negado') corStatus = 'var(--senju-red)';
-
+                            const dataEnvio = String(sol.data_envio || '').replace(/</g, '&lt;');
                             html += `
-                                <div style="background: rgba(0,0,0,0.4); border: 1px solid rgba(194,155,56,0.3); border-radius: 6px; padding: 15px; margin-bottom: 15px;">
-                                    <p><b>Data do Envio:</b> ${sol.data_envio}</p>
-                                    <p><b>Prints Enviados:</b> ${sol.qtd_missoes}</p>
-                                    <p><b>Recompensa Calculada:</b> <span style="color: var(--senju-gold); font-weight: bold;">${valorTotalRyos} Ryos</span> (${blocosCompletos} bloco(s) de 5)</p>
+                                <div class="member-reward-card">
+                                    <p><b>Data do Envio:</b> ${dataEnvio}</p>
+                                    <p><b>Prints Enviados:</b> ${Number(sol.qtd_missoes) || 0}</p>
+                                    <p><b>Recompensa Calculada:</b> <span class="member-ryos">${valorTotalRyos} Ryos</span> (${blocosCompletos} bloco(s) de 5)</p>
                                     ${avisoSobraHtml}
-                                    <p style="margin-top: 6px;"><b>Status:</b> <span style="color: ${corStatus}; font-weight: bold;">${statusExibicao}</span></p>
+                                    <p class="member-reward-status"><b>Status:</b> <span style="color:${corStatus}; font-weight:800;">${statusExibicao}</span></p>
                                     ${printsHtml}
                                     ${botaoAcao}
-                                </div>
-                            `;
+                                </div>`;
                         });
-
-                        if (!html) {
-                            conteudo.innerHTML = `<p style="text-align:center; padding: 20px;">Nenhuma solicitação ativa ou recente no momento.</p>`;
-                        } else {
-                            conteudo.innerHTML = html;
-                        }
+                        conteudo.innerHTML = html;
                     });
             });
         }
@@ -3343,6 +3545,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     else document.getElementById('trabalhoMembro').value = "";
 
                     document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
+                    document.getElementById('checkAvaliadorTreino').checked = !!membro.e_avaliador_treino;
                     modalMembro.style.display = 'flex';
                 });
             });
@@ -3371,6 +3574,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const cargoEspecialSelect = document.getElementById('cargoEspecialMembro').value;
                 const trabalho = document.getElementById('trabalhoMembro').value;
                 const e_admin = document.getElementById('checkAdminMembro').checked;
+                const e_avaliador_treino = document.getElementById('checkAvaliadorTreino').checked;
 
                 let graduacao = graduacaoSelect;
                 if (graduacaoSelect === "Estudante") graduacao = "Estudante [ 学 生 ]";
@@ -3395,7 +3599,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 btnSubmit.innerText = "Salvando...";
 
                 if (idEdicao === "") {
-                    supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }]).then(({ error }) => {
+                    supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin, e_avaliador_treino }]).then(({ error }) => {
                         if (error) {
                             mostrarAviso('Erro ao cadastrar membro: ' + error.message, 'erro');
                             salvandoMembroEmAndamento = false;
@@ -3407,7 +3611,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         concluirSalvamentoMembro();
                     });
                 } else {
-                    supabaseClient.from('membros').update({ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin }).eq('id', idEdicao).then(({ error }) => {
+                    supabaseClient.from('membros').update({ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin, e_avaliador_treino }).eq('id', idEdicao).then(({ error }) => {
                         if (error) {
                             mostrarAviso('Erro ao atualizar membro: ' + error.message, 'erro');
                             salvandoMembroEmAndamento = false;
@@ -5837,6 +6041,88 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             font-size: .76rem;
             line-height: 1.4;
             text-align: center;
+        }
+
+    
+
+        /* Perfil do membro: histórico + avaliação de treino */
+        .member-detail-tabs {
+            display: flex;
+            gap: 8px;
+            margin: -2px 0 20px;
+            padding: 0 0 10px;
+            overflow-x: auto;
+            border-bottom: 1px solid rgba(194,155,56,.17);
+        }
+
+        .member-detail-tab {
+            flex: 0 0 auto;
+            min-height: 40px;
+            padding: 9px 13px;
+            border: 1px solid transparent;
+            border-radius: 9px;
+            color: #a99a86;
+            background: transparent;
+            font: 700 .8rem 'Inter', sans-serif;
+            cursor: pointer;
+            transition: color .18s ease, background .18s ease, border-color .18s ease;
+        }
+
+        .member-detail-tab:hover { color: #f0dfbd; background: rgba(194,155,56,.06); }
+        .member-detail-tab.active { color: #f0d27e; border-color: rgba(194,155,56,.22); background: linear-gradient(145deg, rgba(194,155,56,.12), rgba(194,155,56,.035)); }
+        .member-detail-panel { min-height: 120px; }
+        .member-profile-footer { margin-top: 18px; }
+        .training-panel-intro { margin: 0 0 17px; padding: 13px 15px; border: 1px solid rgba(194,155,56,.15); border-radius: 11px; background: rgba(194,155,56,.045); }
+        .training-kicker { color: rgba(218,181,86,.78); font: 800 .65rem 'Cinzel', serif; letter-spacing: .15em; }
+        .training-panel-intro p { margin-top: 6px; color: #a99d8d; font-size: .81rem; line-height: 1.5; }
+        .training-member-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 2px 14px; }
+        .training-member-name { margin-top: 4px; color: #f0e2c8; font: 700 1.05rem 'Cinzel', serif; }
+        .training-edit-button { flex: 0 0 auto; padding: 9px 12px; border: 1px solid rgba(194,155,56,.28); border-radius: 9px; color: #e3c878; background: rgba(194,155,56,.08); font: 800 .75rem 'Inter', sans-serif; cursor: pointer; }
+        .training-edit-button:hover { background: rgba(194,155,56,.16); }
+        .training-stat-list { display: flex; flex-direction: column; gap: 9px; }
+        .training-stat-row { padding: 12px 13px; border: 1px solid rgba(194,155,56,.14); border-radius: 11px; background: linear-gradient(110deg, rgba(255,255,255,.025), rgba(0,0,0,.10)); }
+        .training-stat-heading { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
+        .training-stat-index { color: rgba(194,155,56,.65); font: 700 .67rem 'Cinzel', serif; }
+        .training-stat-name { flex: 1; color: #e5d9c8; font-size: .82rem; font-weight: 700; }
+        .training-stat-score { color: #e7c66e; font: 800 .9rem 'Cinzel', serif; }
+        .training-stat-score small { margin-left: 2px; color: #8c7c66; font: 700 .65rem 'Inter', sans-serif; }
+        .training-squares { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+        .training-square { display: block; min-width: 0; height: 15px; border: 1px solid rgba(209,190,155,.12); border-radius: 4px; background: linear-gradient(180deg, rgba(204,188,159,.09), rgba(117,101,79,.06)); }
+        .training-square.aceso { border-color: rgba(239,204,112,.88); background: linear-gradient(180deg, #efd47e, #b78d3b); box-shadow: 0 0 9px rgba(217,177,79,.18), inset 0 1px 0 rgba(255,255,255,.28); }
+        .training-legend { display: flex; justify-content: center; flex-wrap: wrap; gap: 18px; margin: 13px 0 7px; color: #a39480; font-size: .7rem; }
+        .training-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .training-legend-square { width: 11px; height: 11px; border: 1px solid rgba(209,190,155,.15); border-radius: 3px; background: rgba(194,155,56,.06); }
+        .training-legend-square.aceso { border-color: #d4b15d; background: linear-gradient(180deg, #efd47e, #b78d3b); }
+        .training-edit-form { margin-top: 16px; padding: 16px; border: 1px solid rgba(194,155,56,.22); border-radius: 12px; background: rgba(0,0,0,.18); }
+        .training-edit-heading h3 { color: #efdfbe; font: 700 1rem 'Cinzel', serif; }
+        .training-edit-heading p { margin: 5px 0 14px; color: #a99d8d; font-size: .78rem; }
+        .training-input-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 13px; }
+        .training-input-grid .form-group { margin-bottom: 12px; }
+        .training-input-grid input { max-width: 100%; }
+        .training-edit-actions { margin-top: 5px; }
+        .training-save-button { background-image: linear-gradient(135deg, #b78d3b, #85611f); color: #170f07; }
+        .training-save-button:disabled { opacity: .6; cursor: wait; }
+        .member-history-loading, .member-history-empty { padding: 26px 12px; color: #a99d8d; text-align: center; line-height: 1.6; }
+        .member-reward-card { margin-bottom: 12px; padding: 15px; border: 1px solid rgba(194,155,56,.18); border-radius: 11px; background: rgba(0,0,0,.22); }
+        .member-reward-card p { margin: 4px 0; }
+        .member-reward-overflow { margin-top: 8px; padding: 9px 10px; border-left: 3px solid var(--senju-gold); border-radius: 7px; color: #d3c4ac; background: rgba(194,155,56,.08); font-size: .8rem; }
+        .member-reward-prints { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .member-reward-prints img { width: 60px; height: 60px; object-fit: cover; border: 1px solid var(--senju-gold); border-radius: 7px; }
+        .member-reward-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+        .member-ryos { color: var(--senju-gold); font-weight: 800; }
+        .evaluator-checkbox-group { border-color: rgba(194,155,56,.28); background: rgba(194,155,56,.07); }
+        .field-help { display: block; margin: 7px 2px 0; color: #9b8b77; font-size: .74rem; line-height: 1.45; }
+        .avaliador-treino-tag { display: inline-flex; align-items: center; gap: 5px; width: fit-content; margin: 6px 0; padding: 4px 8px; border: 1px solid rgba(194,155,56,.26); border-radius: 999px; color: #e2c878; background: rgba(194,155,56,.08); font-size: .69rem; font-weight: 800; }
+
+        @media (max-width: 600px) {
+            .member-detail-tabs { gap: 5px; }
+            .member-detail-tab { padding: 8px 10px; font-size: .72rem; }
+            .training-stat-row { padding: 11px 10px; }
+            .training-squares { gap: 4px; }
+            .training-square { height: 13px; border-radius: 3px; }
+            .training-member-heading { align-items: flex-start; flex-direction: column; }
+            .training-input-grid { grid-template-columns: 1fr 1fr; gap: 0 9px; }
+            .member-reward-actions button { flex: 1 1 100%; }
         }
 
     </style>
