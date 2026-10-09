@@ -3054,18 +3054,28 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         `;
                     }
 
-                    let cargoEspecialHtml = m.cargo_especial ? `<div class="cargo-especial">${m.cargo_especial}</div>` : '';
-                    let trabalhoHtml = m.trabalho ? `<div class="trabalho-tag">${m.trabalho}</div>` : '';
-                    let avaliadorTreinoHtml = m.e_avaliador_treino ? `<div class="avaliador-treino-tag">⚔ Avaliador de Treino</div>` : '';
+                    const cargoEspecialHtml = m.cargo_especial
+                        ? `<div class="member-meta-item member-meta-item--cargo"><span class="member-meta-label">CARGO ESPECIAL</span><strong class="member-meta-value">${m.cargo_especial}</strong></div>`
+                        : '';
+                    const trabalhoHtml = m.trabalho
+                        ? `<div class="member-meta-item member-meta-item--work"><span class="member-meta-label">ATUAÇÃO</span><strong class="member-meta-value">${m.trabalho}</strong></div>`
+                        : '';
+                    const graduacaoHtml = m.graduacao
+                        ? `<div class="member-meta-item member-meta-item--rank"><span class="member-meta-label">GRADUAÇÃO</span><strong class="member-meta-value">${m.graduacao}</strong></div>`
+                        : '';
+                    const avaliadorTreinoHtml = m.e_avaliador_treino
+                        ? `<div class="member-meta-item member-meta-item--evaluator"><span class="member-meta-label">PERMISSÃO</span><strong class="member-meta-value">⚔ Avaliador de Treino</strong></div>`
+                        : '';
+                    const informacoesMembroHtml = [cargoEspecialHtml, trabalhoHtml, graduacaoHtml, avaliadorTreinoHtml]
+                        .filter(Boolean).join('');
 
                     card.innerHTML = `
                         ${botaoEsquerdaHtml}
                         ${botoesAdminHtml}
-                        <h4>${m.nome_jogo}</h4>
-                        ${cargoEspecialHtml}
-                        ${trabalhoHtml}
-                        ${avaliadorTreinoHtml}
-                        <div class="graduacao">${m.graduacao}</div>
+                        <div class="member-card-content">
+                            <h4>${m.nome_jogo || 'Membro do Clã'}</h4>
+                            <div class="member-card-meta">${informacoesMembroHtml}</div>
+                        </div>
                     `;
                     container.appendChild(card);
                 });
@@ -6123,6 +6133,132 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             .training-member-heading { align-items: flex-start; flex-direction: column; }
             .training-input-grid { grid-template-columns: 1fr 1fr; gap: 0 9px; }
             .member-reward-actions button { flex: 1 1 100%; }
+        }
+
+    
+
+        /* Redesign dos cartões: cargos e dados do membro em badges organizados */
+        .member-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 190px;
+            padding: 19px 15px 16px;
+            overflow: hidden;
+            background:
+                radial-gradient(ellipse at 50% 0%, rgba(194,155,56,.09), transparent 57%),
+                linear-gradient(145deg, rgba(25,13,7,.96), rgba(9,5,3,.98));
+            border-color: rgba(194,155,56,.23);
+            box-shadow: 0 12px 28px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,231,173,.035);
+        }
+
+        .member-card:hover {
+            border-color: rgba(216,181,91,.58);
+            box-shadow: 0 16px 34px rgba(0,0,0,.38), 0 0 22px rgba(194,155,56,.055);
+        }
+
+        .member-card-content { width: 100%; }
+
+        .member-card h4 {
+            display: flex;
+            min-height: 43px;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0 13px;
+            padding: 0 42px;
+            color: #f0e2c8;
+            font-family: 'Cinzel', serif;
+            font-size: .99rem;
+            font-weight: 700;
+            line-height: 1.25;
+            text-align: center;
+            overflow-wrap: anywhere;
+            text-wrap: balance;
+        }
+
+        .member-card-meta {
+            display: flex;
+            width: 100%;
+            flex-wrap: wrap;
+            align-items: stretch;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .member-meta-item {
+            display: flex;
+            flex: 1 1 105px;
+            min-width: 0;
+            max-width: 100%;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px 10px;
+            border: 1px solid rgba(194,155,56,.14);
+            border-radius: 9px;
+            background: linear-gradient(145deg, rgba(255,255,255,.035), rgba(0,0,0,.17));
+            text-align: center;
+        }
+
+        .member-meta-label {
+            color: #a98d50;
+            font: 800 .57rem 'Inter', sans-serif;
+            letter-spacing: .12em;
+            line-height: 1.2;
+        }
+
+        .member-meta-value {
+            display: block;
+            max-width: 100%;
+            color: #e5d8c3;
+            font: 700 .69rem 'Inter', sans-serif;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+            text-wrap: pretty;
+        }
+
+        .member-meta-item--cargo {
+            flex-basis: 100%;
+            border-color: rgba(166,76,66,.22);
+            background: linear-gradient(120deg, rgba(141,47,41,.12), rgba(194,155,56,.035));
+        }
+
+        .member-meta-item--cargo .member-meta-label { color: #bd7869; }
+        .member-meta-item--cargo .member-meta-value { color: #e6b3a3; }
+
+        .member-meta-item--work {
+            border-color: rgba(99,129,245,.19);
+            background: linear-gradient(145deg, rgba(64,82,170,.12), rgba(0,0,0,.14));
+        }
+
+        .member-meta-item--work .member-meta-label { color: #899bfa; }
+        .member-meta-item--work .member-meta-value { color: #b9c3ff; }
+
+        .member-meta-item--rank {
+            border-color: rgba(194,155,56,.25);
+            background: linear-gradient(145deg, rgba(194,155,56,.11), rgba(0,0,0,.16));
+        }
+
+        .member-meta-item--rank .member-meta-value { color: #e8cd7e; }
+
+        .member-meta-item--evaluator {
+            flex-basis: 100%;
+            border-color: rgba(194,155,56,.22);
+            background: rgba(194,155,56,.07);
+        }
+
+        .member-meta-item--evaluator .member-meta-label { color: #c7a64f; }
+        .member-meta-item--evaluator .member-meta-value { color: #efd88e; }
+
+        @media (max-width: 600px) {
+            .member-card { min-height: 176px; padding: 18px 12px 13px; }
+            .member-card h4 { min-height: 40px; margin-bottom: 11px; padding-inline: 38px; font-size: .91rem; }
+            .member-card-meta { gap: 6px; }
+            .member-meta-item { flex-basis: 100px; padding: 7px 8px; }
+            .member-meta-item--cargo, .member-meta-item--evaluator { flex-basis: 100%; }
+            .member-meta-value { font-size: .66rem; }
         }
 
     </style>
