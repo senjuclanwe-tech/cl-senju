@@ -1756,7 +1756,7 @@
         <h2 class="section-title">Calculadora de Treino (NPC Guy)</h2>
         <div class="calculator-card">
             <p style="color: var(--text-muted); font-size: 0.95rem; text-align: center; margin-bottom: 25px; line-height: 1.5;">
-                O NPC Guy cobra <b>400 Ryos por sessão</b> e dobra o ganho para <b>2 pontos por habilidade ativada</b>. Com duas habilidades desbloqueadas, informe o cooldown de cada uma: usando a primeira e depois a segunda, o ciclo rende <b>4 pontos</b>.
+                O NPC Guy cobra <b>400 Ryos por sessão</b> e concede <b>2 pontos por habilidade ativada</b>. Cada habilidade tem seu próprio cooldown e recarrega independentemente, então você pode usar uma enquanto a outra está recarregando. Escolha uma ou duas habilidades para calcular o tempo, os treinos e o custo.
             </p>
 
             <div class="calculator-grid">
@@ -1780,14 +1780,22 @@
                     </select>
                 </div>
 
+                <div class="form-group calc-habilidades-control" style="margin-bottom: 0;">
+                    <label for="calcQuantidadeHabilidades">Habilidades desbloqueadas:</label>
+                    <select id="calcQuantidadeHabilidades" onchange="atualizarCamposHabilidades()">
+                        <option value="1" selected>1 habilidade</option>
+                        <option value="2">2 habilidades</option>
+                    </select>
+                </div>
+
                 <div class="cooldown-pair">
                     <div class="form-group cooldown-control">
                         <label for="calcCooldown1">Cooldown da 1ª habilidade (s)</label>
-                        <input type="number" id="calcCooldown1" min="0.1" step="0.1" value="5" placeholder="5" oninput="calcularTreinoGuy()">
+                        <input type="number" id="calcCooldown1" min="0.1" step="0.1" value="30" placeholder="Ex.: 30" oninput="calcularTreinoGuy()">
                     </div>
-                    <div class="form-group cooldown-control">
+                    <div class="form-group cooldown-control" id="calcCooldown2Container" style="display: none;">
                         <label for="calcCooldown2">Cooldown da 2ª habilidade (s)</label>
-                        <input type="number" id="calcCooldown2" min="0.1" step="0.1" value="5" placeholder="7" oninput="calcularTreinoGuy()">
+                        <input type="number" id="calcCooldown2" min="0.1" step="0.1" value="30" placeholder="Ex.: 30" oninput="calcularTreinoGuy()">
                     </div>
                 </div>
             </div>
@@ -2391,7 +2399,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const CLIENT_ID = "1554155836585021510";
-        const ADMINS_FIXOS = ["375808506374258699"];
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
         const CHAVES_WEBHOOK = {
@@ -2428,36 +2435,50 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const videosPorPagina = 6;
         let adminMidiasAtual = false;
 
-        // CALCULADORA DO GUY: uma habilidade rende 2 pontos; as duas em sequência rendem 4.
+        // Mostra apenas os campos necessários para a quantidade de habilidades selecionada.
+        function atualizarCamposHabilidades() {
+            const quantidade = document.getElementById('calcQuantidadeHabilidades')?.value || '1';
+            const segundoCampo = document.getElementById('calcCooldown2Container');
+            if (segundoCampo) segundoCampo.style.display = quantidade === '2' ? '' : 'none';
+            calcularTreinoGuy();
+        }
+
+        // Cada habilidade tem cooldown independente. As ativações acontecem em paralelo,
+        // sem somar os cooldowns; cada ativação concede 2 pontos.
         function calcularTreinoGuy() {
             const atual = Math.max(0, parseInt(document.getElementById('calcAtual').value, 10) || 0);
             const meta = Math.max(0, parseInt(document.getElementById('calcMeta').value, 10) || 0);
             const minutosTreino = parseInt(document.getElementById('calcBonusTempo').value, 10) || 10;
+            const quantidadeHabilidades = document.getElementById('calcQuantidadeHabilidades')?.value || '1';
             const cooldown1Informado = parseFloat(document.getElementById('calcCooldown1').value);
             const cooldown2Informado = parseFloat(document.getElementById('calcCooldown2').value);
-            const cooldown1 = Number.isFinite(cooldown1Informado) && cooldown1Informado > 0 ? cooldown1Informado : 5;
-            const cooldown2 = Number.isFinite(cooldown2Informado) && cooldown2Informado > 0 ? cooldown2Informado : 5;
+            const cooldown1 = Number.isFinite(cooldown1Informado) && cooldown1Informado > 0 ? cooldown1Informado : 30;
+            const cooldown2 = Number.isFinite(cooldown2Informado) && cooldown2Informado > 0 ? cooldown2Informado : 30;
 
             const pontosFaltando = Math.max(0, meta - atual);
             const segundosPorTreino = minutosTreino * 60;
-            const segundosPorCiclo = cooldown1 + cooldown2;
-            const pontosPorCiclo = 4;
-            const ciclosNecessarios = Math.ceil(pontosFaltando / pontosPorCiclo);
-            const ciclosPorSessao = Math.floor(segundosPorTreino / segundosPorCiclo);
+            const usandoDuasHabilidades = quantidadeHabilidades === '2';
 
-            let sessoesGuy = 0;
-            if (pontosFaltando > 0 && ciclosPorSessao > 0) {
-                sessoesGuy = Math.ceil(ciclosNecessarios / ciclosPorSessao);
-            }
+            // Cada habilidade pode ser ativada assim que a sessão começa e depois
+            // sempre que o seu próprio cooldown termina. Os temporizadores são independentes.
+            const ativacoesHabilidade1 = Math.ceil(segundosPorTreino / cooldown1);
+            const ativacoesHabilidade2 = usandoDuasHabilidades
+                ? Math.ceil(segundosPorTreino / cooldown2)
+                : 0;
+            const pontosPorSessao = (ativacoesHabilidade1 + ativacoesHabilidade2) * 2;
+
+            // Uma ativação rende 2 pontos. Arredondamos para cima porque não existe
+            // uma fração de ativação, e cada sessão comprada custa 400 Ryos.
+            const sessoesGuy = pontosFaltando > 0 && pontosPorSessao > 0
+                ? Math.ceil(pontosFaltando / pontosPorSessao)
+                : 0;
 
             const custoTotal = sessoesGuy * 400;
             const tempoTotalMinutos = sessoesGuy * minutosTreino;
 
             document.getElementById('resFalta').innerText = `${pontosFaltando} pts`;
-            document.getElementById('resTempoTotal').innerText = `${tempoTotalMinutos} min`;
-            document.getElementById('resTreinos').innerText = pontosFaltando > 0 && ciclosPorSessao === 0
-                ? 'Cooldown alto'
-                : `${sessoesGuy}x (Guy)`;
+            document.getElementById('resTempoTotal').innerText = `${tempoTotalMinutos.toLocaleString('pt-BR')} min`;
+            document.getElementById('resTreinos').innerText = `${sessoesGuy}x (Guy)`;
             document.getElementById('resCusto').innerText = `${custoTotal.toLocaleString('pt-BR')} Ryos`;
         }
 
@@ -2590,21 +2611,22 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         };
 
         function obterAdminsAutorizados() {
-            let admins = [...ADMINS_FIXOS];
+            // A lista de administradores vem exclusivamente do banco de dados.
+            // Se a consulta falhar, ninguém recebe permissões administrativas.
             return supabaseClient.from('membros').select('discord_id, e_admin')
-                .then(({ data: membros }) => {
-                    if (membros) {
-                        membros.forEach(m => {
-                            if (m.e_admin && m.discord_id && !admins.includes(m.discord_id)) {
-                                admins.push(m.discord_id);
-                            }
-                        });
+                .then(({ data: membros, error }) => {
+                    if (error) {
+                        console.error("Erro ao buscar admins no banco:", error);
+                        return [];
                     }
-                    return admins;
+
+                    return (membros || [])
+                        .filter(m => m.e_admin === true && m.discord_id)
+                        .map(m => String(m.discord_id));
                 })
                 .catch(e => {
                     console.error("Erro ao buscar admins:", e);
-                    return admins;
+                    return [];
                 });
         }
 
