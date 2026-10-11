@@ -1505,6 +1505,213 @@
                 max-width: 100%;
             }
         }
+    
+
+        /* AJUSTE RESPONSIVO FINAL: impede que cartões e seções ultrapassem a tela */
+        html {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: clip;
+            scroll-padding-top: 82px;
+        }
+
+        body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: clip;
+        }
+
+        /* O menu é sobreposto ao conteúdo e não reserva largura lateral. */
+        header {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .senju-sidebar {
+            max-width: min(286px, 88vw);
+        }
+
+        .banner-topo {
+            width: min(100% - 32px, 1180px);
+            max-width: 1180px;
+            padding: 0;
+            margin: 82px auto 12px;
+        }
+
+        .banner-topo img {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        .senju-hero-image-only {
+            display: block;
+            width: min(100% - 32px, 1514px);
+            max-width: 1514px;
+            min-width: 0;
+            height: auto;
+            min-height: 0;
+            margin: 78px auto 16px;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .senju-hero-reference-image {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            aspect-ratio: 1514 / 342;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        .senju-stats-strip {
+            width: min(100% - 32px, 1180px);
+            max-width: 1180px;
+            min-width: 0;
+            margin: 0 auto 16px;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .senju-stat-card {
+            min-width: 0;
+            max-width: 100%;
+            padding: 13px 14px;
+            gap: 10px;
+        }
+
+        .senju-stat-card > div {
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .senju-stat-card strong {
+            overflow-wrap: anywhere;
+        }
+
+        .container,
+        section,
+        .leadership-grid,
+        .members-grid,
+        .gallery-grid,
+        .calculator-card,
+        .calculator-grid,
+        .historia-wrapper,
+        .historia-container {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .container {
+            width: min(100% - 32px, 1180px);
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        img, video, iframe, canvas, table {
+            max-width: 100%;
+        }
+
+        /* Em grids e flex, filhos podem encolher em vez de empurrar a página. */
+        .leadership-grid > *,
+        .members-grid > *,
+        .gallery-grid > *,
+        .calculator-grid > *,
+        .senju-stats-strip > *,
+        .container > *,
+        .historia-container > * {
+            min-width: 0;
+        }
+
+        @media (max-width: 900px) {
+            .senju-stats-strip {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .senju-hero-image-only {
+                width: calc(100% - 24px);
+                margin-top: 76px;
+            }
+
+            .container {
+                width: calc(100% - 24px);
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+        }
+
+        @media (max-width: 650px) {
+            header {
+                gap: 8px;
+                padding: 0 9px;
+            }
+
+            .senju-hero-image-only {
+                width: calc(100% - 20px);
+                margin-top: 72px;
+                border-radius: 8px;
+            }
+
+            .senju-hero-reference-image {
+                aspect-ratio: 3.2 / 1;
+                object-fit: cover;
+                object-position: center;
+            }
+
+            .senju-stats-strip {
+                width: calc(100% - 20px);
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .senju-stat-card {
+                min-height: 72px;
+                padding: 9px;
+                gap: 8px;
+            }
+
+            .senju-stat-icon {
+                width: 32px;
+                height: 32px;
+                flex-basis: 32px;
+            }
+
+            .senju-stat-card strong {
+                font-size: 1.05rem;
+            }
+
+            .senju-stat-card div span {
+                font-size: .68rem;
+                line-height: 1.3;
+            }
+
+            .container {
+                width: calc(100% - 20px);
+                padding: 30px 8px;
+            }
+
+            .calculator-card {
+                width: 100%;
+                padding: 16px;
+            }
+
+            .calculator-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .gallery-nav {
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            .historia-wrapper > .container {
+                padding-left: 10px;
+                padding-right: 10px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -1664,6 +1871,49 @@
                 <strong id="dashboard-missoes">0</strong>
                 <span>Missões realizadas pelo clã</span>
             </div>
+        </div>
+    </section>
+
+    <!-- PAINEL INICIAL: avisos, ranking e atividades -->
+    <section id="painel-inicial" class="senju-dashboard" aria-label="Painel do clã">
+        <div class="senju-dashboard-top">
+            <section class="senju-panel senju-highlights-panel">
+                <div class="senju-panel-heading"><span>✥</span><h2>DESTAQUES DO CLÃ</h2></div>
+                <div class="senju-highlights-content">
+                    <article class="senju-feature-card">
+                        <div class="senju-feature-art" aria-hidden="true"><span>千</span></div>
+                        <span class="senju-feature-tag">MISSÕES DO CLÃ</span>
+                        <h3>UMA HISTÓRIA CONSTRUÍDA EM EQUIPE</h3>
+                        <p>Reviva os registros das missões, treinamentos e momentos que fortalecem o nome Senju.</p>
+                        <a href="#galeria">Explorar álbuns <span>→</span></a>
+                    </article>
+                    <div class="senju-quick-links">
+                        <a class="senju-quick-card" href="#sobre"><span class="senju-quick-icon">♛</span><span><small>LIDERANÇA</small><strong>Conheça o comando do clã</strong><em>Veja quem conduz nossa jornada.</em></span><b>→</b></a>
+                        <a class="senju-quick-card" href="#membros"><span class="senju-quick-icon red">♟</span><span><small>COMUNIDADE</small><strong>Os membros Senju</strong><em>Conheça os integrantes do clã.</em></span><b>→</b></a>
+                        <a class="senju-quick-card" href="#historia"><span class="senju-quick-icon olive">巻</span><span><small>TRADIÇÃO</small><strong>Legado e história</strong><em>Descubra a trajetória do clã.</em></span><b>→</b></a>
+                    </div>
+                </div>
+            </section>
+            <section class="senju-panel senju-notices-panel">
+                <div class="senju-panel-heading"><span>⚑</span><h2>AVISOS DA LIDERANÇA</h2><button type="button" class="senju-mini-action" onclick="abrirAvisosSenju()">Ver todos →</button></div>
+                <div class="senju-notice-list" id="senju-notice-list">
+                    <article class="senju-notice"><span class="senju-notice-icon urgent">!</span><div><div class="senju-notice-title"><strong>Treinamento coletivo</strong><time>AVISO</time></div><p>Confira os avisos de treinamento e participe das atividades do clã.</p></div></article>
+                    <article class="senju-notice"><span class="senju-notice-icon scroll">巻</span><div><div class="senju-notice-title"><strong>Missão Kage</strong><time>MISSÕES</time></div><p>Consulte as regras e acompanhe suas solicitações de recompensa.</p></div></article>
+                    <article class="senju-notice"><span class="senju-notice-icon info">i</span><div><div class="senju-notice-title"><strong>Comunicados do clã</strong><time>GERAL</time></div><p>Fique atento às novidades publicadas pela liderança.</p></div></article>
+                </div>
+                <p class="senju-notice-footnote">A vontade do fogo ainda arde <span>千手一族</span></p>
+            </section>
+        </div>
+        <div class="senju-dashboard-bottom">
+            <section class="senju-panel senju-ranking-panel">
+                <div class="senju-panel-heading"><span>🏆</span><h2>RANKING DE MISSÕES</h2><a class="senju-mini-action" href="#membros">Ver membros →</a></div>
+                <div class="senju-ranking-list" id="senju-ranking-list"><p class="senju-panel-loading">Carregando ranking de missões…</p></div>
+            </section>
+            <section class="senju-panel senju-activity-panel">
+                <div class="senju-panel-heading"><span>◷</span><h2>ATIVIDADES RECENTES</h2><button type="button" class="senju-icon-refresh" onclick="carregarAtividadesSenju()" aria-label="Atualizar atividades">↻</button></div>
+                <div class="senju-activity-list" id="senju-activity-list"><p class="senju-panel-loading">Carregando atividades…</p></div>
+                <p class="senju-activity-footer">A vontade do fogo ainda arde</p>
+            </section>
         </div>
     </section>
 
@@ -4406,6 +4656,134 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         }
     </script>
+
+<style id="senju-dashboard-visual-fix">
+/* Dashboard inspirado na referência enviada. Tudo dimensionado dentro da viewport. */
+#painel-inicial, #painel-inicial * { box-sizing: border-box; }
+.senju-stats-strip { width: min(100% - 32px, 1514px) !important; max-width: 1514px !important; }
+@media (max-width: 650px) { .senju-stats-strip { width: calc(100% - 20px) !important; } }
+#painel-inicial { width: min(100% - 32px, 1514px); max-width: 1514px; margin: 14px auto 34px; color: #e9dfc7; min-width: 0; }
+#painel-inicial .senju-dashboard-top, #painel-inicial .senju-dashboard-bottom { display:grid; grid-template-columns:minmax(0, 1.72fr) minmax(300px, .96fr); gap:14px; align-items:stretch; min-width:0; }
+#painel-inicial .senju-dashboard-bottom { margin-top:14px; grid-template-columns:minmax(0, 1.72fr) minmax(300px, .96fr); }
+#painel-inicial .senju-panel { min-width:0; overflow:hidden; border:1px solid rgba(194,145,40,.78); border-radius:12px; background:linear-gradient(145deg,rgba(18,12,8,.97),rgba(5,4,3,.98)); box-shadow:0 8px 24px rgba(0,0,0,.18); }
+#painel-inicial .senju-panel-heading { min-height:43px; display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid rgba(194,145,40,.28); min-width:0; }
+#painel-inicial .senju-panel-heading > span { color:#d7ad50; font-size:19px; flex:0 0 auto; }
+#painel-inicial .senju-panel-heading h2 { margin:0; padding:0; border:0; color:#e9d49c; font:700 14px/1.2 Georgia,serif; letter-spacing:.045em; flex:1; min-width:0; }
+#painel-inicial .senju-mini-action, #painel-inicial .senju-icon-refresh { flex:0 0 auto; color:#e7bd59; border:1px solid rgba(194,145,40,.48); background:rgba(43,29,12,.52); border-radius:7px; padding:5px 8px; text-decoration:none; font-size:12px; cursor:pointer; white-space:nowrap; }
+#painel-inicial .senju-highlights-content { display:grid; grid-template-columns:minmax(0,1.02fr) minmax(0,1fr); gap:12px; padding:12px; height:calc(100% - 43px); }
+#painel-inicial .senju-feature-card { position:relative; min-width:0; min-height:238px; padding:0 10px 12px; display:flex; flex-direction:column; align-items:flex-start; border:1px solid rgba(194,145,40,.3); border-radius:9px; background:#080604; overflow:hidden; }
+#painel-inicial .senju-feature-art { height:126px; width:calc(100% + 20px); margin:0 -10px 0; display:flex; align-items:center; justify-content:center; background:radial-gradient(ellipse at 70% 28%,rgba(173,79,35,.72),transparent 45%),linear-gradient(145deg,#45251b,#160e09 70%); overflow:hidden; }
+#painel-inicial .senju-feature-art span { color:rgba(222,178,94,.18); font:100px/1 Georgia,serif; transform:rotate(-8deg); }
+#painel-inicial .senju-feature-tag { position:relative; margin-top:-16px; padding:4px 8px; border-radius:4px; background:#8c211d; color:#fff1d8; font-size:10px; font-weight:700; letter-spacing:.04em; }
+#painel-inicial .senju-feature-card h3 { margin:10px 0 5px; font:700 15px/1.3 Georgia,serif; color:#f0e6d2; }
+#painel-inicial .senju-feature-card p { margin:0 0 8px; color:#b8ad9a; font-size:12px; line-height:1.45; }
+#painel-inicial .senju-feature-card a { margin-top:auto; color:#e0b54c; text-decoration:none; font-size:12px; }
+#painel-inicial .senju-quick-links { display:flex; flex-direction:column; gap:9px; min-width:0; }
+#painel-inicial .senju-quick-card { display:grid; grid-template-columns:48px minmax(0,1fr) 14px; align-items:center; gap:10px; flex:1; min-width:0; padding:9px; border:1px solid rgba(194,145,40,.28); border-radius:9px; background:linear-gradient(110deg,rgba(30,20,11,.75),rgba(6,5,4,.94)); color:inherit; text-decoration:none; }
+#painel-inicial .senju-quick-icon { width:46px; height:46px; display:grid; place-items:center; border:1px solid rgba(194,145,40,.65); border-radius:8px; background:linear-gradient(145deg,#49351b,#15100a); color:#e6c56e; font-size:25px; }
+#painel-inicial .senju-quick-icon.red { color:#f1c5bd; border-color:#813a31; background:linear-gradient(145deg,#50251f,#1a0d0b); }
+#painel-inicial .senju-quick-icon.olive { color:#d8bd70; background:linear-gradient(145deg,#3a3319,#121007); }
+#painel-inicial .senju-quick-card > span:nth-child(2) { min-width:0; display:flex; flex-direction:column; gap:3px; }
+#painel-inicial .senju-quick-card small { color:#c99d3b; font-size:9px; letter-spacing:.08em; }
+#painel-inicial .senju-quick-card strong { color:#eee3cf; font-size:12px; line-height:1.25; overflow-wrap:anywhere; }
+#painel-inicial .senju-quick-card em { color:#a99e8d; font-size:10px; line-height:1.3; font-style:normal; }
+#painel-inicial .senju-quick-card > b { color:#e6b94c; font-size:18px; font-weight:400; }
+#painel-inicial .senju-notice-list { display:flex; flex-direction:column; gap:9px; padding:10px; }
+#painel-inicial .senju-notice { display:grid; grid-template-columns:48px minmax(0,1fr); gap:10px; align-items:start; padding:9px; border:1px solid rgba(194,145,40,.34); border-radius:9px; background:rgba(24,17,10,.65); min-width:0; }
+#painel-inicial .senju-notice-icon { width:46px; height:46px; display:grid; place-items:center; border:1px solid rgba(194,145,40,.5); border-radius:8px; color:#f2dcb2; background:#34220e; font-size:22px; font-weight:700; }
+#painel-inicial .senju-notice-icon.urgent { background:#501b18; border-color:#9e352b; color:#ffded5; }
+#painel-inicial .senju-notice-icon.info { background:#14232d; border-color:#42718b; color:#9bd5ff; }
+#painel-inicial .senju-notice-title { display:flex; align-items:start; justify-content:space-between; gap:8px; }
+#painel-inicial .senju-notice-title strong { color:#eee2cd; font-size:12px; line-height:1.3; }
+#painel-inicial .senju-notice-title time { color:#8d8376; font-size:10px; white-space:nowrap; }
+#painel-inicial .senju-notice p { margin:4px 0 0; color:#b7ad9d; font-size:11px; line-height:1.45; }
+#painel-inicial .senju-notice-footnote { display:flex; justify-content:space-between; gap:8px; padding:0 13px 10px; margin:0; color:#9d7a30; font:10px Georgia,serif; letter-spacing:.05em; text-transform:uppercase; }
+#painel-inicial .senju-notice-footnote span { color:#d7b75d; }
+#painel-inicial .senju-ranking-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; padding:10px; min-height:128px; }
+#painel-inicial .senju-rank-card { display:grid; grid-template-columns:28px 48px minmax(0,1fr); align-items:center; gap:8px; min-width:0; padding:10px; border:1px solid rgba(194,145,40,.28); border-radius:9px; background:linear-gradient(130deg,rgba(30,20,11,.7),rgba(5,4,3,.95)); }
+#painel-inicial .senju-rank-medal { font:700 21px Georgia,serif; color:#e4c56d; text-align:center; }
+#painel-inicial .senju-rank-card:nth-child(2) .senju-rank-medal { color:#bfc3c8; }
+#painel-inicial .senju-rank-card:nth-child(3) .senju-rank-medal { color:#ce8b62; }
+#painel-inicial .senju-rank-avatar { width:46px; height:46px; border-radius:50%; display:grid; place-items:center; border:1px solid #c79a3c; background:#1b1712; color:#d8b257; font-size:20px; overflow:hidden; }
+#painel-inicial .senju-rank-avatar img { width:100%; height:100%; object-fit:cover; }
+#painel-inicial .senju-rank-info { min-width:0; display:flex; flex-direction:column; gap:4px; }
+#painel-inicial .senju-rank-info strong { font-size:11px; color:#eee3d1; overflow-wrap:anywhere; }
+#painel-inicial .senju-rank-info small { color:#a79b8a; font-size:10px; }
+#painel-inicial .senju-rank-info b { color:#d9b14e; font-size:12px; font-weight:600; }
+#painel-inicial .senju-activity-list { padding:0 12px; }
+#painel-inicial .senju-activity-item { display:grid; grid-template-columns:28px minmax(0,1fr) auto; align-items:center; gap:9px; min-width:0; padding:10px 0; border-bottom:1px solid rgba(194,145,40,.16); }
+#painel-inicial .senju-activity-avatar { width:27px; height:27px; display:grid; place-items:center; border:1px solid #9c7530; border-radius:50%; color:#dfbf70; background:#25190e; font-size:12px; }
+#painel-inicial .senju-activity-item p { margin:0; color:#d4c9b8; font-size:11px; line-height:1.4; overflow-wrap:anywhere; }
+#painel-inicial .senju-activity-item time { color:#8d8376; font-size:10px; white-space:nowrap; }
+#painel-inicial .senju-activity-footer { padding:4px 12px 10px; margin:0; color:#9d7a30; font:10px Georgia,serif; text-transform:uppercase; letter-spacing:.04em; }
+#painel-inicial .senju-panel-loading, #painel-inicial .senju-panel-empty { grid-column:1/-1; margin:0; padding:20px 12px; color:#a79b8a; text-align:center; font-size:12px; }
+#painel-inicial .senju-panel-error { color:#d6a49a; }
+@media (min-width:1500px) { #painel-inicial .senju-feature-art { height:145px; } #painel-inicial .senju-feature-card { min-height:260px; } }
+@media (max-width:1050px) { #painel-inicial .senju-dashboard-top, #painel-inicial .senju-dashboard-bottom { grid-template-columns:minmax(0,1fr) minmax(270px,.8fr); gap:10px; } #painel-inicial .senju-highlights-content { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-feature-card { min-height:200px; } #painel-inicial .senju-feature-art { height:95px; } #painel-inicial .senju-quick-card { min-height:70px; } #painel-inicial .senju-ranking-list { grid-template-columns:1fr; } }
+@media (max-width:760px) { #painel-inicial { width:calc(100% - 20px); margin-top:10px; } #painel-inicial .senju-dashboard-top, #painel-inicial .senju-dashboard-bottom { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-highlights-content { grid-template-columns:repeat(2,minmax(0,1fr)); } #painel-inicial .senju-feature-card { min-height:250px; } #painel-inicial .senju-feature-art { height:110px; } #painel-inicial .senju-ranking-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:520px) { #painel-inicial .senju-highlights-content { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-feature-card { min-height:0; padding-bottom:14px; } #painel-inicial .senju-feature-art { height:130px; } #painel-inicial .senju-ranking-list { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-rank-card { grid-template-columns:28px 44px minmax(0,1fr); } #painel-inicial .senju-panel-heading { padding:9px 10px; gap:7px; } #painel-inicial .senju-panel-heading h2 { font-size:12px; } #painel-inicial .senju-mini-action { font-size:10px; padding:5px 6px; } #painel-inicial .senju-activity-item { grid-template-columns:27px minmax(0,1fr); } #painel-inicial .senju-activity-item time { grid-column:2; } }
+</style>
+
+<script id="senju-dashboard-data">
+(function(){
+    const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
+    const esc = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    function tempoRelativo(data){
+        if(!data) return 'data recente';
+        const d = new Date(data); if(Number.isNaN(d.getTime())) return 'data recente';
+        const h = Math.max(0, Math.floor((Date.now()-d.getTime())/3600000));
+        if(h < 1) return 'agora'; if(h < 24) return `há ${h} hora${h===1?'':'s'}`;
+        const dias=Math.floor(h/24); return `há ${dias} dia${dias===1?'':'s'}`;
+    }
+    window.abrirAvisosSenju = function(){
+        const notices = document.getElementById('senju-notice-list');
+        if(!notices) return;
+        notices.scrollIntoView({behavior:'smooth',block:'center'});
+        notices.style.outline='1px solid rgba(215,173,80,.65)';
+        setTimeout(()=>{ notices.style.outline=''; },1200);
+    };
+    window.carregarAtividadesSenju = async function(){
+        const el=document.getElementById('senju-activity-list'); if(!el) return;
+        if(!client){el.innerHTML='<p class="senju-panel-empty senju-panel-error">Conexão com o Supabase indisponível.</p>';return;}
+        el.innerHTML='<p class="senju-panel-loading">Atualizando atividades…</p>';
+        try{
+            const {data,error}=await client.from('solicitacoes_recompensa').select('discord_id,nome_jogo,qtd_missoes,status,created_at,data_pagamento').eq('status','Pago').order('created_at',{ascending:false}).limit(8);
+            if(error) throw error;
+            if(!data || !data.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há missões aprovadas para exibir.</p>';return;}
+            el.innerHTML=data.map(r=>`<div class="senju-activity-item"><span class="senju-activity-avatar">✦</span><p><strong>${esc(r.nome_jogo || 'Membro Senju')}</strong> concluiu ${Number(r.qtd_missoes||0)} missões.</p><time>${esc(tempoRelativo(r.data_pagamento || r.created_at))}</time></div>`).join('');
+        }catch(e){console.error('Falha ao carregar atividades do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar as atividades. Confira as políticas de leitura da tabela solicitacoes_recompensa no Supabase.</p>';}
+    };
+    async function carregarRankingSenju(){
+        const el=document.getElementById('senju-ranking-list'); if(!el) return;
+        if(!client){el.innerHTML='<p class="senju-panel-empty senju-panel-error">Conexão com o Supabase indisponível.</p>';return;}
+        try{
+            // O ranking considera exclusivamente solicitações pagas/aprovadas.
+            // O filtro é aplicado no Supabase e repetido localmente como proteção extra.
+            const {data:sols,error}=await client.from('solicitacoes_recompensa')
+                .select('discord_id,nome_jogo,qtd_missoes,status')
+                .eq('status','Pago')
+                .limit(2000);
+            if(error) throw error;
+            const pagas=(sols || []).filter(r => r.status === 'Pago');
+            if(!pagas.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há missões pagas/aprovadas para montar o ranking.</p>';return;}
+            const totals=new Map();
+            pagas.forEach(r=>{
+                const id=r.discord_id || r.nome_jogo || 'desconhecido';
+                const old=totals.get(id)||{name:r.nome_jogo||'Membro Senju',missions:0};
+                old.missions+=Math.max(0,Number(r.qtd_missoes)||0);
+                if(r.nome_jogo)old.name=r.nome_jogo;
+                totals.set(id,old);
+            });
+            const top=[...totals.values()].sort((a,b)=>b.missions-a.missions).slice(0,3);
+            if(!top.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há dados para o ranking.</p>';return;}
+            el.innerHTML=top.map((m,i)=>`<article class="senju-rank-card"><span class="senju-rank-medal">${i+1}</span><span class="senju-rank-avatar">${['♛','♜','♞'][i]}</span><div class="senju-rank-info"><strong>${esc(m.name)}</strong><small>${i===0?'1º lugar':i===1?'2º lugar':'3º lugar'}</small><b>${m.missions.toLocaleString('pt-BR')} missões</b></div></article>`).join('');
+        }catch(e){console.error('Falha ao carregar ranking do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar o ranking. Confira as políticas de leitura da tabela solicitacoes_recompensa no Supabase.</p>';}
+    }
+    function iniciar(){ carregarRankingSenju(); window.carregarAtividadesSenju(); }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
+})();
+</script>
+
 </body>
 </html>
 
