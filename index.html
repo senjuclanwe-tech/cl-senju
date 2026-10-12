@@ -2360,6 +2360,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 <figcaption>Tutorial visual da comprovação das missões.</figcaption>
             </figure>
 
+            <div id="aviso-trava-missao-kage" style="display:none;margin:0 0 16px;padding:12px;border-left:3px solid var(--senju-red);background:rgba(217,20,20,.10);border-radius:5px;color:#ffb4a8;font-weight:600;">🔒 A Missão Kage está temporariamente bloqueada pela liderança. Você não pode enviar solicitações neste momento.</div>
             <form id="formRecompensa" onsubmit="enviarRecompensa(event)">
                 <div class="form-group">
                     <label for="nomeJogoRecompensa">Nome no Jogo:</label>
@@ -2384,6 +2385,20 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <button type="submit" class="btn-discord-login" id="btnEnviarRecompensa" style="padding: 10px 20px; background-color: #2e8b57;">Solicitar Recompensa</button>
                 </div>
             </form>
+
+            <div id="controle-trava-missao-kage" class="webhook-admin-box" style="display:none; background:rgba(217,20,20,.06); border:1px solid rgba(217,20,20,.3); border-radius:8px; padding:12px;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                    <div>
+                        <strong style="display:block;color:var(--senju-gold);font-size:.9rem;">🔐 Trava da Missão Kage</strong>
+                        <span id="status-trava-missao-kage" style="font-size:.78rem;color:var(--text-muted);">Verificando status...</span>
+                    </div>
+                    <label class="switch" title="Ativar ou desativar a Missão Kage">
+                        <input type="checkbox" id="toggle-trava-missao-kage" onchange="alterarTravaMissaoKage(this.checked)">
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                <small style="display:block;color:var(--text-muted);margin-top:8px;">Ligada: membros não podem abrir nem enviar solicitações. Desligada: funcionamento normal.</small>
+            </div>
 
             <div id="webhook-box-recompensa" class="webhook-admin-box" style="display: none;">
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
@@ -2648,6 +2663,94 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxsb2VrYmRwcm5neWhvcXRyeWt2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2MTg5MDUsImV4cCI6MjEwNjE5NDkwNX0.ZMddhSZ1Al8Mc0bqErgmv7WBd6omFAhkA8d1b2818Bo";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // Trava global da Missão Kage, persistida no Supabase.
+        let missaoKageBloqueada = false;
+        let carregandoTravaKage = false;
+
+        async function obterEstadoTravaMissaoKage() {
+            const { data, error } = await supabaseClient
+                .from('configuracoes_site')
+                .select('valor')
+                .eq('chave', 'missao_kage_bloqueada')
+                .maybeSingle();
+
+            if (error) {
+                console.error('Não foi possível consultar a trava da Missão Kage:', error);
+                throw error;
+            }
+            missaoKageBloqueada = data?.valor === true;
+            atualizarInterfaceTravaKage();
+            return missaoKageBloqueada;
+        }
+
+        function atualizarInterfaceTravaKage() {
+            const toggle = document.getElementById('toggle-trava-missao-kage');
+            const status = document.getElementById('status-trava-missao-kage');
+            const form = document.getElementById('formRecompensa');
+            const btnEnviar = document.getElementById('btnEnviarRecompensa');
+            if (toggle) toggle.checked = missaoKageBloqueada;
+            if (status) {
+                status.textContent = missaoKageBloqueada
+                    ? '🔴 ATIVADA: solicitações temporariamente bloqueadas'
+                    : '🟢 DESATIVADA: solicitações liberadas';
+                status.style.color = missaoKageBloqueada ? '#ff8f8f' : '#7ee2a8';
+            }
+            if (form) {
+                form.querySelectorAll('input, button[type="submit"]').forEach(el => {
+                    if (el.id !== 'toggle-trava-missao-kage') el.disabled = missaoKageBloqueada;
+                });
+                const aviso = document.getElementById('aviso-trava-missao-kage');
+                if (aviso) aviso.style.display = missaoKageBloqueada ? 'block' : 'none';
+            }
+            if (btnEnviar && missaoKageBloqueada) btnEnviar.innerText = 'Missão Kage bloqueada';
+            else if (btnEnviar) btnEnviar.innerText = 'Solicitar Recompensa';
+        }
+
+        async function carregarControleTravaMissaoKage() {
+            const box = document.getElementById('controle-trava-missao-kage');
+            if (!box) return;
+            const userId = localStorage.getItem('discord_user_id');
+            const admins = await obterAdminsAutorizados();
+            const eAdmin = !!userId && admins.includes(String(userId));
+            box.style.display = eAdmin ? 'block' : 'none';
+            try {
+                await obterEstadoTravaMissaoKage();
+            } catch (_) {
+                const status = document.getElementById('status-trava-missao-kage');
+                if (status) {
+                    status.textContent = 'Erro ao ler a trava. Confira a configuração do Supabase.';
+                    status.style.color = '#ff8f8f';
+                }
+            }
+        }
+
+        async function alterarTravaMissaoKage(ativar) {
+            const userId = localStorage.getItem('discord_user_id');
+            const admins = await obterAdminsAutorizados();
+            if (!userId || !admins.includes(String(userId))) {
+                mostrarAviso('Apenas administradores autorizados podem alterar essa trava.', 'erro');
+                await obterEstadoTravaMissaoKage().catch(() => {});
+                return;
+            }
+            const toggle = document.getElementById('toggle-trava-missao-kage');
+            if (toggle) toggle.disabled = true;
+            const { error } = await supabaseClient
+                .from('configuracoes_site')
+                .update({ valor: !!ativar, atualizado_em: new Date().toISOString() })
+                .eq('chave', 'missao_kage_bloqueada');
+            if (toggle) toggle.disabled = false;
+            if (error) {
+                console.error('Erro ao salvar trava Missão Kage:', error);
+                mostrarAviso('Não foi possível salvar a trava. Confira as permissões da tabela no Supabase.', 'erro');
+                await obterEstadoTravaMissaoKage().catch(() => {});
+                return;
+            }
+            missaoKageBloqueada = !!ativar;
+            atualizarInterfaceTravaKage();
+            mostrarAviso(ativar ? '🔒 Missão Kage bloqueada para os membros.' : '🔓 Missão Kage liberada para os membros.');
+        }
+
+
         const CLIENT_ID = "1554155836585021510";
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
@@ -2846,6 +2949,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             carregarMembros();
             carregarMidias();
             carregarTotalMissoesCla();
+            carregarControleTravaMissaoKage();
             calcularTreinoGuy();
 
             const membroIdNaUrl = queryParams.get('membroId');
@@ -4262,6 +4366,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
+            obterEstadoTravaMissaoKage().then(bloqueada => {
+                if (bloqueada) {
+                    mostrarAviso('🔒 A Missão Kage está temporariamente bloqueada pela liderança.', 'erro');
+                    return;
+                }
+
             // SEGURANÇA: Validação no banco ignorando status 'Negado'
             supabaseClient
                 .from('solicitacoes_recompensa')
@@ -4304,6 +4414,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         });
                     });
                 });
+            }).catch(() => {
+                mostrarAviso('Não foi possível verificar se a Missão Kage está liberada. Tente novamente mais tarde.', 'erro');
+            });
         }
 
         function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
@@ -4337,8 +4450,18 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         });
 
-        function enviarRecompensa(event) {
+        async function enviarRecompensa(event) {
             event.preventDefault();
+            try {
+                if (await obterEstadoTravaMissaoKage()) {
+                    mostrarAviso('🔒 A Missão Kage está bloqueada. Seus prints não foram enviados.', 'erro');
+                    atualizarInterfaceTravaKage();
+                    return;
+                }
+            } catch (_) {
+                mostrarAviso('Não foi possível verificar a trava da Missão Kage. O envio foi cancelado por segurança.', 'erro');
+                return;
+            }
             const btnEnviar = document.getElementById('btnEnviarRecompensa');
             btnEnviar.disabled = true;
             btnEnviar.innerText = "Preparando prints...";
