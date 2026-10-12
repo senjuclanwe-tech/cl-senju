@@ -1797,6 +1797,15 @@
         #marketModal .market-admin-price label { color:#bcae98; font-size:.72rem; }
         #marketModal .market-empty { padding:16px; color:#b7aa96; border:1px dashed rgba(194,155,56,.24); border-radius:10px; text-align:center; line-height:1.5; }
         #marketModal .market-footnote { margin-top:11px; color:#938675; font-size:.74rem; line-height:1.45; }
+        #marketModal .market-tabs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:19px 0 20px; padding:5px; border:1px solid rgba(194,155,56,.2); border-radius:13px; background:rgba(4,3,2,.42); }
+        #marketModal .market-tabs[hidden], #marketModal [hidden] { display:none !important; }
+        #marketModal .market-tab { display:flex; align-items:center; justify-content:center; gap:9px; min-height:46px; padding:10px 14px; border:1px solid transparent; border-radius:9px; color:#b9aa91; background:transparent; font:700 .84rem Inter,sans-serif; cursor:pointer; transition:color .18s ease,border-color .18s ease,background .18s ease,transform .18s ease; }
+        #marketModal .market-tab:hover { color:#f0dfb5; transform:translateY(-1px); }
+        #marketModal .market-tab[aria-selected="true"] { border-color:rgba(194,155,56,.46); color:#f2db96; background:linear-gradient(135deg,rgba(194,155,56,.2),rgba(95,54,20,.25)); box-shadow:0 5px 15px rgba(0,0,0,.18),0 0 0 1px rgba(194,155,56,.07) inset; }
+        #marketModal .market-tab-icon { font-size:1rem; line-height:1; }
+        #marketModal .market-tab-panel { animation:marketTabEnter .18s ease both; }
+        #marketModal .market-admin-panel { margin-top:0; }
+        @keyframes marketTabEnter { from { opacity:.55; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
         #marketModal .market-close { width:38px; height:38px; margin-left:auto; flex:0 0 38px; border:1px solid rgba(194,155,56,.25); border-radius:10px; color:#e8dcc7; background:rgba(0,0,0,.16); font-size:1.35rem; cursor:pointer; }
         @media (max-width:650px) {
             #marketModal { align-items:flex-end; padding:8px; }
@@ -1804,6 +1813,8 @@
             #marketModal .market-products { grid-template-columns:1fr; gap:8px; }
             #marketModal .market-product { grid-template-columns:minmax(0,1fr) 98px; padding:11px; }
             #marketModal .market-admin-price { grid-template-columns:minmax(0,1fr) 110px; padding:9px; }
+            #marketModal .market-tabs { gap:5px; margin:15px 0 17px; }
+            #marketModal .market-tab { gap:6px; min-height:44px; padding:9px 6px; font-size:.75rem; }
             #marketModal .market-total-row { padding:12px 6px; }
             #marketModal .market-actions .market-btn { flex:1 1 auto; }
         }
@@ -2755,23 +2766,33 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             </div>
             <div id="marketContent" style="display:none">
                 <p id="marketMemberGreeting" class="market-footnote"></p>
-                <h3 class="market-section-title">Catálogo de recursos</h3>
-                <form id="marketOrderForm">
-                    <div id="marketProductList" class="market-products"></div>
-                    <div id="marketTotalRow" class="market-total-row" style="display:none">
-                        <span>Total previsto do pedido</span><strong id="marketOrderTotal">0 Ryos</strong>
-                    </div>
-                    <div class="market-actions">
-                        <button id="marketSubmitOrder" class="market-btn primary" type="submit">Enviar pedido</button>
-                    </div>
-                </form>
-                <p class="market-footnote">O responsável ainda precisa aprovar o pedido. O valor registrado no envio fica preservado para esse pedido, mesmo que o catálogo seja alterado depois.</p>
-                <div class="market-divider"></div>
-                <h3 class="market-section-title">Meus pedidos</h3>
-                <div id="marketOrderHistory" class="market-order-list"></div>
-                <section id="marketAdminPanel" class="market-admin-panel" style="display:none" aria-labelledby="marketAdminTitle">
-                    <h3 id="marketAdminTitle" class="market-section-title" style="margin-top:0">Painel do responsável</h3>
-                    <p class="market-admin-note">Edite aqui o valor que o clã pagará por unidade. A alteração vale para novos pedidos; pedidos já enviados mantêm o preço registrado.</p>
+                <div id="marketTabs" class="market-tabs" role="tablist" aria-label="Seções do Mercado" hidden>
+                    <button id="marketTabOrders" class="market-tab" type="button" role="tab" aria-selected="true" aria-controls="marketOrdersPanel" onclick="selecionarAbaMercado('pedidos')">
+                        <span class="market-tab-icon" aria-hidden="true">📦</span><span>Pedidos e catálogo</span>
+                    </button>
+                    <button id="marketTabPrices" class="market-tab" type="button" role="tab" aria-selected="false" aria-controls="marketAdminPanel" onclick="selecionarAbaMercado('precos')" hidden>
+                        <span class="market-tab-icon" aria-hidden="true">🪙</span><span>Preços do clã</span>
+                    </button>
+                </div>
+                <section id="marketOrdersPanel" class="market-tab-panel" role="tabpanel" aria-labelledby="marketTabOrders">
+                    <h3 class="market-section-title">Catálogo de recursos</h3>
+                    <form id="marketOrderForm">
+                        <div id="marketProductList" class="market-products"></div>
+                        <div id="marketTotalRow" class="market-total-row" style="display:none">
+                            <span>Total previsto do pedido</span><strong id="marketOrderTotal">0 Ryos</strong>
+                        </div>
+                        <div class="market-actions">
+                            <button id="marketSubmitOrder" class="market-btn primary" type="submit">Enviar pedido</button>
+                        </div>
+                    </form>
+                    <p class="market-footnote">O responsável ainda precisa aprovar o pedido. O valor registrado no envio fica preservado para esse pedido, mesmo que o catálogo seja alterado depois.</p>
+                    <div class="market-divider"></div>
+                    <h3 class="market-section-title">Meus pedidos</h3>
+                    <div id="marketOrderHistory" class="market-order-list"></div>
+                </section>
+                <section id="marketAdminPanel" class="market-tab-panel market-admin-panel" hidden role="tabpanel" aria-labelledby="marketTabPrices">
+                    <h3 id="marketAdminTitle" class="market-section-title" style="margin-top:0">Preços do Mercado</h3>
+                    <p class="market-admin-note">Defina quanto o clã pagará por unidade. A alteração vale para novos pedidos; pedidos já enviados mantêm o preço registrado.</p>
                     <div id="marketAdminPriceList" class="market-admin-list"></div>
                     <div class="market-actions">
                         <button id="marketSavePrices" class="market-btn primary" type="button" onclick="salvarPrecosMercado()">Salvar preços</button>
@@ -4908,7 +4929,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 
         /* MERCADO DO CLÃ — catálogo e pedidos autenticados pelo Discord */
-        const mercadoEstado = { catalogo: [], pedidos: [], isAdmin: false };
+        const mercadoEstado = { catalogo: [], pedidos: [], isAdmin: false, aba: 'pedidos' };
 
         function tokenDiscordMercado() {
             const token = sessionStorage.getItem('discord_access_token');
@@ -5119,12 +5140,32 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }).join('');
         }
 
+        function selecionarAbaMercado(aba) {
+            const abaAtiva = aba === 'precos' && mercadoEstado.isAdmin ? 'precos' : 'pedidos';
+            mercadoEstado.aba = abaAtiva;
+            const pedidosAtivos = abaAtiva === 'pedidos';
+            const botaoPedidos = document.getElementById('marketTabOrders');
+            const botaoPrecos = document.getElementById('marketTabPrices');
+            const painelPedidos = document.getElementById('marketOrdersPanel');
+            const painelPrecos = document.getElementById('marketAdminPanel');
+            if (botaoPedidos) botaoPedidos.setAttribute('aria-selected', String(pedidosAtivos));
+            if (botaoPrecos) botaoPrecos.setAttribute('aria-selected', String(!pedidosAtivos && mercadoEstado.isAdmin));
+            if (painelPedidos) painelPedidos.hidden = !pedidosAtivos;
+            if (painelPrecos) painelPrecos.hidden = pedidosAtivos || !mercadoEstado.isAdmin;
+        }
+
         function desenharPainelPrecosMercado() {
             const panel = document.getElementById('marketAdminPanel');
             const container = document.getElementById('marketAdminPriceList');
-            if (!panel || !container) return;
-            panel.style.display = mercadoEstado.isAdmin ? 'block' : 'none';
-            if (!mercadoEstado.isAdmin) return;
+            const tabs = document.getElementById('marketTabs');
+            const priceTab = document.getElementById('marketTabPrices');
+            if (!panel || !container || !tabs || !priceTab) return;
+            tabs.hidden = !mercadoEstado.isAdmin;
+            priceTab.hidden = !mercadoEstado.isAdmin;
+            if (!mercadoEstado.isAdmin) {
+                selecionarAbaMercado('pedidos');
+                return;
+            }
             container.innerHTML = mercadoEstado.catalogo.map(produto => `
                 <div class="market-admin-price">
                     <strong>${escaparMercado(produto.nome)}</strong>
@@ -5134,6 +5175,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                aria-label="Novo preço de ${escaparMercado(produto.nome)}">
                     </label>
                 </div>`).join('') || '<div class="market-empty">Nenhum produto no catálogo.</div>';
+            selecionarAbaMercado(mercadoEstado.aba || 'pedidos');
         }
 
         async function salvarPrecosMercado() {
@@ -7323,5 +7365,4 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 </body>
 </html>
-
 
