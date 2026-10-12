@@ -1712,6 +1712,105 @@
             }
         }
 
+
+
+        /* MERCADO SENJU — catálogo, pedidos e edição segura de preços */
+        #marketModal { z-index: 4300; padding: 20px; }
+        #marketModal .market-modal {
+            width: min(980px, 100%);
+            max-height: min(90vh, 920px);
+            overflow: auto;
+            padding: clamp(18px, 3vw, 30px);
+            border: 1px solid rgba(194,155,56,.58);
+            border-radius: 18px;
+            background: radial-gradient(ellipse at 90% 0%, rgba(117,70,25,.22), transparent 36%),
+                        linear-gradient(145deg, rgba(31,17,11,.99), rgba(15,9,6,.99));
+            box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 0 1px rgba(194,155,56,.08) inset;
+        }
+        #marketModal .market-heading { display:flex; gap:14px; align-items:center; min-width:0; }
+        #marketModal .market-mark {
+            width:48px; height:48px; flex:0 0 48px; display:grid; place-items:center;
+            border:1px solid rgba(194,155,56,.55); border-radius:14px;
+            color:#efcf76; background:linear-gradient(145deg,rgba(194,155,56,.17),rgba(74,36,16,.36));
+            font-size:1.35rem; box-shadow:0 8px 22px rgba(0,0,0,.22);
+        }
+        #marketModal .market-heading h2 { margin:0; color:#f2e7ce; font:800 clamp(1.15rem,2.8vw,1.6rem) 'Cinzel',serif; letter-spacing:.025em; }
+        #marketModal .market-kicker { margin:4px 0 0; color:#c6a65a; font-size:.72rem; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+        #marketModal .market-intro {
+            margin:18px 0; padding:13px 15px; border-left:3px solid var(--senju-gold);
+            border-radius:0 10px 10px 0; color:#d8cebd; background:rgba(194,155,56,.07);
+            line-height:1.55; font-size:.9rem;
+        }
+        #marketModal .market-status { min-height:22px; margin:10px 0; color:#cbbd9e; font-size:.88rem; }
+        #marketModal .market-status.error { color:#ff9a91; }
+        #marketModal .market-login-box { padding:24px 16px; border:1px solid rgba(194,155,56,.22); border-radius:13px; text-align:center; color:#d8cebd; }
+        #marketModal .market-login-box p { margin-bottom:14px; line-height:1.55; }
+        #marketModal .market-section-title { display:flex; align-items:center; gap:10px; margin:23px 0 12px; color:#ead8ad; font:700 1.03rem 'Cinzel',serif; }
+        #marketModal .market-section-title::after { content:''; height:1px; flex:1; background:linear-gradient(90deg,rgba(194,155,56,.4),transparent); }
+        #marketModal .market-products { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
+        #marketModal .market-product {
+            display:grid; grid-template-columns:minmax(0,1fr) 118px; gap:10px; align-items:center;
+            padding:14px; border:1px solid rgba(194,155,56,.2); border-radius:13px;
+            background:linear-gradient(135deg,rgba(44,26,16,.72),rgba(18,11,7,.82));
+            transition:border-color .18s ease,transform .18s ease,background .18s ease;
+        }
+        #marketModal .market-product:hover { border-color:rgba(194,155,56,.5); transform:translateY(-1px); }
+        #marketModal .market-product-name { display:block; color:#f0e6d4; font-weight:700; line-height:1.35; }
+        #marketModal .market-product-price { display:block; margin-top:5px; color:#d1ad53; font-size:.83rem; }
+        #marketModal .market-qty-label { color:#a99c88; font-size:.72rem; text-align:right; }
+        #marketModal .market-qty-label input,
+        #marketModal .market-admin-price input {
+            width:100%; margin-top:5px; padding:9px 10px; border:1px solid rgba(194,155,56,.3);
+            border-radius:9px; outline:none; color:#f7ecd6; background:rgba(8,6,5,.65); font:600 .95rem Inter,sans-serif;
+        }
+        #marketModal .market-qty-label input:focus,
+        #marketModal .market-admin-price input:focus { border-color:#d3ae4b; box-shadow:0 0 0 3px rgba(194,155,56,.12); }
+        #marketModal .market-total-row { display:flex; justify-content:space-between; gap:12px; align-items:center; margin:15px 0; padding:13px 15px; border-top:1px solid rgba(194,155,56,.22); border-bottom:1px solid rgba(194,155,56,.22); color:#c9bda9; }
+        #marketModal .market-total-row strong { color:#f1d781; font:800 1.16rem 'Cinzel',serif; }
+        #marketModal .market-actions { display:flex; justify-content:flex-end; flex-wrap:wrap; gap:9px; margin-top:12px; }
+        #marketModal .market-btn {
+            min-height:42px; padding:10px 17px; border:1px solid rgba(194,155,56,.42); border-radius:10px;
+            color:#eadfc9; background:rgba(50,31,18,.78); font:700 .85rem Inter,sans-serif; cursor:pointer;
+            transition:filter .15s ease,transform .15s ease,border-color .15s ease;
+        }
+        #marketModal .market-btn:hover { filter:brightness(1.12); transform:translateY(-1px); border-color:#d5ad4a; }
+        #marketModal .market-btn:disabled { opacity:.55; cursor:wait; transform:none; }
+        #marketModal .market-btn.primary { border-color:#c29b38; color:#1a0f08; background:linear-gradient(135deg,#e0bf63,#b58a2d); }
+        #marketModal .market-btn.quiet { background:transparent; }
+        #marketModal .market-divider { height:1px; margin:22px 0; background:linear-gradient(90deg,transparent,rgba(194,155,56,.32),transparent); }
+        #marketModal .market-order-list { display:grid; gap:9px; }
+        #marketModal .market-order {
+            padding:12px 14px; border:1px solid rgba(194,155,56,.18); border-radius:11px; background:rgba(5,5,5,.19);
+        }
+        #marketModal .market-order-head { display:flex; justify-content:space-between; flex-wrap:wrap; gap:7px; color:#b5a995; font-size:.78rem; }
+        #marketModal .market-order strong { color:#eadfc9; }
+        #marketModal .market-order-items { margin:7px 0; color:#cfc4b2; line-height:1.5; font-size:.83rem; }
+        #marketModal .market-order-total { color:#e6c86f; font-weight:700; font-size:.84rem; }
+        #marketModal .market-badge { display:inline-flex; padding:4px 8px; border:1px solid rgba(194,155,56,.35); border-radius:999px; color:#e4c568; font-size:.7rem; font-weight:700; }
+        #marketModal .market-badge.aprovada, #marketModal .market-badge.concluída { border-color:rgba(90,174,118,.35); color:#8bd6a2; }
+        #marketModal .market-badge.recusada { border-color:rgba(217,80,70,.38); color:#ff9a91; }
+        #marketModal .market-admin-panel { margin-top:24px; padding:16px; border:1px solid rgba(194,155,56,.34); border-radius:14px; background:linear-gradient(145deg,rgba(83,54,22,.18),rgba(12,8,5,.4)); }
+        #marketModal .market-admin-note { margin:-3px 0 13px; color:#b8aa94; line-height:1.5; font-size:.8rem; }
+        #marketModal .market-admin-list { display:grid; gap:8px; }
+        #marketModal .market-admin-price { display:grid; grid-template-columns:minmax(0,1fr) 150px; gap:12px; align-items:center; padding:10px 12px; border:1px solid rgba(194,155,56,.15); border-radius:10px; background:rgba(0,0,0,.17); }
+        #marketModal .market-admin-price strong { color:#eadfc9; font-size:.88rem; }
+        #marketModal .market-admin-price label { color:#bcae98; font-size:.72rem; }
+        #marketModal .market-empty { padding:16px; color:#b7aa96; border:1px dashed rgba(194,155,56,.24); border-radius:10px; text-align:center; line-height:1.5; }
+        #marketModal .market-footnote { margin-top:11px; color:#938675; font-size:.74rem; line-height:1.45; }
+        #marketModal .market-close { width:38px; height:38px; margin-left:auto; flex:0 0 38px; border:1px solid rgba(194,155,56,.25); border-radius:10px; color:#e8dcc7; background:rgba(0,0,0,.16); font-size:1.35rem; cursor:pointer; }
+        @media (max-width:650px) {
+            #marketModal { align-items:flex-end; padding:8px; }
+            #marketModal .market-modal { width:100%; max-height:94dvh; padding:17px 13px calc(18px + env(safe-area-inset-bottom)); border-radius:16px 16px 10px 10px; }
+            #marketModal .market-products { grid-template-columns:1fr; gap:8px; }
+            #marketModal .market-product { grid-template-columns:minmax(0,1fr) 98px; padding:11px; }
+            #marketModal .market-admin-price { grid-template-columns:minmax(0,1fr) 110px; padding:9px; }
+            #marketModal .market-total-row { padding:12px 6px; }
+            #marketModal .market-actions .market-btn { flex:1 1 auto; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            #marketModal *, #marketModal *::before, #marketModal *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; }
+        }
+
     </style>
 </head>
 <body>
@@ -1795,6 +1894,13 @@
                 <a onclick="tentarAbrirRecompensa(); fecharSenjuMenu()"
                    class="sidebar-link action-kage">
                     <span class="sidebar-icon">💰</span><span>Missão Kage</span>
+                </a>
+            </li>
+
+            <li>
+                <a onclick="fecharSenjuMenu(); abrirMercado(); return false;"
+                   class="sidebar-link action-mercado" href="#mercado">
+                    <span class="sidebar-icon">🛒</span><span>Mercado do Clã</span>
                 </a>
             </li>
 
@@ -2251,7 +2357,7 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="input-webhook-notificacao" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <input type="password" id="input-webhook-notificacao" autocomplete="new-password" class="webhook-input-popup" placeholder="URL guardado no servidor; cole um URL novo para substituir" disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
                     <button id="btn-salvar-notificacao" class="webhook-btn-popup" onclick="salvarWebhookPopup('notificacao')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
                 </div>
                 <span id="msg-status-notificacao" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
@@ -2312,7 +2418,7 @@
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="input-webhook-sorteio" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <input type="password" id="input-webhook-sorteio" autocomplete="new-password" class="webhook-input-popup" placeholder="URL guardado no servidor; cole um URL novo para substituir" disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
                     <button id="btn-salvar-sorteio" class="webhook-btn-popup" onclick="salvarWebhookPopup('sorteio')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
                 </div>
                 <span id="msg-status-sorteio" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
@@ -2412,10 +2518,38 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="input-webhook-recompensa" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <input type="password" id="input-webhook-recompensa" autocomplete="new-password" class="webhook-input-popup" placeholder="URL guardado no servidor; cole um URL novo para substituir" disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
                     <button id="btn-salvar-recompensa" class="webhook-btn-popup" onclick="salvarWebhookPopup('recompensa')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
                 </div>
                 <span id="msg-status-recompensa" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
+            </div>
+            <div id="webhook-box-aprovado" class="webhook-admin-box" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                    <span style="font-size:.8rem;color:var(--senju-gold);font-weight:600;">⚙️ Webhook de Missão Kage aprovada</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <label class="switch"><input type="checkbox" id="toggle-edicao-aprovado" onchange="alternarEdicaoPopup('aprovado')"><span class="slider round"></span></label>
+                        <span id="label-status-aprovado" style="font-size:.75rem;color:var(--text-muted);">🔒 Bloqueado</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <input type="password" id="input-webhook-aprovado" class="webhook-input-popup" autocomplete="new-password" placeholder="URL guardado no servidor; cole um URL novo para substituir" disabled style="flex:1;padding:8px;font-size:.8rem;background:#0f0805;border:1px solid rgba(194,155,56,.3);border-radius:4px;color:var(--text-light);">
+                    <button id="btn-salvar-aprovado" class="webhook-btn-popup" onclick="salvarWebhookPopup('aprovado')" disabled style="padding:0 12px;background:var(--senju-gold);color:#0f0805;border:none;border-radius:4px;font-weight:bold;font-size:.8rem;cursor:pointer;">Salvar</button>
+                </div>
+                <span id="msg-status-aprovado" style="display:block;font-size:.75rem;margin-top:4px;"></span>
+            </div>
+            <div id="webhook-box-negado" class="webhook-admin-box" style="display:none;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+                    <span style="font-size:.8rem;color:var(--senju-gold);font-weight:600;">⚙️ Webhook de Missão Kage negada</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <label class="switch"><input type="checkbox" id="toggle-edicao-negado" onchange="alternarEdicaoPopup('negado')"><span class="slider round"></span></label>
+                        <span id="label-status-negado" style="font-size:.75rem;color:var(--text-muted);">🔒 Bloqueado</span>
+                    </div>
+                </div>
+                <div style="display:flex;gap:6px;">
+                    <input type="password" id="input-webhook-negado" class="webhook-input-popup" autocomplete="new-password" placeholder="URL guardado no servidor; cole um URL novo para substituir" disabled style="flex:1;padding:8px;font-size:.8rem;background:#0f0805;border:1px solid rgba(194,155,56,.3);border-radius:4px;color:var(--text-light);">
+                    <button id="btn-salvar-negado" class="webhook-btn-popup" onclick="salvarWebhookPopup('negado')" disabled style="padding:0 12px;background:var(--senju-gold);color:#0f0805;border:none;border-radius:4px;font-weight:bold;font-size:.8rem;cursor:pointer;">Salvar</button>
+                </div>
+                <span id="msg-status-negado" style="display:block;font-size:.75rem;margin-top:4px;"></span>
             </div>
         </div>
     </div>
@@ -2471,7 +2605,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     </div>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                    <input type="text" id="input-webhook-relatorio" class="webhook-input-popup" placeholder="https://discord.com/api/webhooks/..." disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
+                    <input type="password" id="input-webhook-relatorio" autocomplete="new-password" class="webhook-input-popup" placeholder="URL guardado no servidor; cole um URL novo para substituir" disabled style="flex: 1; padding: 8px; font-size: 0.8rem; background: #0f0805; border: 1px solid rgba(194,155,56,0.3); border-radius: 4px; color: var(--text-main);">
                     <button id="btn-salvar-relatorio" class="webhook-btn-popup" onclick="salvarWebhookPopup('relatorio')" disabled style="padding: 0 12px; background: var(--senju-gold); color: #0f0805; border: none; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer;">Salvar</button>
                 </div>
                 <span id="msg-status-relatorio" style="display: block; font-size: 0.75rem; margin-top: 4px;"></span>
@@ -2597,6 +2731,52 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             <div class="modal-footer confirmacao-acoes">
                 <button type="button" id="btnCancelarAcao" class="btn-cancelar" onclick="fecharModalConfirmacao(false)">Cancelar</button>
                 <button type="button" id="btnConfirmarAcao" class="btn-confirmar-acao" onclick="fecharModalConfirmacao(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO MERCADO DO CLÃ -->
+    <div class="modal-overlay" id="marketModal" role="dialog" aria-modal="true" aria-labelledby="marketTitle"
+         onclick="if (event.target === this) fecharMercado()">
+        <div class="modal-content market-modal">
+            <div class="market-heading">
+                <div class="market-mark" aria-hidden="true">🛒</div>
+                <div>
+                    <p class="market-kicker">Clã Senju · comércio de recursos</p>
+                    <h2 id="marketTitle">Mercado do Clã</h2>
+                </div>
+                <button type="button" class="market-close" aria-label="Fechar Mercado" onclick="fecharMercado()">×</button>
+            </div>
+            <p class="market-intro">Escolha os recursos e quantidades para enviar um pedido de venda ao responsável do clã. Os valores abaixo são pagos pelo clã. A aprovação, a recusa e a confirmação da compra acontecem no Discord; você acompanha o andamento aqui.</p>
+            <div id="marketStatus" class="market-status" role="status" aria-live="polite"></div>
+            <div id="marketLoginBox" class="market-login-box" style="display:none">
+                <p id="marketLoginMessage">Entre novamente com o Discord para acessar o Mercado.</p>
+                <button class="market-btn primary" type="button" onclick="logarComDiscord()">Entrar com Discord</button>
+            </div>
+            <div id="marketContent" style="display:none">
+                <p id="marketMemberGreeting" class="market-footnote"></p>
+                <h3 class="market-section-title">Catálogo de recursos</h3>
+                <form id="marketOrderForm">
+                    <div id="marketProductList" class="market-products"></div>
+                    <div id="marketTotalRow" class="market-total-row" style="display:none">
+                        <span>Total previsto do pedido</span><strong id="marketOrderTotal">0 Ryos</strong>
+                    </div>
+                    <div class="market-actions">
+                        <button id="marketSubmitOrder" class="market-btn primary" type="submit">Enviar pedido</button>
+                    </div>
+                </form>
+                <p class="market-footnote">O responsável ainda precisa aprovar o pedido. O valor registrado no envio fica preservado para esse pedido, mesmo que o catálogo seja alterado depois.</p>
+                <div class="market-divider"></div>
+                <h3 class="market-section-title">Meus pedidos</h3>
+                <div id="marketOrderHistory" class="market-order-list"></div>
+                <section id="marketAdminPanel" class="market-admin-panel" style="display:none" aria-labelledby="marketAdminTitle">
+                    <h3 id="marketAdminTitle" class="market-section-title" style="margin-top:0">Painel do responsável</h3>
+                    <p class="market-admin-note">Edite aqui o valor que o clã pagará por unidade. A alteração vale para novos pedidos; pedidos já enviados mantêm o preço registrado.</p>
+                    <div id="marketAdminPriceList" class="market-admin-list"></div>
+                    <div class="market-actions">
+                        <button id="marketSavePrices" class="market-btn primary" type="button" onclick="salvarPrecosMercado()">Salvar preços</button>
+                    </div>
+                </section>
             </div>
         </div>
     </div>
@@ -2754,22 +2934,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         const CLIENT_ID = "1554155836585021510";
         const REDIRECT_URI = window.location.origin + window.location.pathname;
 
-        const CHAVES_WEBHOOK = {
-            'sorteio': 'webhook_sorteio',
-            'recompensa': 'webhook_recompensa',
-            'relatorio': 'webhook_relatorio',
-            'notificacao': 'webhook_notificacoes_admin'
-        };
-
-        const FALLBACKS_WEBHOOK = {
-            'sorteio': 'https://discord.com/api/webhooks/1552406722973409351/9QUBgLwd7kquuSwQvATuYW70SjWOJEQVjMq4TMaQhibavLyWENRZUQewZ7MT0lZixbZd',
-            'recompensa': 'https://discord.com/api/webhooks/1554198297328222249/FVFDya3o62j5BJwsjWKiIFGeDAVTsfnn6fSB69yTJTiumEgsjSIZobf3ufswBAZjOf-e',
-            'relatorio': 'https://discord.com/api/webhooks/1555995570886152237/wbvcbUBwW6qLgsNks0TxmFDui2B7Dqw8L5n6R-O8geGxAlxT3tPAuEA8E0J55AEAUH6K',
-            'notificacao': 'https://discord.com/api/webhooks/1555751541007192255/xjQNNdEvlyrcIZBR3_wXkQVn7CVuQs7DnHvc2bvaZFj_3Np5Vam_pT8ZVU2fA4l5U1En'
-        };
-
-        const WEBHOOK_APROVADO = "https://discord.com/api/webhooks/1555730877781377034/M3JyAR9gKMRuHPkmc_W4vIAHRJkiwo3TPE9bxIwTC7KGY3vS7leAhyxrmRCWolhnD0uQ";
-        const WEBHOOK_NEGADO = "https://discord.com/api/webhooks/1555732189566468167/Js9N8Qp-N4txQSGzSfKmGsYlyoa9UkiOPov4L2BDN_fU64UKVQYchrmwLZW4YpFMQdCi";
+        const TIPOS_WEBHOOK = ['sorteio', 'recompensa', 'relatorio', 'notificacao', 'aprovado', 'negado'];
 
         let listaMembrosCache = [];
         let membrosFiltradosCache = [];
@@ -2833,25 +2998,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('resTempoTotal').innerText = `${tempoTotalMinutos.toLocaleString('pt-BR')} min`;
             document.getElementById('resTreinos').innerText = `${sessoesGuy}x (Guy)`;
             document.getElementById('resCusto').innerText = `${custoTotal.toLocaleString('pt-BR')} Ryos`;
-        }
-
-        function obterWebhookUrl(tipo) {
-            const chaveDb = CHAVES_WEBHOOK[tipo];
-            return supabaseClient
-                .from('Configs')
-                .select('valor')
-                .eq('chave', chaveDb)
-                .single()
-                .then(({ data }) => {
-                    if (data && data.valor) {
-                        return data.valor;
-                    }
-                    return FALLBACKS_WEBHOOK[tipo];
-                })
-                .catch(e => {
-                    console.error(`Erro ao buscar webhook de ${tipo}:`, e);
-                    return FALLBACKS_WEBHOOK[tipo];
-                });
         }
 
         let callbackConfirmacaoPendente = null;
@@ -2922,6 +3068,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function deslogarDiscord() {
             localStorage.removeItem('discord_user_id');
             localStorage.removeItem('discord_username');
+            sessionStorage.removeItem('discord_access_token');
+            sessionStorage.removeItem('discord_access_token_exp');
             window.location.href = REDIRECT_URI;
         }
 
@@ -2939,7 +3087,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     if (data.id) {
                         localStorage.setItem('discord_user_id', data.id);
                         localStorage.setItem('discord_username', data.username);
+                        const expiresIn = Number(hashParams.get('expires_in') || queryParams.get('expires_in') || 3600);
+                        sessionStorage.setItem('discord_access_token', accessToken);
+                        sessionStorage.setItem('discord_access_token_exp', String(Date.now() + Math.max(60, expiresIn - 60) * 1000));
                         window.history.replaceState({}, document.title, REDIRECT_URI);
+                        verificarPermissaoAdmin();
+                        carregarMembros();
                     }
                 })
                 .catch(err => console.error("Erro ao autenticar Discord:", err));
@@ -3011,22 +3164,38 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         }
 
-        function carregarWebhookNoPopup(tipo) {
+                async function carregarWebhookNoPopup(tipo) {
             const userId = localStorage.getItem('discord_user_id');
-            obterAdminsAutorizados().then(adminsAtuais => {
-                const ehAdmin = userId && adminsAtuais.includes(userId);
-                const box = document.getElementById(`webhook-box-${tipo}`);
-                if (!ehAdmin) {
-                    if (box) box.style.display = 'none';
-                    return;
-                }
-
-                if (box) box.style.display = 'block';
-                obterWebhookUrl(tipo).then(url => {
-                    const input = document.getElementById(`input-webhook-${tipo}`);
-                    if (input) input.value = url;
-                });
-            });
+            const box = document.getElementById(`webhook-box-${tipo}`);
+            const input = document.getElementById(`input-webhook-${tipo}`);
+            const msgStatus = document.getElementById(`msg-status-${tipo}`);
+            if (input) {
+                input.value = '';
+                input.placeholder = 'URL guardado no servidor; cole um URL novo apenas para substituir';
+            }
+            const adminsAtuais = await obterAdminsAutorizados();
+            const ehAdmin = userId && adminsAtuais.includes(userId);
+            if (!ehAdmin) {
+                if (box) box.style.display = 'none';
+                return;
+            }
+            if (box) box.style.display = 'block';
+            if (!msgStatus) return;
+            if (!tokenDiscordMercado()) {
+                msgStatus.style.color = 'var(--senju-red)';
+                msgStatus.innerText = 'Entre novamente com o Discord para consultar a configuração.';
+                return;
+            }
+            try {
+                const status = await chamarFuncaoMercado('status_webhook', { tipo });
+                msgStatus.style.color = status.configurado ? '#86c99a' : 'var(--senju-gold)';
+                msgStatus.innerText = status.configurado
+                    ? '🔐 Webhook configurado e protegido no servidor. O URL não é exibido.'
+                    : '⚠️ Ainda não configurado. Cadastre um URL novo do Discord.';
+            } catch (error) {
+                msgStatus.style.color = 'var(--senju-red)';
+                msgStatus.innerText = error?.message || 'Não foi possível consultar a configuração.';
+            }
         }
 
         function alternarEdicaoPopup(tipo) {
@@ -3049,36 +3218,34 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }
         }
 
-        function salvarWebhookPopup(tipo) {
-            const novoUrl = document.getElementById(`input-webhook-${tipo}`).value.trim();
+                async function salvarWebhookPopup(tipo) {
+            const input = document.getElementById(`input-webhook-${tipo}`);
+            const novoUrl = input?.value.trim() || '';
             const msgStatus = document.getElementById(`msg-status-${tipo}`);
-            const chaveDb = CHAVES_WEBHOOK[tipo];
-
-            if (!novoUrl.startsWith('https://discord.com/api/webhooks/')) {
+            const tiposPermitidos = ['sorteio', 'recompensa', 'relatorio', 'notificacao', 'aprovado', 'negado'];
+            if (!tiposPermitidos.includes(tipo) || !/^https:\/\/(?:discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[A-Za-z0-9._-]+$/.test(novoUrl)) {
                 msgStatus.style.color = 'var(--senju-red)';
-                msgStatus.innerText = '⚠️ URL inválida!';
+                msgStatus.innerText = '⚠️ Cole um URL válido de webhook do Discord.';
                 return;
             }
-
             msgStatus.style.color = 'var(--senju-gold)';
-            msgStatus.innerText = 'Salvando...';
-
-            supabaseClient
-                .from('Configs')
-                .upsert({ chave: chaveDb, valor: novoUrl }, { onConflict: 'chave' })
-                .then(({ error }) => {
-                    if (error) throw error;
-                    msgStatus.style.color = '#248046';
-                    msgStatus.innerText = '✅ Atualizado!';
-                    document.getElementById(`toggle-edicao-${tipo}`).checked = false;
-                    alternarEdicaoPopup(tipo);
-                    setTimeout(() => { msgStatus.innerText = ''; }, 3000);
-                })
-                .catch(err => {
-                    console.error(err);
-                    msgStatus.style.color = 'var(--senju-red)';
-                    msgStatus.innerText = '❌ Erro ao salvar.';
-                });
+            msgStatus.innerText = 'Salvando de forma protegida...';
+            try {
+                await chamarFuncaoMercado('salvar_webhook_config', { tipo, url: novoUrl });
+                if (input) {
+                    input.value = '';
+                    input.placeholder = 'Webhook guardado; o URL não será mostrado novamente';
+                }
+                msgStatus.style.color = '#248046';
+                msgStatus.innerText = '✅ Salvo com proteção no Supabase.';
+                const toggle = document.getElementById(`toggle-edicao-${tipo}`);
+                if (toggle) toggle.checked = false;
+                alternarEdicaoPopup(tipo);
+                setTimeout(() => carregarWebhookNoPopup(tipo), 900);
+            } catch (error) {
+                msgStatus.style.color = 'var(--senju-red)';
+                msgStatus.innerText = error?.message || '❌ Erro ao salvar o webhook.';
+            }
         }
 
         async function limparPrintsAposRelatorioDomingo() {
@@ -3211,27 +3378,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             ]
                         };
 
-                        obterWebhookUrl('relatorio').then(webhookUrl => {
-                            fetch(webhookUrl, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            })
-                            .then(response => {
-                                if (response.ok) {
-                                    mostrarAviso('Resumo semanal enviado com sucesso!');
-                                    setTimeout(() => {
-                                        limparPrintsAposRelatorioDomingo();
-                                    }, 3000);
-                                } else {
-                                    mostrarAviso('Erro ao enviar o resumo.', 'erro');
-                                }
+                        enviarWebhookSeguro('relatorio', payload)
+                            .then(() => {
+                                mostrarAviso('Resumo semanal enviado com sucesso!');
+                                setTimeout(() => limparPrintsAposRelatorioDomingo(), 3000);
                             })
                             .catch(err => {
                                 console.error(err);
-                                mostrarAviso('Erro de conexão.', 'erro');
+                                mostrarAviso('Erro ao enviar o resumo.', 'erro');
                             });
-                        });
                     });
                     }
                 });
@@ -3305,30 +3460,20 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 ]
             };
 
-            obterWebhookUrl('notificacao').then(webhookUrl => {
-                fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                })
-                .then(response => {
-                    if (response.ok) {
-                        mostrarAviso('Notificação enviada com sucesso!');
-                        fecharPainelNotificacoes();
-                        document.getElementById('formNotificacao').reset();
-                    } else {
-                        mostrarAviso('Erro ao enviar webhook.', 'erro');
-                    }
+            enviarWebhookSeguro('notificacao', payload)
+                .then(() => {
+                    mostrarAviso('Notificação enviada com sucesso!');
+                    fecharPainelNotificacoes();
+                    document.getElementById('formNotificacao').reset();
                 })
                 .catch(err => {
-                    console.error("Erro webhook notif:", err);
-                    mostrarAviso('Erro de conexão.', 'erro');
+                    console.error('Erro no envio protegido da notificação:', err);
+                    mostrarAviso(err?.message || 'Erro ao enviar notificação.', 'erro');
                 })
                 .finally(() => {
                     btn.disabled = false;
-                    btn.innerText = "Enviar Notificação & Webhook";
+                    btn.innerText = 'Enviar Notificação & Webhook';
                 });
-            });
         }
 
         function carregarTotalMissoesCla() {
@@ -3799,11 +3944,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                 const payload = {
                                     content: `<@${solData.discord_id}> ✅ **MISSÃO DO KAGE APROVADA!** O teu pedido de ${solData.qtd_missoes} prints foi verificado e aprovado.\n\n💰 **Recompensa deste lote:** **${ryosCalculados} Ryos** (${blocosCompletos} bloco(s) de 5).\n🏃‍♂️ **Próximo passo:** Procure o responsável pelo pagamento das missões para resgatar os teus Ryos!`
                                 };
-                                fetch(WEBHOOK_APROVADO, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(payload)
-                                }).catch(err => console.error(err));
+                                enviarWebhookSeguro('aprovado', payload).catch(err => console.error(err));
                             }
 
                             mostrarAviso('Aprovação confirmada! O aviso foi enviado no Discord.');
@@ -3869,11 +4010,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             const payload = {
                                 content: `<@${solData.discord_id}> ❌ **MISSÃO KAGE NEGADA.** O teu pedido de recompensa foi rejeitado.\n\n💬 **Motivo:** ${motivo}`
                             };
-                            fetch(WEBHOOK_NEGADO, {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(payload)
-                            }).catch(err => console.error(err));
+                            enviarWebhookSeguro('negado', payload).catch(err => console.error(err));
                         }
 
                         mostrarAviso('Solicitação negada com sucesso!');
@@ -3953,83 +4090,93 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             document.getElementById('formMembro').reset(); 
         }
 
-        function salvarMembro(event) {
+        async function salvarMembro(event) {
             event.preventDefault();
             if (salvandoMembroEmAndamento) return;
 
             const userId = localStorage.getItem('discord_user_id');
-            obterAdminsAutorizados().then(adminsAtuais => {
-                if (!userId || !adminsAtuais.includes(userId)) {
-                    mostrarAviso('Acesso negado!', 'erro');
-                    return;
-                }
+            const adminsAtuais = await obterAdminsAutorizados();
+            if (!userId || !adminsAtuais.includes(userId)) {
+                mostrarAviso('Acesso negado!', 'erro');
+                return;
+            }
 
-                const idEdicao = document.getElementById('idMembroEdicao').value;
-                const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
-                const discord_id = document.getElementById('idMembroDiscord').value.trim();
-                const graduacaoSelect = document.getElementById('graduacaoMembro').value;
-                const cargoEspecialSelect = document.getElementById('cargoEspecialMembro').value;
-                const trabalho = document.getElementById('trabalhoMembro').value;
-                const e_admin = document.getElementById('checkAdminMembro').checked;
-                const e_avaliador_treino = document.getElementById('checkAvaliadorTreino').checked;
+            const idEdicao = document.getElementById('idMembroEdicao').value;
+            const nome_jogo = document.getElementById('nomeJogoMembro').value.trim();
+            const discord_id = document.getElementById('idMembroDiscord').value.trim();
+            const graduacaoSelect = document.getElementById('graduacaoMembro').value;
+            const cargoEspecialSelect = document.getElementById('cargoEspecialMembro').value;
+            const trabalho = document.getElementById('trabalhoMembro').value;
+            const e_admin = document.getElementById('checkAdminMembro').checked;
+            const e_avaliador_treino = document.getElementById('checkAvaliadorTreino').checked;
 
-                let graduacao = graduacaoSelect;
-                if (graduacaoSelect === "Estudante") graduacao = "Estudante [ 学 生 ]";
-                if (graduacaoSelect === "Genin") graduacao = "Genin [ 元仁 ]";
-                if (graduacaoSelect === "Chunin") graduacao = "Chunin [ ちゅうにん ]";
-                if (graduacaoSelect === "Jounin") graduacao = "Jounin [ じょうにん ]";
+            let graduacao = graduacaoSelect;
+            if (graduacaoSelect === 'Estudante') graduacao = 'Estudante [ 学 生 ]';
+            if (graduacaoSelect === 'Genin') graduacao = 'Genin [ 元仁 ]';
+            if (graduacaoSelect === 'Chunin') graduacao = 'Chunin [ ちゅうにん ]';
+            if (graduacaoSelect === 'Jounin') graduacao = 'Jounin [ じょうにん ]';
 
-                let cargo_especial = cargoEspecialSelect;
-                if (cargoEspecialSelect === "Líder") cargo_especial = "Líder Senju [ 千住リーダー ]";
-                if (cargoEspecialSelect === "Braço Direito") cargo_especial = "Braço Direito [ 千住サブリーダー ]";
+            let cargo_especial = cargoEspecialSelect;
+            if (cargoEspecialSelect === 'Líder') cargo_especial = 'Líder Senju [ 千住リーダー ]';
+            if (cargoEspecialSelect === 'Braço Direito') cargo_especial = 'Braço Direito [ 千住サブリーダー ]';
 
-                const idExistente = listaMembrosCache.find(m => m.discord_id === discord_id && m.id != idEdicao);
-                if (idExistente) {
-                    mostrarAviso(`Já existe um membro cadastrado com esse ID (${idExistente.nome_jogo}).`, 'erro');
-                    return;
-                }
+            const idExistente = listaMembrosCache.find(m => m.discord_id === discord_id && String(m.id) !== String(idEdicao));
+            if (idExistente) {
+                mostrarAviso(`Já existe um membro cadastrado com esse ID (${idExistente.nome_jogo}).`, 'erro');
+                return;
+            }
 
-                salvandoMembroEmAndamento = true;
-                const btnSubmit = document.getElementById('btnSalvarMembroTexto');
-                const textoOriginalBtn = btnSubmit.innerText;
-                btnSubmit.disabled = true;
-                btnSubmit.innerText = "Salvando...";
+            const btnSubmit = document.getElementById('btnSalvarMembroTexto');
+            const textoOriginalBtn = btnSubmit.innerText;
+            salvandoMembroEmAndamento = true;
+            btnSubmit.disabled = true;
+            btnSubmit.innerText = 'Salvando...';
 
-                if (idEdicao === "") {
-                    supabaseClient.from('membros').insert([{ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin, e_avaliador_treino }]).then(({ error }) => {
-                        if (error) {
-                            mostrarAviso('Erro ao cadastrar membro: ' + error.message, 'erro');
-                            salvandoMembroEmAndamento = false;
-                            btnSubmit.disabled = false;
-                            btnSubmit.innerText = textoOriginalBtn;
-                            return;
-                        }
-                        mostrarAviso(`Membro ${nome_jogo} cadastrado com sucesso!`);
-                        concluirSalvamentoMembro();
-                    });
+            // e_admin foi intencionalmente removido deste payload: somente a Edge Function o altera.
+            const dadosPublicos = { nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_avaliador_treino };
+            const membroAnterior = idEdicao
+                ? listaMembrosCache.find(m => String(m.id) === String(idEdicao))
+                : null;
+            let membroId = idEdicao ? Number(idEdicao) : null;
+
+            try {
+                if (!idEdicao) {
+                    const { data, error } = await supabaseClient
+                        .from('membros')
+                        .insert([dadosPublicos])
+                        .select('id')
+                        .single();
+                    if (error || !data) throw new Error('Erro ao cadastrar membro: ' + (error?.message || 'sem confirmação do banco'));
+                    membroId = Number(data.id);
                 } else {
-                    supabaseClient.from('membros').update({ nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_admin, e_avaliador_treino }).eq('id', idEdicao).then(({ error }) => {
-                        if (error) {
-                            mostrarAviso('Erro ao atualizar membro: ' + error.message, 'erro');
-                            salvandoMembroEmAndamento = false;
-                            btnSubmit.disabled = false;
-                            btnSubmit.innerText = textoOriginalBtn;
-                            return;
-                        }
-                        mostrarAviso(`Membro ${nome_jogo} atualizado com sucesso!`);
-                        concluirSalvamentoMembro();
+                    const { error } = await supabaseClient
+                        .from('membros')
+                        .update(dadosPublicos)
+                        .eq('id', idEdicao);
+                    if (error) throw new Error('Erro ao atualizar membro: ' + error.message);
+                }
+
+                const adminAnterior = membroAnterior?.e_admin === true;
+                const precisaAtualizarAdmin = !idEdicao ? e_admin : (!membroAnterior || adminAnterior !== e_admin);
+                if (precisaAtualizarAdmin) {
+                    await chamarFuncaoMercado('definir_admin_membro', {
+                        member_id: membroId,
+                        e_admin,
                     });
                 }
 
-                function concluirSalvamentoMembro() {
-                    carregarMembros();
-                    fecharModalMembro();
-                    verificarPermissaoAdmin();
-                    salvandoMembroEmAndamento = false;
-                    btnSubmit.disabled = false;
-                    btnSubmit.innerText = textoOriginalBtn;
-                }
-            });
+                mostrarAviso(`Membro ${nome_jogo} ${idEdicao ? 'atualizado' : 'cadastrado'} com sucesso!`);
+                carregarMembros();
+                fecharModalMembro();
+                verificarPermissaoAdmin();
+            } catch (error) {
+                console.error('Erro ao salvar membro:', error);
+                mostrarAviso(error?.message || 'Não foi possível salvar o membro.', 'erro');
+            } finally {
+                salvandoMembroEmAndamento = false;
+                btnSubmit.disabled = false;
+                btnSubmit.innerText = textoOriginalBtn;
+            }
         }
 
         function excluirMembro(id) {
@@ -4346,13 +4493,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 ]
             };
 
-            obterWebhookUrl('sorteio').then(webhookUrl => {
-                fetch(webhookUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).catch(err => console.error(err));
-            });
+            enviarWebhookSeguro('sorteio', payload).catch(err => console.error(err));
         }
 
         const modalRecompensa = document.getElementById('modalRecompensa');
@@ -4411,6 +4552,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             document.getElementById('nomeJogoRecompensa').value = membroEncontrado ? membroEncontrado.nome_jogo : "";
                             modalRecompensa.style.display = 'flex';
                             carregarWebhookNoPopup('recompensa');
+                carregarWebhookNoPopup('aprovado');
+                carregarWebhookNoPopup('negado');
                         });
                     });
                 });
@@ -4593,13 +4736,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                     ]
                                 };
 
-                                obterWebhookUrl('recompensa').then(webhookUrl => {
-                                    fetch(webhookUrl, {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify(payloadDiscord)
-                                    }).catch(err => console.error(err));
-                                });
+                                enviarWebhookSeguro('recompensa', payloadDiscord).catch(err => console.error(err));
 
                                 const mensagemSucesso = quantidadeExcedente > 0
                                     ? `Solicitação enviada com ${qtdMissoes} prints válidos. ${quantidadeExcedente} print(s) excedente(s) foram descartados.`
@@ -4700,36 +4837,26 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 }
             }
 
-            obterWebhookUrl('relatorio').then(webhookUrl => {
-                fetch(webhookUrl, {
-                    method: 'POST',
-                    body: formData
+            enviarWebhookComAnexosSeguro(formData)
+                .then(() => {
+                    mostrarAviso(`Relatório enviado com sucesso, ${nomeJogo}!`);
+                    fecharModalRelatorio();
+                    document.getElementById('formRelatorio').reset();
                 })
-                .then(response => {
-                    if (response.ok) {
-                        mostrarAviso(`Relatório enviado com sucesso, ${nomeJogo}!`);
-                        fecharModalRelatorio();
-                        document.getElementById('formRelatorio').reset();
-                    } else {
-                        mostrarAviso('Erro ao enviar relatório.', 'erro');
-                    }
-                })
-                .catch(() => mostrarAviso('Erro de conexão.', 'erro'))
+                .catch(error => mostrarAviso(error?.message || 'Erro ao enviar relatório.', 'erro'))
                 .finally(() => {
                     let segundosRestantes = 5;
                     btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
                     let intervalo = setInterval(() => {
                         segundosRestantes--;
-                        if (segundosRestantes > 0) {
-                            btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
-                        } else {
+                        if (segundosRestantes > 0) btnEnviar.innerText = `Aguarde (${segundosRestantes}s)...`;
+                        else {
                             clearInterval(intervalo);
                             btnEnviar.disabled = false;
-                            btnEnviar.innerText = "Enviar Relatório";
+                            btnEnviar.innerText = 'Enviar Relatório';
                         }
                     }, 1000);
                 });
-            });
         }
 
         const modalAdmin = document.getElementById('modalAdmin');
@@ -4778,6 +4905,269 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 renderizarPaginaMidia('videos');
             }
         }
+
+
+        /* MERCADO DO CLÃ — catálogo e pedidos autenticados pelo Discord */
+        const mercadoEstado = { catalogo: [], pedidos: [], isAdmin: false };
+
+        function tokenDiscordMercado() {
+            const token = sessionStorage.getItem('discord_access_token');
+            const expiraEm = Number(sessionStorage.getItem('discord_access_token_exp') || 0);
+            return token && expiraEm > Date.now() ? token : null;
+        }
+
+        async function chamarFuncaoMercado(action, payload = {}) {
+            const token = tokenDiscordMercado();
+            if (!token) throw new Error('Sua sessão do Discord expirou. Saia e entre novamente no site.');
+
+            const { data, error } = await supabaseClient.functions.invoke('mercado', {
+                body: { action, ...payload },
+                headers: { 'x-discord-access-token': token },
+            });
+            if (error) {
+                let mensagem = error.message || 'Falha ao consultar o Mercado.';
+                try {
+                    const resposta = await error.context?.json();
+                    if (resposta?.error) mensagem = resposta.error;
+                } catch (_) {}
+                throw new Error(mensagem);
+            }
+            if (data?.error) throw new Error(data.error);
+            return data;
+        }
+
+
+
+        async function enviarWebhookSeguro(tipo, payload) {
+            return chamarFuncaoMercado('enviar_webhook', { tipo, payload });
+        }
+
+        async function enviarWebhookComAnexosSeguro(formData) {
+            const token = tokenDiscordMercado();
+            if (!token) throw new Error('Sua sessão do Discord expirou. Entre novamente no site.');
+            formData.set('action', 'enviar_webhook');
+            formData.set('tipo', 'relatorio_anexo');
+            const { data, error } = await supabaseClient.functions.invoke('mercado', {
+                body: formData,
+                headers: { 'x-discord-access-token': token },
+            });
+            if (error) {
+                let mensagem = error.message || 'Falha ao enviar o relatório.';
+                try {
+                    const resposta = await error.context?.json();
+                    if (resposta?.error) mensagem = resposta.error;
+                } catch (_) {}
+                throw new Error(mensagem);
+            }
+            if (data?.error) throw new Error(data.error);
+            return data;
+        }
+
+        function escaparMercado(valor) {
+            return String(valor ?? '').replace(/[&<>"']/g, caractere => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[caractere]));
+        }
+
+        function ryosMercado(valor) {
+            const numero = Number(valor);
+            return `${Number.isFinite(numero) ? Math.round(numero).toLocaleString('pt-BR') : '0'} Ryos`;
+        }
+
+        function definirStatusMercado(texto, erro = false) {
+            const status = document.getElementById('marketStatus');
+            if (!status) return;
+            status.textContent = texto || '';
+            status.classList.toggle('error', !!erro);
+        }
+
+        function abrirMercado() {
+            const modal = document.getElementById('marketModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            carregarMercado();
+        }
+
+        function fecharMercado() {
+            const modal = document.getElementById('marketModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        async function carregarMercado() {
+            const loginBox = document.getElementById('marketLoginBox');
+            const content = document.getElementById('marketContent');
+            if (!tokenDiscordMercado()) {
+                if (content) content.style.display = 'none';
+                if (loginBox) loginBox.style.display = 'block';
+                document.getElementById('marketLoginMessage').textContent =
+                    localStorage.getItem('discord_user_id')
+                        ? 'Sua sessão segura expirou. Entre novamente com o Discord para usar o Mercado.'
+                        : 'Entre com o Discord para solicitar recursos e acompanhar seus pedidos.';
+                definirStatusMercado('');
+                return;
+            }
+
+            if (loginBox) loginBox.style.display = 'none';
+            if (content) content.style.display = 'block';
+            definirStatusMercado('Carregando catálogo e pedidos...');
+            try {
+                const dados = await chamarFuncaoMercado('inicializar');
+                mercadoEstado.catalogo = Array.isArray(dados.catalogo) ? dados.catalogo : [];
+                mercadoEstado.pedidos = Array.isArray(dados.pedidos) ? dados.pedidos : [];
+                mercadoEstado.isAdmin = dados.membro?.e_admin === true;
+                document.getElementById('marketMemberGreeting').textContent =
+                    `Conectado como ${dados.membro?.nome_jogo || localStorage.getItem('discord_username') || 'membro do clã'}.`;
+                desenharCatalogoMercado();
+                desenharHistoricoMercado();
+                desenharPainelPrecosMercado();
+                definirStatusMercado('');
+            } catch (error) {
+                console.error('Falha ao carregar Mercado:', error);
+                if (content) content.style.display = 'none';
+                if (loginBox) loginBox.style.display = 'block';
+                document.getElementById('marketLoginMessage').textContent = error?.message || 'Não foi possível abrir o Mercado.';
+                definirStatusMercado('Confira a função segura e a configuração do Supabase.', true);
+            }
+        }
+
+        function desenharCatalogoMercado() {
+            const container = document.getElementById('marketProductList');
+            const form = document.getElementById('marketOrderForm');
+            const totalRow = document.getElementById('marketTotalRow');
+            if (!container) return;
+            if (!mercadoEstado.catalogo.length) {
+                container.innerHTML = '<div class="market-empty" style="grid-column:1/-1">Não há recursos ativos no catálogo. Peça a um administrador para conferir os produtos no Supabase.</div>';
+                if (totalRow) totalRow.style.display = 'none';
+                return;
+            }
+            container.innerHTML = mercadoEstado.catalogo.map(produto => `
+                <label class="market-product">
+                    <span>
+                        <span class="market-product-name">${escaparMercado(produto.nome)}</span>
+                        <span class="market-product-price">${ryosMercado(produto.preco_cla)} por unidade</span>
+                    </span>
+                    <span class="market-qty-label">Quantidade
+                        <input type="number" min="0" max="1000000" step="1" value="0"
+                               data-market-qty="${Number(produto.id)}" aria-label="Quantidade de ${escaparMercado(produto.nome)}">
+                    </span>
+                </label>`).join('');
+            container.querySelectorAll('[data-market-qty]').forEach(input => input.addEventListener('input', atualizarTotalMercado));
+            if (form) form.style.display = 'block';
+            if (totalRow) totalRow.style.display = 'flex';
+            atualizarTotalMercado();
+        }
+
+        function obterItensSelecionadosMercado() {
+            return [...document.querySelectorAll('#marketProductList [data-market-qty]')]
+                .map(input => ({ id: Number(input.dataset.marketQty), quantidade: Number(input.value) || 0 }))
+                .filter(item => Number.isSafeInteger(item.id) && Number.isSafeInteger(item.quantidade) && item.quantidade > 0);
+        }
+
+        function atualizarTotalMercado() {
+            const itens = obterItensSelecionadosMercado();
+            const precos = new Map(mercadoEstado.catalogo.map(produto => [Number(produto.id), Number(produto.preco_cla)]));
+            const total = itens.reduce((soma, item) => soma + (precos.get(item.id) || 0) * item.quantidade, 0);
+            const label = document.getElementById('marketOrderTotal');
+            if (label) label.textContent = ryosMercado(total);
+            const button = document.getElementById('marketSubmitOrder');
+            if (button) button.disabled = itens.length === 0;
+        }
+
+        async function enviarPedidoMercado(event) {
+            event.preventDefault();
+            const itens = obterItensSelecionadosMercado();
+            if (!itens.length) {
+                mostrarAviso('Escolha pelo menos um recurso e informe a quantidade.', 'erro');
+                return;
+            }
+            const button = document.getElementById('marketSubmitOrder');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Enviando...';
+            try {
+                const resposta = await chamarFuncaoMercado('criar_pedido', { itens });
+                mostrarAviso(`Pedido #${resposta.pedido?.id || ''} enviado para análise.`);
+                document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => input.value = '0');
+                await carregarMercado();
+            } catch (error) {
+                mostrarAviso(error?.message || 'Não foi possível enviar o pedido.', 'erro');
+            } finally {
+                button.textContent = original;
+                atualizarTotalMercado();
+            }
+        }
+
+        function desenharHistoricoMercado() {
+            const container = document.getElementById('marketOrderHistory');
+            if (!container) return;
+            if (!mercadoEstado.pedidos.length) {
+                container.innerHTML = '<div class="market-empty">Você ainda não enviou pedidos de venda.</div>';
+                return;
+            }
+            container.innerHTML = mercadoEstado.pedidos.map(pedido => {
+                const itens = Array.isArray(pedido.itens) ? pedido.itens : [];
+                const resumo = itens.map(item => `${escaparMercado(item.recurso)} × ${Number(item.quantidade) || 0}`).join(' · ');
+                const statusClass = String(pedido.status || '').toLowerCase();
+                const data = pedido.criado_em ? new Date(pedido.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+                return `<article class="market-order">
+                    <div class="market-order-head"><strong>Pedido #${Number(pedido.id)}</strong><span>${escaparMercado(data)}</span><span class="market-badge ${escaparMercado(statusClass)}">${escaparMercado(pedido.status)}</span></div>
+                    <div class="market-order-items">${resumo || 'Itens não informados'}${pedido.motivo_recusa ? `<br><span>Motivo: ${escaparMercado(pedido.motivo_recusa)}</span>` : ''}</div>
+                    <div class="market-order-total">Total registrado: ${ryosMercado(pedido.total_ryos)}</div>
+                </article>`;
+            }).join('');
+        }
+
+        function desenharPainelPrecosMercado() {
+            const panel = document.getElementById('marketAdminPanel');
+            const container = document.getElementById('marketAdminPriceList');
+            if (!panel || !container) return;
+            panel.style.display = mercadoEstado.isAdmin ? 'block' : 'none';
+            if (!mercadoEstado.isAdmin) return;
+            container.innerHTML = mercadoEstado.catalogo.map(produto => `
+                <div class="market-admin-price">
+                    <strong>${escaparMercado(produto.nome)}</strong>
+                    <label>Novo valor (Ryos)
+                        <input type="number" min="1" max="2147483647" step="1"
+                               value="${Number(produto.preco_cla)}" data-market-price="${Number(produto.id)}"
+                               aria-label="Novo preço de ${escaparMercado(produto.nome)}">
+                    </label>
+                </div>`).join('') || '<div class="market-empty">Nenhum produto no catálogo.</div>';
+        }
+
+        async function salvarPrecosMercado() {
+            if (!mercadoEstado.isAdmin) {
+                mostrarAviso('Apenas administradores podem alterar os preços.', 'erro');
+                return;
+            }
+            const precos = [...document.querySelectorAll('#marketAdminPriceList [data-market-price]')]
+                .map(input => ({ id: Number(input.dataset.marketPrice), preco_cla: Number(input.value) }));
+            if (!precos.length || precos.some(item => !Number.isSafeInteger(item.preco_cla) || item.preco_cla < 1)) {
+                mostrarAviso('Informe valores inteiros maiores que zero.', 'erro');
+                return;
+            }
+            const button = document.getElementById('marketSavePrices');
+            const original = button.textContent;
+            button.disabled = true;
+            button.textContent = 'Salvando...';
+            try {
+                await chamarFuncaoMercado('atualizar_precos', { precos });
+                mostrarAviso('Preços do Mercado atualizados.');
+                await carregarMercado();
+            } catch (error) {
+                mostrarAviso(error?.message || 'Não foi possível salvar os preços.', 'erro');
+            } finally {
+                button.disabled = false;
+                button.textContent = original;
+            }
+        }
+
+        document.getElementById('marketOrderForm')?.addEventListener('submit', enviarPedidoMercado);
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && document.getElementById('marketModal')?.style.display === 'flex') fecharMercado();
+        });
+
     </script>
 
 <style id="senju-dashboard-visual-fix">
@@ -4906,9 +5296,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
 })();
 </script>
-
-</body>
-</html>
 
 <style>
 @media (max-width: 600px) {
@@ -6933,3 +7320,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             #calculadora .calc-result-box { padding: 14px 10px; }
         }
     </style>
+
+</body>
+</html>
+
+
