@@ -2716,6 +2716,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 </div>
 
                 <div class="form-group">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="checkCompradorRecursos">
+                        <label for="checkCompradorRecursos">Conceder cargo: Comprador de Recursos</label>
+                    </div>
+                    <small class="field-help">Permite alterar preços no Mercado. Para operar os pedidos no Discord, o membro também precisa do cargo correspondente no servidor.</small>
+                </div>
+
+                <div class="form-group">
                     <div class="checkbox-group evaluator-checkbox-group">
                         <input type="checkbox" id="checkAvaliadorTreino">
                         <label for="checkAvaliadorTreino">Conceder tag: Avaliador de Treino</label>
@@ -4100,6 +4108,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     else document.getElementById('trabalhoMembro').value = "";
 
                     document.getElementById('checkAdminMembro').checked = !!membro.e_admin;
+                    document.getElementById('checkCompradorRecursos').checked = !!membro.e_comprador_recursos;
                     document.getElementById('checkAvaliadorTreino').checked = !!membro.e_avaliador_treino;
                     modalMembro.style.display = 'flex';
                 });
@@ -4129,6 +4138,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const cargoEspecialSelect = document.getElementById('cargoEspecialMembro').value;
             const trabalho = document.getElementById('trabalhoMembro').value;
             const e_admin = document.getElementById('checkAdminMembro').checked;
+            const e_comprador_recursos = document.getElementById('checkCompradorRecursos').checked;
             const e_avaliador_treino = document.getElementById('checkAvaliadorTreino').checked;
 
             let graduacao = graduacaoSelect;
@@ -4153,7 +4163,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             btnSubmit.disabled = true;
             btnSubmit.innerText = 'Salvando...';
 
-            // e_admin foi intencionalmente removido deste payload: somente a Edge Function o altera.
+            // e_admin e e_comprador_recursos são alterados apenas pela Edge Function autorizada.
             const dadosPublicos = { nome_jogo, discord_id, graduacao, cargo_especial, trabalho, e_avaliador_treino };
             const membroAnterior = idEdicao
                 ? listaMembrosCache.find(m => String(m.id) === String(idEdicao))
@@ -4183,6 +4193,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     await chamarFuncaoMercado('definir_admin_membro', {
                         member_id: membroId,
                         e_admin,
+                    });
+                }
+                const compradorAnterior = membroAnterior?.e_comprador_recursos === true;
+                const precisaAtualizarComprador = !idEdicao ? e_comprador_recursos : (!membroAnterior || compradorAnterior !== e_comprador_recursos);
+                if (precisaAtualizarComprador) {
+                    await chamarFuncaoMercado('definir_comprador_recursos', {
+                        member_id: membroId,
+                        e_comprador_recursos,
                     });
                 }
 
@@ -4519,7 +4537,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         const modalRecompensa = document.getElementById('modalRecompensa');
 
-        function tentarAbrirRecompensa() {
+        async function tentarAbrirRecompensa() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
 
@@ -4528,21 +4546,34 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
 
-            obterEstadoTravaMissaoKage().then(bloqueada => {
-                if (bloqueada) {
+            try {
+                const [bloqueada, adminsAtuais] = await Promise.all([
+                    obterEstadoTravaMissaoKage(),
+                    obterAdminsAutorizados()
+                ]);
+                const eAdmin = adminsAtuais.includes(String(userId));
+
+                // Um admin precisa conseguir abrir o popup para remover a própria trava.
+                // Membros continuam sem acesso enquanto a Missão Kage estiver bloqueada.
+                if (bloqueada && !eAdmin) {
                     mostrarAviso('🔒 A Missão Kage está temporariamente bloqueada pela liderança.', 'erro');
                     return;
                 }
 
-            // SEGURANÇA: Validação no banco ignorando status 'Negado'
-            supabaseClient
-                .from('solicitacoes_recompensa')
-                .select('created_at, data_envio, status')
-                .eq('discord_id', userId)
-                .neq('status', 'Negado')
-                .order('id', { ascending: false })
-                .limit(1)
-                .then(({ data: ultimosEnvios }) => {
+                // A trava não impede o admin de abrir o painel de controle. Enquanto ela
+                // estiver ativa, o formulário de envio continua desabilitado pela interface
+                // e a função enviarRecompensa também valida a trava no banco.
+                if (!bloqueada) {
+                    const { data: ultimosEnvios, error: erroEnvios } = await supabaseClient
+                        .from('solicitacoes_recompensa')
+                        .select('created_at, data_envio, status')
+                        .eq('discord_id', userId)
+                        .neq('status', 'Negado')
+                        .order('id', { ascending: false })
+                        .limit(1);
+
+                    if (erroEnvios) throw erroEnvios;
+
                     if (ultimosEnvios && ultimosEnvios.length > 0) {
                         const ultimoEnvio = ultimosEnvios[0];
                         const dataEnvioStr = ultimoEnvio.created_at || ultimoEnvio.data_envio;
@@ -4558,29 +4589,30 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             return;
                         }
                     }
+                }
 
-                    supabaseClient.from('membros').select('*').then(({ data: membros }) => {
-                        const membroEncontrado = membros ? membros.find(m => m.discord_id === userId) : null;
-                        obterAdminsAutorizados().then(adminsAtuais => {
-                            const eAdmin = adminsAtuais.includes(userId);
+                const { data: membros, error: erroMembros } = await supabaseClient
+                    .from('membros')
+                    .select('*');
+                if (erroMembros) throw erroMembros;
 
-                            if (!membroEncontrado && !eAdmin) {
-                                mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
-                                return;
-                            }
+                const membroEncontrado = membros ? membros.find(m => String(m.discord_id) === String(userId)) : null;
+                if (!membroEncontrado && !eAdmin) {
+                    mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
+                    return;
+                }
 
-                            document.getElementById('nomeDiscordRecompensa').value = username;
-                            document.getElementById('nomeJogoRecompensa').value = membroEncontrado ? membroEncontrado.nome_jogo : "";
-                            modalRecompensa.style.display = 'flex';
-                            carregarWebhookNoPopup('recompensa');
+                document.getElementById('nomeDiscordRecompensa').value = username || '';
+                document.getElementById('nomeJogoRecompensa').value = membroEncontrado ? membroEncontrado.nome_jogo : '';
+                modalRecompensa.style.display = 'flex';
+                await carregarControleTravaMissaoKage();
+                carregarWebhookNoPopup('recompensa');
                 carregarWebhookNoPopup('aprovado');
                 carregarWebhookNoPopup('negado');
-                        });
-                    });
-                });
-            }).catch(() => {
-                mostrarAviso('Não foi possível verificar se a Missão Kage está liberada. Tente novamente mais tarde.', 'erro');
-            });
+            } catch (error) {
+                console.error('Não foi possível abrir a Missão Kage:', error);
+                mostrarAviso('Não foi possível verificar o acesso à Missão Kage. Tente novamente mais tarde.', 'erro');
+            }
         }
 
         function fecharModalRecompensa() { modalRecompensa.style.display = 'none'; }
@@ -4929,7 +4961,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 
         /* MERCADO DO CLÃ — catálogo e pedidos autenticados pelo Discord */
-        const mercadoEstado = { catalogo: [], pedidos: [], isAdmin: false, aba: 'pedidos' };
+        const mercadoEstado = { catalogo: [], pedidos: [], isAdmin: false, canManageMarket: false, aba: 'pedidos' };
 
         function tokenDiscordMercado() {
             const token = sessionStorage.getItem('discord_access_token');
@@ -5038,6 +5070,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 mercadoEstado.catalogo = Array.isArray(dados.catalogo) ? dados.catalogo : [];
                 mercadoEstado.pedidos = Array.isArray(dados.pedidos) ? dados.pedidos : [];
                 mercadoEstado.isAdmin = dados.membro?.e_admin === true;
+                mercadoEstado.canManageMarket = mercadoEstado.isAdmin || dados.membro?.e_comprador_recursos === true;
                 document.getElementById('marketMemberGreeting').textContent =
                     `Conectado como ${dados.membro?.nome_jogo || localStorage.getItem('discord_username') || 'membro do clã'}.`;
                 desenharCatalogoMercado();
@@ -5141,7 +5174,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         function selecionarAbaMercado(aba) {
-            const abaAtiva = aba === 'precos' && mercadoEstado.isAdmin ? 'precos' : 'pedidos';
+            const abaAtiva = aba === 'precos' && mercadoEstado.canManageMarket ? 'precos' : 'pedidos';
             mercadoEstado.aba = abaAtiva;
             const pedidosAtivos = abaAtiva === 'pedidos';
             const botaoPedidos = document.getElementById('marketTabOrders');
@@ -5149,9 +5182,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const painelPedidos = document.getElementById('marketOrdersPanel');
             const painelPrecos = document.getElementById('marketAdminPanel');
             if (botaoPedidos) botaoPedidos.setAttribute('aria-selected', String(pedidosAtivos));
-            if (botaoPrecos) botaoPrecos.setAttribute('aria-selected', String(!pedidosAtivos && mercadoEstado.isAdmin));
+            if (botaoPrecos) botaoPrecos.setAttribute('aria-selected', String(!pedidosAtivos && mercadoEstado.canManageMarket));
             if (painelPedidos) painelPedidos.hidden = !pedidosAtivos;
-            if (painelPrecos) painelPrecos.hidden = pedidosAtivos || !mercadoEstado.isAdmin;
+            if (painelPrecos) painelPrecos.hidden = pedidosAtivos || !mercadoEstado.canManageMarket;
         }
 
         function desenharPainelPrecosMercado() {
@@ -5160,9 +5193,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const tabs = document.getElementById('marketTabs');
             const priceTab = document.getElementById('marketTabPrices');
             if (!panel || !container || !tabs || !priceTab) return;
-            tabs.hidden = !mercadoEstado.isAdmin;
-            priceTab.hidden = !mercadoEstado.isAdmin;
-            if (!mercadoEstado.isAdmin) {
+            tabs.hidden = !mercadoEstado.canManageMarket;
+            priceTab.hidden = !mercadoEstado.canManageMarket;
+            if (!mercadoEstado.canManageMarket) {
                 selecionarAbaMercado('pedidos');
                 return;
             }
@@ -5179,8 +5212,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         async function salvarPrecosMercado() {
-            if (!mercadoEstado.isAdmin) {
-                mostrarAviso('Apenas administradores podem alterar os preços.', 'erro');
+            if (!mercadoEstado.canManageMarket) {
+                mostrarAviso('Somente Administradores e Compradores de Recursos podem alterar os preços.', 'erro');
                 return;
             }
             const precos = [...document.querySelectorAll('#marketAdminPriceList [data-market-price]')]
@@ -7365,4 +7398,3 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 </body>
 </html>
-
