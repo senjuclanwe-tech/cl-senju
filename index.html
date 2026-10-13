@@ -2935,18 +2935,18 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             </div><div class="caixa-actions"><button class="caixa-btn" type="submit">Registrar ajuste auditável</button></div></form>
                         </div>
                         <div class="caixa-section" id="caixaCanalAdmin" hidden>
-                            <h3>Canal Discord da prestação — Administradores</h3>
-                            <p class="caixa-note">Informe o ID do canal de texto onde o bot antigo publicará os relatórios. Não cole link de webhook nem token.</p>
-                            <form onsubmit="salvarCanalCaixa(event)"><div class="caixa-form-grid">
-                                <div class="caixa-field"><label for="caixaDiscordChannel">ID numérico do canal</label><input id="caixaDiscordChannel" inputmode="numeric" pattern="[0-9]{5,22}" maxlength="22" placeholder="Ex.: 123456789012345678" required></div>
-                            </div><div class="caixa-actions"><button class="caixa-btn" type="submit">Salvar canal</button></div></form>
+                            <h3>Destinatário da prestação por DM — Administradores</h3>
+                            <p class="caixa-note">Informe o ID numérico da conta Discord que receberá as próximas prestações em mensagem privada. O ID inicial do líder já está preenchido; Administradores podem trocá-lo. A pessoa precisa aceitar DMs do bot e compartilhar um servidor com ele. Relatórios já enfileirados mantêm o destinatário registrado quando foram solicitados.</p>
+                            <form onsubmit="salvarDestinatarioCaixa(event)"><div class="caixa-form-grid">
+                                <div class="caixa-field"><label for="caixaDiscordRecipient">ID do usuário Discord</label><input id="caixaDiscordRecipient" inputmode="numeric" pattern="[0-9]{5,22}" maxlength="22" value="384808394701275147" placeholder="Ex.: 123456789012345678" required></div>
+                            </div><div class="caixa-actions"><button class="caixa-btn" type="submit">Salvar destinatário</button></div></form>
                         </div>
                         <div class="caixa-section"><h3>Histórico do caixa</h3><p class="caixa-note">Compras do Mercado são registradas automaticamente quando o responsável confirma a compra concluída no Discord.</p><div id="caixaLedger" class="caixa-list"></div></div>
                     </section>
                     <section id="caixaPanePrestacao" class="caixa-pane" role="tabpanel" hidden>
                         <div class="caixa-section">
                             <h3>Gerar e enviar prestação</h3>
-                            <p class="caixa-note">A prestação é calculada a partir dos registros do período e enfileirada para o bot postar no canal configurado. O histórico financeiro original não será alterado.</p>
+                            <p class="caixa-note">A prestação é calculada a partir dos registros do período e enfileirada para o bot enviar por mensagem privada ao usuário configurado. O histórico financeiro original não será alterado.</p>
                             <form onsubmit="gerarPrestacaoCaixa(event)"><div class="caixa-form-grid">
                                 <div class="caixa-field"><label for="caixaPeriodoInicio">Início do período</label><input id="caixaPeriodoInicio" type="date" required></div>
                                 <div class="caixa-field"><label for="caixaPeriodoFim">Fim do período</label><input id="caixaPeriodoFim" type="date" required></div>
@@ -5301,7 +5301,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         /* CAIXA DO CLÃ — operações e prestações protegidas pelo backend */
-        const caixaEstado = { isAdmin: false, carregando: false, timer: null, canalConfigurado: false };
+        const caixaEstado = { isAdmin: false, carregando: false, timer: null, destinatarioConfigurado: false };
 
         function escaparCaixa(value) {
             return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
@@ -5408,7 +5408,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             try {
                 const data = await chamarFuncaoMercado('caixa_resumo');
                 caixaEstado.isAdmin = data.membro?.e_admin === true;
-                caixaEstado.canalConfigurado = data.canal_configurado === true;
+                caixaEstado.destinatarioConfigurado = data.destinatario_configurado === true;
                 document.getElementById('caixaGreeting').textContent = `Acesso autorizado para ${data.membro?.nome_jogo || localStorage.getItem('discord_username') || 'responsável'}. As alterações ficam vinculadas à sua conta.`;
                 const initialPanel = document.getElementById('caixaInitialPanel');
                 const dashboard = document.getElementById('caixaDashboard');
@@ -5423,15 +5423,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     desenharLancamentosCaixa(data.lancamentos);
                     desenharRelatoriosCaixa(data.relatorios);
                     if (caixaEstado.isAdmin) {
-                        const channelInput = document.getElementById('caixaDiscordChannel');
-                        if (document.activeElement !== channelInput) channelInput.value = data.canal_id || '';
+                        const recipientInput = document.getElementById('caixaDiscordRecipient');
+                        if (document.activeElement !== recipientInput) recipientInput.value = data.destinatario_id || '384808394701275147';
                     }
                     const startInput = document.getElementById('caixaPeriodoInicio');
                     const endInput = document.getElementById('caixaPeriodoFim');
                     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
                     if (!startInput.value) startInput.value = data.inicio_em ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date(data.inicio_em)) : today;
                     if (!endInput.value) endInput.value = today;
-                    if (!data.canal_configurado && !quiet) definirStatusCaixa(caixaEstado.isAdmin ? 'Configure o ID do canal no painel para liberar o envio de prestações.' : 'O Administrador ainda precisa configurar o canal de envio.');
+                    if (!data.destinatario_configurado && !quiet) definirStatusCaixa(caixaEstado.isAdmin ? 'Confira e salve o ID do destinatário por DM no painel para liberar as prestações.' : 'O Administrador ainda precisa salvar o destinatário das prestações por DM.');
                     else if (!quiet) definirStatusCaixa('');
                 } else {
                     desenharRelatoriosCaixa([]);
@@ -5512,19 +5512,20 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             pedirConfirmacaoCaixa({ titulo: 'Registrar ajuste auditável?', mensagem: `${direcao === 'entrada' ? 'Entrada' : 'Saída'} compensatória de ${formatarRyosCaixa(valor)}. Justificativa: ${descricao}`, botao: 'Registrar ajuste', action: 'caixa_lancar_ajuste', payload: { direcao, valor_ryos: valor, descricao }, form, successText: 'Ajuste compensatório registrado com justificativa.' });
         }
 
-        async function salvarCanalCaixa(event) {
+        async function salvarDestinatarioCaixa(event) {
             event.preventDefault();
             const form = event.currentTarget;
-            const discord_channel_id = document.getElementById('caixaDiscordChannel').value.trim();
+            const discord_recipient_id = document.getElementById('caixaDiscordRecipient').value.trim();
             const button = form.querySelector('button[type="submit"]');
             button.disabled = true;
-            definirStatusCaixa('Salvando o canal de envio…');
+            definirStatusCaixa('Salvando o destinatário da DM…');
             try {
-                await chamarFuncaoMercado('caixa_configurar_canal', { discord_channel_id });
-                definirStatusCaixa('Canal salvo com segurança. O bot usará esse canal nas próximas prestações.');
-                mostrarAviso('Canal da prestação configurado.', 'sucesso');
+                await chamarFuncaoMercado('caixa_configurar_destinatario', { discord_recipient_id });
+                caixaEstado.destinatarioConfigurado = true;
+                definirStatusCaixa('Destinatário salvo. As próximas prestações serão enviadas por mensagem privada para esse usuário.');
+                mostrarAviso('Destinatário da prestação configurado.', 'sucesso');
             } catch (error) {
-                definirStatusCaixa(error?.message || 'Não foi possível salvar o canal.', true);
+                definirStatusCaixa(error?.message || 'Não foi possível salvar o destinatário.', true);
             } finally { button.disabled = false; }
         }
 
@@ -5533,15 +5534,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const form = event.currentTarget;
             const periodo_inicio = document.getElementById('caixaPeriodoInicio').value;
             const periodo_fim = document.getElementById('caixaPeriodoFim').value;
-            if (!caixaEstado.canalConfigurado) {
-                definirStatusCaixa('Um Administrador precisa configurar o canal Discord antes de enviar a prestação.', true);
+            if (!caixaEstado.destinatarioConfigurado) {
+                definirStatusCaixa('Um Administrador precisa salvar o ID do destinatário por DM antes de enviar a prestação.', true);
                 return;
             }
             if (!periodo_inicio || !periodo_fim || periodo_fim < periodo_inicio) {
                 definirStatusCaixa('Confira as datas: o início deve ser anterior ou igual ao fim.', true);
                 return;
             }
-            pedirConfirmacaoCaixa({ titulo: 'Gerar prestação de contas?', mensagem: `O bot publicará no canal configurado o relatório financeiro do período ${periodo_inicio} a ${periodo_fim}. Ele incluirá compras concluídas, vendas ao NPC, aportes e totais agregados de cogumelos.`, botao: 'Gerar e enviar', action: 'caixa_gerar_prestacao', payload: { periodo_inicio, periodo_fim }, form, successText: 'Prestação calculada e enviada à fila do bot. O estado de envio aparecerá aqui.' });
+            pedirConfirmacaoCaixa({ titulo: 'Gerar prestação de contas?', mensagem: `O bot enviará por mensagem privada ao destinatário configurado pelo Administrador o relatório financeiro do período ${periodo_inicio} a ${periodo_fim}. Ele incluirá compras concluídas, vendas ao NPC, aportes e totais agregados de cogumelos.`, botao: 'Gerar e enviar por DM', action: 'caixa_gerar_prestacao', payload: { periodo_inicio, periodo_fim }, form, successText: 'Prestação calculada e enviada à fila do bot. O estado de envio aparecerá aqui.' });
         }
 
         function desenharCatalogoMercado() {
