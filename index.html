@@ -436,7 +436,8 @@
         /* Os IDs continuam sendo os mesmos para o JavaScript de permissões.
            A visibilidade passa a controlar o item inteiro. */
         #navBtnSorteio,
-        #navBtnSemanal {
+        #navBtnSemanal,
+        #navBtnCaixa {
             display: none;
         }
 
@@ -1963,13 +1964,6 @@
                 </a>
             </li>
             <li>
-                <a onclick="fecharSenjuMenu(); abrirCaixa(); return false;"
-                   class="sidebar-link action-mercado" href="#caixa">
-                    <span class="sidebar-icon">🪙</span><span>Caixa do Clã</span>
-                </a>
-            </li>
-
-            <li>
                 <a onclick="tentarAbrirRelatorio(); fecharSenjuMenu()"
                    class="sidebar-link action-relatorio">
                     <span class="sidebar-icon">📋</span><span>Relatório</span>
@@ -1995,6 +1989,12 @@
                    id="navBtnSemanal"
                    title="Enviar Relatório Semanal (Apenas Domingo)">
                     <span class="sidebar-icon">📊</span><span>Resumo</span>
+                </a>
+            </li>
+            <li>
+                <a onclick="fecharSenjuMenu(); abrirCaixa(); return false;"
+                   class="sidebar-link action-mercado" href="#caixa" id="navBtnCaixa">
+                    <span class="sidebar-icon">🪙</span><span>Caixa do Clã</span>
                 </a>
             </li>
         </ul>
@@ -2936,9 +2936,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         </div>
                         <div class="caixa-section" id="caixaCanalAdmin" hidden>
                             <h3>Destinatário da prestação por DM — Administradores</h3>
-                            <p class="caixa-note">Informe o ID numérico da conta Discord que receberá as próximas prestações em mensagem privada. O ID inicial do líder já está preenchido; Administradores podem trocá-lo. A pessoa precisa aceitar DMs do bot e compartilhar um servidor com ele. Relatórios já enfileirados mantêm o destinatário registrado quando foram solicitados.</p>
+                            <p class="caixa-note">Escolha um membro cadastrado no site; o ID do Discord vinculado a ele será usado automaticamente. A pessoa precisa aceitar mensagens privadas do bot e compartilhar um servidor com ele. Relatórios já enfileirados mantêm o destinatário registrado quando foram solicitados.</p>
                             <form onsubmit="salvarDestinatarioCaixa(event)"><div class="caixa-form-grid">
-                                <div class="caixa-field"><label for="caixaDiscordRecipient">ID do usuário Discord</label><input id="caixaDiscordRecipient" inputmode="numeric" pattern="[0-9]{5,22}" maxlength="22" value="384808394701275147" placeholder="Ex.: 123456789012345678" required></div>
+                                <div class="caixa-field"><label for="caixaDiscordRecipient">Membro que receberá as prestações</label><select id="caixaDiscordRecipient" required><option value="">Selecione um membro cadastrado…</option></select><small>O ID do Discord cadastrado será usado automaticamente. Se houver nomes iguais, confira o ID exibido na opção.</small></div>
                             </div><div class="caixa-actions"><button class="caixa-btn" type="submit">Salvar destinatário</button></div></form>
                         </div>
                         <div class="caixa-section"><h3>Histórico do caixa</h3><p class="caixa-note">Compras do Mercado são registradas automaticamente quando o responsável confirma a compra concluída no Discord.</p><div id="caixaLedger" class="caixa-list"></div></div>
@@ -3323,6 +3323,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const btnAdicionarMembro = document.getElementById('btn-adicionar-membro');
             const navBtnSorteio = document.getElementById('navBtnSorteio');
             const navBtnSemanal = document.getElementById('navBtnSemanal');
+            const navBtnCaixa = document.getElementById('navBtnCaixa');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -3339,6 +3340,17 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         if(navBtnSemanal) navBtnSemanal.style.display = 'inline-block';
                     }
                 });
+                supabaseClient.from('membros').select('e_admin, e_comprador_recursos')
+                    .eq('discord_id', userId).maybeSingle()
+                    .then(({ data: membro, error }) => {
+                        if (error) {
+                            console.error('Erro ao verificar acesso ao Caixa no menu:', error);
+                            return;
+                        }
+                        if (navBtnCaixa && (membro?.e_admin === true || membro?.e_comprador_recursos === true)) {
+                            navBtnCaixa.style.display = 'inline-block';
+                        }
+                    });
             }
         }
 
@@ -5324,6 +5336,36 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             el.classList.toggle('error', !!isError);
         }
 
+        function atualizarDestinatariosCaixa(destinatarios, destinatarioSalvo) {
+            const select = document.getElementById('caixaDiscordRecipient');
+            if (!select) return;
+            const previousValue = select.value;
+            const preservePendingChoice = previousValue && previousValue !== String(destinatarioSalvo || '');
+            const targetValue = preservePendingChoice ? previousValue : String(destinatarioSalvo || '');
+            select.replaceChildren();
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'Selecione um membro cadastrado…';
+            select.appendChild(placeholder);
+            const validIds = new Set();
+            for (const membro of (Array.isArray(destinatarios) ? destinatarios : [])) {
+                const discordId = String(membro?.discord_id || '').trim();
+                if (!/^\d{5,22}$/.test(discordId) || validIds.has(discordId)) continue;
+                validIds.add(discordId);
+                const option = document.createElement('option');
+                option.value = discordId;
+                option.textContent = `${String(membro?.nome_jogo || 'Membro').trim() || 'Membro'} · ${discordId}`;
+                select.appendChild(option);
+            }
+            if (targetValue && !validIds.has(targetValue)) {
+                const option = document.createElement('option');
+                option.value = targetValue;
+                option.textContent = `Destinatário atual · ${targetValue}`;
+                select.appendChild(option);
+            }
+            select.value = targetValue;
+        }
+
         function abrirCaixa() {
             const modal = document.getElementById('caixaModal');
             if (!modal) return;
@@ -5423,8 +5465,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     desenharLancamentosCaixa(data.lancamentos);
                     desenharRelatoriosCaixa(data.relatorios);
                     if (caixaEstado.isAdmin) {
-                        const recipientInput = document.getElementById('caixaDiscordRecipient');
-                        if (document.activeElement !== recipientInput) recipientInput.value = data.destinatario_id || '384808394701275147';
+                        atualizarDestinatariosCaixa(data.destinatarios, data.destinatario_id);
                     }
                     const startInput = document.getElementById('caixaPeriodoInicio');
                     const endInput = document.getElementById('caixaPeriodoFim');
@@ -5516,6 +5557,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             event.preventDefault();
             const form = event.currentTarget;
             const discord_recipient_id = document.getElementById('caixaDiscordRecipient').value.trim();
+            if (!discord_recipient_id) {
+                definirStatusCaixa('Selecione um membro para receber as prestações.', true);
+                return;
+            }
             const button = form.querySelector('button[type="submit"]');
             button.disabled = true;
             definirStatusCaixa('Salvando o destinatário da DM…');
