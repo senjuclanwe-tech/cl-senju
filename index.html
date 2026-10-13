@@ -1822,6 +1822,54 @@
             #marketModal *, #marketModal *::before, #marketModal *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; }
         }
 
+        /* CAIXA SENJU — prestação de contas auditável */
+        #caixaModal { z-index: 4350; padding: 20px; }
+        #caixaModal .caixa-modal { width:min(1040px,100%); max-height:min(92vh,960px); overflow:auto; padding:clamp(18px,3vw,30px); border:1px solid rgba(194,155,56,.58); border-radius:18px; background:radial-gradient(ellipse at 90% 0%,rgba(117,70,25,.2),transparent 36%),linear-gradient(145deg,rgba(31,17,11,.99),rgba(15,9,6,.99)); box-shadow:0 28px 90px rgba(0,0,0,.72),0 0 0 1px rgba(194,155,56,.08) inset; }
+        #caixaModal .caixa-heading { display:flex; gap:14px; align-items:center; }
+        #caixaModal .caixa-mark { width:48px;height:48px;flex:0 0 48px;display:grid;place-items:center;border:1px solid rgba(194,155,56,.55);border-radius:14px;color:#efcf76;background:linear-gradient(145deg,rgba(194,155,56,.17),rgba(74,36,16,.36));font-size:1.35rem; }
+        #caixaModal .caixa-heading h2 { margin:0;color:#f2e7ce;font:800 clamp(1.15rem,2.8vw,1.6rem) 'Cinzel',serif; }
+        #caixaModal .caixa-kicker { margin:4px 0 0;color:#c6a65a;font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase; }
+        #caixaModal .caixa-close { width:38px;height:38px;margin-left:auto;flex:0 0 38px;border:1px solid rgba(194,155,56,.25);border-radius:10px;color:#e8dcc7;background:rgba(0,0,0,.16);font-size:1.35rem;cursor:pointer; }
+        #caixaModal .caixa-intro { margin:18px 0;padding:13px 15px;border-left:3px solid var(--senju-gold);border-radius:0 10px 10px 0;color:#d8cebd;background:rgba(194,155,56,.07);line-height:1.55;font-size:.88rem; }
+        #caixaModal .caixa-status { min-height:22px;margin:10px 0;color:#cbbd9e;font-size:.87rem; }
+        #caixaModal .caixa-status.error { color:#ff9a91; }
+        #caixaModal .caixa-auth { padding:24px 16px;border:1px solid rgba(194,155,56,.22);border-radius:13px;text-align:center;color:#d8cebd; }
+        #caixaModal .caixa-tabs { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:18px 0;padding:5px;border:1px solid rgba(194,155,56,.2);border-radius:13px;background:rgba(4,3,2,.42); }
+        #caixaModal .caixa-tab { min-height:43px;padding:9px 12px;border:1px solid transparent;border-radius:9px;color:#b9aa91;background:transparent;font:700 .82rem Inter,sans-serif;cursor:pointer; }
+        #caixaModal .caixa-tab[aria-selected="true"] { border-color:rgba(194,155,56,.46);color:#f2db96;background:linear-gradient(135deg,rgba(194,155,56,.2),rgba(95,54,20,.25)); }
+        #caixaModal .caixa-pane[hidden], #caixaModal [hidden] { display:none!important; }
+        #caixaModal .caixa-summary { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:16px 0; }
+        #caixaModal .caixa-card { padding:14px;border:1px solid rgba(194,155,56,.23);border-radius:12px;background:linear-gradient(135deg,rgba(44,26,16,.72),rgba(18,11,7,.82)); }
+        #caixaModal .caixa-card span { display:block;color:#bcae98;font-size:.75rem; }
+        #caixaModal .caixa-card strong { display:block;margin-top:6px;color:#f1d781;font:800 clamp(1rem,3vw,1.35rem) 'Cinzel',serif;overflow-wrap:anywhere; }
+        #caixaModal .caixa-card.out strong { color:#e7b0a2; }
+        #caixaModal .caixa-section { margin-top:19px;padding:16px;border:1px solid rgba(194,155,56,.22);border-radius:13px;background:rgba(0,0,0,.16); }
+        #caixaModal .caixa-section h3 { margin:0 0 8px;color:#ead8ad;font:700 1rem 'Cinzel',serif; }
+        #caixaModal .caixa-note { margin:0 0 13px;color:#aa9d88;font-size:.78rem;line-height:1.5; }
+        #caixaModal .caixa-form-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px; }
+        #caixaModal .caixa-field label { display:block;margin-bottom:5px;color:#cbbd9e;font-size:.76rem;font-weight:650; }
+        #caixaModal .caixa-field input, #caixaModal .caixa-field select, #caixaModal .caixa-field textarea { width:100%;min-height:40px;padding:9px 10px;border:1px solid rgba(194,155,56,.3);border-radius:9px;outline:none;color:#f7ecd6;background:rgba(8,6,5,.72);font:500 .87rem Inter,sans-serif; }
+        #caixaModal .caixa-field input:focus, #caixaModal .caixa-field select:focus, #caixaModal .caixa-field textarea:focus { border-color:#d3ae4b;box-shadow:0 0 0 3px rgba(194,155,56,.12); }
+        #caixaModal .caixa-field textarea { min-height:74px;resize:vertical; }
+        #caixaModal .caixa-field.full { grid-column:1/-1; }
+        #caixaModal .caixa-resources { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px; }
+        #caixaModal .caixa-resource { display:grid;grid-template-columns:minmax(0,1fr) 100px;gap:8px;align-items:center;padding:10px;border:1px solid rgba(194,155,56,.16);border-radius:10px;color:#eadfc9;background:rgba(0,0,0,.16);font-size:.83rem; }
+        #caixaModal .caixa-resource small { display:block;margin-top:3px;color:#bda75e;font-size:.7rem; }
+        #caixaModal .caixa-resource input { width:100%;padding:8px;border:1px solid rgba(194,155,56,.25);border-radius:8px;color:#f7ecd6;background:#100b08; }
+        #caixaModal .caixa-actions { display:flex;justify-content:flex-end;flex-wrap:wrap;gap:9px;margin-top:12px; }
+        #caixaModal .caixa-btn { min-height:40px;padding:9px 15px;border:1px solid rgba(194,155,56,.42);border-radius:9px;color:#eadfc9;background:rgba(50,31,18,.78);font:700 .82rem Inter,sans-serif;cursor:pointer; }
+        #caixaModal .caixa-btn.primary { border-color:#c29b38;color:#1a0f08;background:linear-gradient(135deg,#e0bf63,#b58a2d); }
+        #caixaModal .caixa-btn:disabled { opacity:.55;cursor:wait; }
+        #caixaModal .caixa-list { display:grid;gap:8px;margin-top:12px; }
+        #caixaModal .caixa-entry, #caixaModal .caixa-report { padding:11px 12px;border:1px solid rgba(194,155,56,.16);border-radius:10px;background:rgba(0,0,0,.16); }
+        #caixaModal .caixa-entry-head, #caixaModal .caixa-report-head { display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#d7c7aa;font-size:.78rem; }
+        #caixaModal .caixa-entry p, #caixaModal .caixa-report p { margin:6px 0 0;color:#aa9d88;font-size:.76rem;line-height:1.45; }
+        #caixaModal .caixa-positive { color:#8bd6a2!important; }
+        #caixaModal .caixa-negative { color:#ffb0a0!important; }
+        #caixaModal .caixa-empty { padding:14px;border:1px dashed rgba(194,155,56,.24);border-radius:10px;color:#b7aa96;text-align:center;font-size:.82rem; }
+        @media(max-width:650px) { #caixaModal { align-items:flex-end;padding:8px; } #caixaModal .caixa-modal { width:100%;max-height:94dvh;padding:17px 13px calc(18px + env(safe-area-inset-bottom));border-radius:16px 16px 10px 10px; } #caixaModal .caixa-summary { grid-template-columns:1fr 1fr; } #caixaModal .caixa-summary .caixa-card:first-child { grid-column:1/-1; } #caixaModal .caixa-form-grid, #caixaModal .caixa-resources { grid-template-columns:1fr; } #caixaModal .caixa-field.full { grid-column:auto; } }
+        @media(prefers-reduced-motion:reduce) { #caixaModal *,#caixaModal *::before,#caixaModal *::after { animation-duration:.01ms!important;transition-duration:.01ms!important; } }
+
     </style>
 </head>
 <body>
@@ -1912,6 +1960,12 @@
                 <a onclick="fecharSenjuMenu(); abrirMercado(); return false;"
                    class="sidebar-link action-mercado" href="#mercado">
                     <span class="sidebar-icon">🛒</span><span>Mercado do Clã</span>
+                </a>
+            </li>
+            <li>
+                <a onclick="fecharSenjuMenu(); abrirCaixa(); return false;"
+                   class="sidebar-link action-mercado" href="#caixa">
+                    <span class="sidebar-icon">🪙</span><span>Caixa do Clã</span>
                 </a>
             </li>
 
@@ -2806,6 +2860,101 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         <button id="marketSavePrices" class="market-btn primary" type="button" onclick="salvarPrecosMercado()">Salvar preços</button>
                     </div>
                 </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO CAIXA E PRESTAÇÃO DE CONTAS -->
+    <div class="modal-overlay" id="caixaModal" role="dialog" aria-modal="true" aria-labelledby="caixaTitle"
+         onclick="if (event.target === this) fecharCaixa()">
+        <div class="modal-content caixa-modal">
+            <div class="caixa-heading">
+                <div class="caixa-mark" aria-hidden="true">🪙</div>
+                <div><p class="caixa-kicker">Clã Senju · livro-caixa</p><h2 id="caixaTitle">Caixa do Clã</h2></div>
+                <button type="button" class="caixa-close" aria-label="Fechar Caixa" onclick="fecharCaixa()">×</button>
+            </div>
+            <p class="caixa-intro">Acompanhe cada entrada e saída do caixa. Compras do Mercado só entram como despesa depois de confirmadas no jogo. Os lançamentos ficam registrados com responsável e horário.</p>
+            <div id="caixaStatus" class="caixa-status" role="status" aria-live="polite"></div>
+            <div id="caixaAuthBox" class="caixa-auth" style="display:none">
+                <p id="caixaAuthMessage">Entre com Discord para abrir o Caixa.</p>
+                <button class="caixa-btn primary" type="button" onclick="logarComDiscord()">Entrar com Discord</button>
+            </div>
+            <div id="caixaContent" style="display:none">
+                <p id="caixaGreeting" class="caixa-note"></p>
+                <section id="caixaInitialPanel" class="caixa-section" hidden>
+                    <h3>Definir o saldo inicial</h3>
+                    <p class="caixa-note">Somente um Administrador pode iniciar o livro-caixa. Informe o dinheiro que realmente está disponível agora. Este valor é definido uma única vez; transações anteriores não serão inventadas nem importadas.</p>
+                    <form onsubmit="definirSaldoInicialCaixa(event)">
+                        <div class="caixa-form-grid">
+                            <div class="caixa-field"><label for="caixaSaldoInicial">Saldo disponível (Ryos)</label><input id="caixaSaldoInicial" type="number" min="1" max="2147483647" step="1" required></div>
+                            <div class="caixa-field"><label for="caixaSaldoInicialNota">Observação / origem</label><input id="caixaSaldoInicialNota" maxlength="300" value="Saldo inicial informado pela liderança" required></div>
+                        </div>
+                        <div class="caixa-actions"><button class="caixa-btn primary" type="submit">Iniciar livro-caixa</button></div>
+                    </form>
+                </section>
+                <div id="caixaDashboard" hidden>
+                    <div class="caixa-summary">
+                        <article class="caixa-card"><span>Saldo disponível no caixa</span><strong id="caixaSaldoAtual">0 Ryos</strong></article>
+                        <article class="caixa-card"><span>Aportes acumulados</span><strong id="caixaAportesTotal">0 Ryos</strong></article>
+                        <article class="caixa-card out"><span>Compras confirmadas</span><strong id="caixaComprasTotal">0 Ryos</strong></article>
+                    </div>
+                    <div class="caixa-tabs" role="tablist" aria-label="Seções do Caixa">
+                        <button id="caixaTabMovimentos" class="caixa-tab" type="button" role="tab" aria-selected="true" onclick="selecionarAbaCaixa('movimentos')">📒 Movimentações</button>
+                        <button id="caixaTabPrestacao" class="caixa-tab" type="button" role="tab" aria-selected="false" onclick="selecionarAbaCaixa('prestacao')">📊 Prestação de contas</button>
+                    </div>
+                    <section id="caixaPaneMovimentos" class="caixa-pane" role="tabpanel">
+                        <div class="caixa-section">
+                            <h3>Registrar aporte ao caixa</h3>
+                            <p class="caixa-note">Use quando a liderança entregar novos Ryos. O valor aumenta o saldo e fica vinculado a quem registrou e à observação.</p>
+                            <form onsubmit="registrarAporteCaixa(event)"><div class="caixa-form-grid">
+                                <div class="caixa-field"><label for="caixaAporteValor">Valor recebido (Ryos)</label><input id="caixaAporteValor" type="number" min="1" max="2147483647" step="1" required></div>
+                                <div class="caixa-field"><label for="caixaAporteNota">Quem entregou / observação</label><input id="caixaAporteNota" maxlength="300" placeholder="Ex.: aporte entregue pela liderança" required></div>
+                            </div><div class="caixa-actions"><button class="caixa-btn primary" type="submit">Registrar aporte</button></div></form>
+                        </div>
+                        <div class="caixa-section">
+                            <h3>Registrar venda ao NPC</h3>
+                            <p class="caixa-note">Informe apenas as unidades efetivamente vendidas. O sistema calcula a receita com os valores fixos do NPC; cogumelos não entram nesta venda.</p>
+                            <form onsubmit="registrarVendaNpcCaixa(event)">
+                                <div class="caixa-resources">
+                                    <label class="caixa-resource"><span>Galho<small>12 Ryos por unidade</small></span><input name="galho" type="number" min="0" max="1000000" step="1" value="0"></label>
+                                    <label class="caixa-resource"><span>Peixe<small>10 Ryos por unidade</small></span><input name="peixe" type="number" min="0" max="1000000" step="1" value="0"></label>
+                                    <label class="caixa-resource"><span>Pedra<small>10 Ryos por unidade</small></span><input name="pedra" type="number" min="0" max="1000000" step="1" value="0"></label>
+                                    <label class="caixa-resource"><span>Algodão<small>7 Ryos por unidade</small></span><input name="algodao" type="number" min="0" max="1000000" step="1" value="0"></label>
+                                </div>
+                                <div class="caixa-field" style="margin-top:10px"><label for="caixaVendaNota">Observação (opcional)</label><input id="caixaVendaNota" maxlength="250" placeholder="Ex.: venda realizada no NPC"></div>
+                                <div class="caixa-actions"><button class="caixa-btn primary" type="submit">Registrar venda NPC</button></div>
+                            </form>
+                        </div>
+                        <div class="caixa-section" id="caixaAjusteAdmin" hidden>
+                            <h3>Ajuste compensatório — Administradores</h3>
+                            <p class="caixa-note">Lançamentos não podem ser apagados. Se houver erro, um Administrador pode registrar a correção com justificativa; o registro original permanece no histórico.</p>
+                            <form onsubmit="registrarAjusteCaixa(event)"><div class="caixa-form-grid">
+                                <div class="caixa-field"><label for="caixaAjusteDirecao">Tipo de ajuste</label><select id="caixaAjusteDirecao"><option value="entrada">Entrada compensatória</option><option value="saida">Saída compensatória</option></select></div>
+                                <div class="caixa-field"><label for="caixaAjusteValor">Valor (Ryos)</label><input id="caixaAjusteValor" type="number" min="1" max="2147483647" step="1" required></div>
+                                <div class="caixa-field full"><label for="caixaAjusteNota">Justificativa obrigatória</label><textarea id="caixaAjusteNota" maxlength="500" minlength="3" required></textarea></div>
+                            </div><div class="caixa-actions"><button class="caixa-btn" type="submit">Registrar ajuste auditável</button></div></form>
+                        </div>
+                        <div class="caixa-section" id="caixaCanalAdmin" hidden>
+                            <h3>Canal Discord da prestação — Administradores</h3>
+                            <p class="caixa-note">Informe o ID do canal de texto onde o bot antigo publicará os relatórios. Não cole link de webhook nem token.</p>
+                            <form onsubmit="salvarCanalCaixa(event)"><div class="caixa-form-grid">
+                                <div class="caixa-field"><label for="caixaDiscordChannel">ID numérico do canal</label><input id="caixaDiscordChannel" inputmode="numeric" pattern="[0-9]{5,22}" maxlength="22" placeholder="Ex.: 123456789012345678" required></div>
+                            </div><div class="caixa-actions"><button class="caixa-btn" type="submit">Salvar canal</button></div></form>
+                        </div>
+                        <div class="caixa-section"><h3>Histórico do caixa</h3><p class="caixa-note">Compras do Mercado são registradas automaticamente quando o responsável confirma a compra concluída no Discord.</p><div id="caixaLedger" class="caixa-list"></div></div>
+                    </section>
+                    <section id="caixaPanePrestacao" class="caixa-pane" role="tabpanel" hidden>
+                        <div class="caixa-section">
+                            <h3>Gerar e enviar prestação</h3>
+                            <p class="caixa-note">A prestação é calculada a partir dos registros do período e enfileirada para o bot postar no canal configurado. O histórico financeiro original não será alterado.</p>
+                            <form onsubmit="gerarPrestacaoCaixa(event)"><div class="caixa-form-grid">
+                                <div class="caixa-field"><label for="caixaPeriodoInicio">Início do período</label><input id="caixaPeriodoInicio" type="date" required></div>
+                                <div class="caixa-field"><label for="caixaPeriodoFim">Fim do período</label><input id="caixaPeriodoFim" type="date" required></div>
+                            </div><div class="caixa-actions"><button class="caixa-btn primary" type="submit">Gerar prestação para o Discord</button></div></form>
+                        </div>
+                        <div class="caixa-section"><h3>Envios recentes</h3><div id="caixaReports" class="caixa-list"></div></div>
+                    </section>
+                </div>
             </div>
         </div>
     </div>
@@ -5149,6 +5298,250 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 document.getElementById('marketLoginMessage').textContent = error?.message || 'Não foi possível abrir o Mercado.';
                 definirStatusMercado('Confira a função segura e a configuração do Supabase.', true);
             }
+        }
+
+        /* CAIXA DO CLÃ — operações e prestações protegidas pelo backend */
+        const caixaEstado = { isAdmin: false, carregando: false, timer: null, canalConfigurado: false };
+
+        function escaparCaixa(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+        }
+
+        function formatarRyosCaixa(value) {
+            const amount = Number(value);
+            return `${Number.isFinite(amount) ? Math.round(amount).toLocaleString('pt-BR') : '0'} Ryos`;
+        }
+
+        function formatarDataCaixa(value) {
+            const date = new Date(value);
+            return Number.isNaN(date.getTime()) ? 'Data indisponível' : date.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
+        }
+
+        function definirStatusCaixa(message = '', isError = false) {
+            const el = document.getElementById('caixaStatus');
+            if (!el) return;
+            el.textContent = message;
+            el.classList.toggle('error', !!isError);
+        }
+
+        function abrirCaixa() {
+            const modal = document.getElementById('caixaModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            carregarCaixa();
+            if (caixaEstado.timer) clearInterval(caixaEstado.timer);
+            caixaEstado.timer = setInterval(() => {
+                if (modal.style.display === 'flex' && tokenDiscordMercado()) carregarCaixa({ quiet: true });
+            }, 12000);
+        }
+
+        function fecharCaixa() {
+            const modal = document.getElementById('caixaModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+            if (caixaEstado.timer) clearInterval(caixaEstado.timer);
+            caixaEstado.timer = null;
+        }
+
+        function selecionarAbaCaixa(tab) {
+            const movements = tab === 'movimentos';
+            document.getElementById('caixaTabMovimentos').setAttribute('aria-selected', String(movements));
+            document.getElementById('caixaTabPrestacao').setAttribute('aria-selected', String(!movements));
+            document.getElementById('caixaPaneMovimentos').hidden = !movements;
+            document.getElementById('caixaPanePrestacao').hidden = movements;
+        }
+
+        function tipoLancamentoCaixa(type) {
+            return ({
+                saldo_inicial: 'Saldo inicial', aporte: 'Aporte', venda_npc: 'Venda ao NPC',
+                compra_membros: 'Compra de recursos concluída', ajuste_entrada: 'Ajuste compensatório · entrada',
+                ajuste_saida: 'Ajuste compensatório · saída'
+            })[type] || 'Movimentação';
+        }
+
+        function desenharLancamentosCaixa(entries) {
+            const container = document.getElementById('caixaLedger');
+            if (!container) return;
+            if (!Array.isArray(entries) || entries.length === 0) {
+                container.innerHTML = '<div class="caixa-empty">Ainda não há movimentações registradas.</div>';
+                return;
+            }
+            container.innerHTML = entries.map(row => {
+                const outgoing = ['compra_membros', 'ajuste_saida'].includes(row.tipo);
+                const amount = `${outgoing ? '−' : '+'}${formatarRyosCaixa(row.valor_ryos)}`;
+                return `<article class="caixa-entry"><div class="caixa-entry-head"><strong>${escaparCaixa(tipoLancamentoCaixa(row.tipo))}</strong><strong class="${outgoing ? 'caixa-negative' : 'caixa-positive'}">${escaparCaixa(amount)}</strong></div><p>${escaparCaixa(row.descricao)}<br>Por ${escaparCaixa(row.nome_responsavel || 'responsável')} · ${escaparCaixa(formatarDataCaixa(row.criado_em))}</p></article>`;
+            }).join('');
+        }
+
+        function desenharRelatoriosCaixa(reports) {
+            const container = document.getElementById('caixaReports');
+            if (!container) return;
+            if (!Array.isArray(reports) || !reports.length) {
+                container.innerHTML = '<div class="caixa-empty">As prestações geradas aparecerão aqui com o estado do envio.</div>';
+                return;
+            }
+            const labels = { Pendente: 'Aguardando bot', Enviando: 'Enviando ao Discord', Enviado: 'Publicado no Discord', Falhou: 'Falha no envio' };
+            container.innerHTML = reports.map(report => {
+                const erro = report.status === 'Falhou' && report.erro_envio ? `<p class="caixa-negative">${escaparCaixa(report.erro_envio)}</p>` : '';
+                return `<article class="caixa-report"><div class="caixa-report-head"><strong>Prestação #${escaparCaixa(report.id)}</strong><strong>${escaparCaixa(labels[report.status] || report.status)}</strong></div><p>Período: ${escaparCaixa(report.periodo_inicio)} a ${escaparCaixa(report.periodo_fim)} · solicitado em ${escaparCaixa(formatarDataCaixa(report.criado_em))}${report.enviado_em ? ` · enviado ${escaparCaixa(formatarDataCaixa(report.enviado_em))}` : ''}</p>${erro}</article>`;
+            }).join('');
+        }
+
+        async function carregarCaixa({ quiet = false } = {}) {
+            const loginBox = document.getElementById('caixaAuthBox');
+            const content = document.getElementById('caixaContent');
+            if (caixaEstado.carregando) return;
+            if (!tokenDiscordMercado()) {
+                if (content) content.style.display = 'none';
+                if (loginBox) loginBox.style.display = 'block';
+                document.getElementById('caixaAuthMessage').textContent = localStorage.getItem('discord_user_id')
+                    ? 'Sua sessão do Discord expirou. Entre novamente para acessar o Caixa.'
+                    : 'Entre com o Discord e use uma conta autorizada para acessar o Caixa.';
+                if (!quiet) definirStatusCaixa('');
+                return;
+            }
+            caixaEstado.carregando = true;
+            if (loginBox) loginBox.style.display = 'none';
+            if (content) content.style.display = 'block';
+            if (!quiet) definirStatusCaixa('Carregando caixa e histórico…');
+            try {
+                const data = await chamarFuncaoMercado('caixa_resumo');
+                caixaEstado.isAdmin = data.membro?.e_admin === true;
+                caixaEstado.canalConfigurado = data.canal_configurado === true;
+                document.getElementById('caixaGreeting').textContent = `Acesso autorizado para ${data.membro?.nome_jogo || localStorage.getItem('discord_username') || 'responsável'}. As alterações ficam vinculadas à sua conta.`;
+                const initialPanel = document.getElementById('caixaInitialPanel');
+                const dashboard = document.getElementById('caixaDashboard');
+                initialPanel.hidden = !!data.inicializado || !caixaEstado.isAdmin;
+                dashboard.hidden = !data.inicializado;
+                document.getElementById('caixaAjusteAdmin').hidden = !caixaEstado.isAdmin;
+                document.getElementById('caixaCanalAdmin').hidden = !caixaEstado.isAdmin;
+                if (data.inicializado) {
+                    document.getElementById('caixaSaldoAtual').textContent = formatarRyosCaixa(data.saldo_atual);
+                    document.getElementById('caixaAportesTotal').textContent = formatarRyosCaixa(data.total_aportes);
+                    document.getElementById('caixaComprasTotal').textContent = formatarRyosCaixa(data.total_compras);
+                    desenharLancamentosCaixa(data.lancamentos);
+                    desenharRelatoriosCaixa(data.relatorios);
+                    if (caixaEstado.isAdmin) {
+                        const channelInput = document.getElementById('caixaDiscordChannel');
+                        if (document.activeElement !== channelInput) channelInput.value = data.canal_id || '';
+                    }
+                    const startInput = document.getElementById('caixaPeriodoInicio');
+                    const endInput = document.getElementById('caixaPeriodoFim');
+                    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+                    if (!startInput.value) startInput.value = data.inicio_em ? new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date(data.inicio_em)) : today;
+                    if (!endInput.value) endInput.value = today;
+                    if (!data.canal_configurado && !quiet) definirStatusCaixa(caixaEstado.isAdmin ? 'Configure o ID do canal no painel para liberar o envio de prestações.' : 'O Administrador ainda precisa configurar o canal de envio.');
+                    else if (!quiet) definirStatusCaixa('');
+                } else {
+                    desenharRelatoriosCaixa([]);
+                    if (!quiet) definirStatusCaixa(caixaEstado.isAdmin ? 'Defina o saldo real atual para iniciar o livro-caixa.' : 'Aguardando um Administrador definir o saldo inicial do caixa.');
+                }
+            } catch (error) {
+                if (content) content.style.display = 'none';
+                if (loginBox) loginBox.style.display = 'block';
+                document.getElementById('caixaAuthMessage').textContent = error?.message || 'Não foi possível abrir o Caixa.';
+                if (!quiet) definirStatusCaixa('Confira a migração do banco e o deploy seguro do Mercado.', true);
+            } finally {
+                caixaEstado.carregando = false;
+            }
+        }
+
+        async function executarAcaoCaixa(action, payload, form, successText) {
+            const button = form?.querySelector('button[type="submit"]');
+            if (button) button.disabled = true;
+            definirStatusCaixa('Registrando no livro-caixa…');
+            try {
+                await chamarFuncaoMercado(action, payload);
+                if (form) form.reset();
+                definirStatusCaixa(successText);
+                await carregarCaixa({ quiet: true });
+                mostrarAviso(successText, 'sucesso');
+            } catch (error) {
+                definirStatusCaixa(error?.message || 'Não foi possível registrar esta movimentação.', true);
+                mostrarAviso(error?.message || 'Não foi possível registrar esta movimentação.', 'erro');
+            } finally {
+                if (button) button.disabled = false;
+            }
+        }
+
+        function pedirConfirmacaoCaixa({ titulo, mensagem, botao, action, payload, form, successText, tipo = 'sucesso' }) {
+            solicitarConfirmacao({
+                titulo, mensagem, botao, tipo,
+                aoConfirmar: () => executarAcaoCaixa(action, payload, form, successText)
+            });
+        }
+
+        function definirSaldoInicialCaixa(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const valor = Number(document.getElementById('caixaSaldoInicial').value);
+            const descricao = document.getElementById('caixaSaldoInicialNota').value.trim();
+            pedirConfirmacaoCaixa({ titulo: 'Iniciar o livro-caixa?', mensagem: `O saldo-base será definido como ${formatarRyosCaixa(valor)}. Esse ponto de partida só poderá ser registrado uma vez; transações anteriores não serão importadas.`, botao: 'Definir saldo inicial', action: 'caixa_definir_saldo_inicial', payload: { valor_ryos: valor, descricao }, form, successText: 'Saldo inicial definido. O livro-caixa está aberto.' });
+        }
+
+        function registrarAporteCaixa(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const valor = Number(document.getElementById('caixaAporteValor').value);
+            const descricao = document.getElementById('caixaAporteNota').value.trim();
+            pedirConfirmacaoCaixa({ titulo: 'Registrar aporte?', mensagem: `Será registrada uma entrada de ${formatarRyosCaixa(valor)}. Observação: ${descricao}`, botao: 'Registrar aporte', action: 'caixa_lancar_aporte', payload: { valor_ryos: valor, descricao }, form, successText: 'Aporte registrado no livro-caixa.' });
+        }
+
+        function registrarVendaNpcCaixa(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const values = new FormData(form);
+            const quantidades = { galho: Number(values.get('galho') || 0), peixe: Number(values.get('peixe') || 0), pedra: Number(values.get('pedra') || 0), algodao: Number(values.get('algodao') || 0) };
+            const total = quantidades.galho * 12 + quantidades.peixe * 10 + quantidades.pedra * 10 + quantidades.algodao * 7;
+            if (Object.values(quantidades).every(value => value === 0)) {
+                definirStatusCaixa('Informe pelo menos uma quantidade vendida ao NPC.', true);
+                return;
+            }
+            const descricao = document.getElementById('caixaVendaNota').value.trim();
+            const linhas = [`Galho: ${quantidades.galho}`, `Peixe: ${quantidades.peixe}`, `Pedra: ${quantidades.pedra}`, `Algodão: ${quantidades.algodao}`].filter((_, i) => Object.values(quantidades)[i] > 0).join(', ');
+            pedirConfirmacaoCaixa({ titulo: 'Confirmar venda ao NPC?', mensagem: `Registrar unidades vendidas: ${linhas || 'nenhuma'}. Receita calculada: ${formatarRyosCaixa(total)}. Verifique as quantidades antes de confirmar.`, botao: 'Registrar venda', action: 'caixa_lancar_venda_npc', payload: { quantidades, descricao }, form, successText: `Venda NPC registrada: ${formatarRyosCaixa(total)}.` });
+        }
+
+        function registrarAjusteCaixa(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const direcao = document.getElementById('caixaAjusteDirecao').value;
+            const valor = Number(document.getElementById('caixaAjusteValor').value);
+            const descricao = document.getElementById('caixaAjusteNota').value.trim();
+            pedirConfirmacaoCaixa({ titulo: 'Registrar ajuste auditável?', mensagem: `${direcao === 'entrada' ? 'Entrada' : 'Saída'} compensatória de ${formatarRyosCaixa(valor)}. Justificativa: ${descricao}`, botao: 'Registrar ajuste', action: 'caixa_lancar_ajuste', payload: { direcao, valor_ryos: valor, descricao }, form, successText: 'Ajuste compensatório registrado com justificativa.' });
+        }
+
+        async function salvarCanalCaixa(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const discord_channel_id = document.getElementById('caixaDiscordChannel').value.trim();
+            const button = form.querySelector('button[type="submit"]');
+            button.disabled = true;
+            definirStatusCaixa('Salvando o canal de envio…');
+            try {
+                await chamarFuncaoMercado('caixa_configurar_canal', { discord_channel_id });
+                definirStatusCaixa('Canal salvo com segurança. O bot usará esse canal nas próximas prestações.');
+                mostrarAviso('Canal da prestação configurado.', 'sucesso');
+            } catch (error) {
+                definirStatusCaixa(error?.message || 'Não foi possível salvar o canal.', true);
+            } finally { button.disabled = false; }
+        }
+
+        function gerarPrestacaoCaixa(event) {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const periodo_inicio = document.getElementById('caixaPeriodoInicio').value;
+            const periodo_fim = document.getElementById('caixaPeriodoFim').value;
+            if (!caixaEstado.canalConfigurado) {
+                definirStatusCaixa('Um Administrador precisa configurar o canal Discord antes de enviar a prestação.', true);
+                return;
+            }
+            if (!periodo_inicio || !periodo_fim || periodo_fim < periodo_inicio) {
+                definirStatusCaixa('Confira as datas: o início deve ser anterior ou igual ao fim.', true);
+                return;
+            }
+            pedirConfirmacaoCaixa({ titulo: 'Gerar prestação de contas?', mensagem: `O bot publicará no canal configurado o relatório financeiro do período ${periodo_inicio} a ${periodo_fim}. Ele incluirá compras concluídas, vendas ao NPC, aportes e totais agregados de cogumelos.`, botao: 'Gerar e enviar', action: 'caixa_gerar_prestacao', payload: { periodo_inicio, periodo_fim }, form, successText: 'Prestação calculada e enviada à fila do bot. O estado de envio aparecerá aqui.' });
         }
 
         function desenharCatalogoMercado() {
