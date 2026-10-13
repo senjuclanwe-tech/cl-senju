@@ -3814,16 +3814,37 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     atualizacao[coluna] = numero;
                 }
 
-                const botaoSalvar = document.getElementById('btnSalvarAvaliacaoTreino');
-                botaoSalvar.disabled = true;
-                botaoSalvar.textContent = 'Salvando...';
-                supabaseClient.from('membros').update(atualizacao).eq('id', membroTreinoSelecionado.id)
-                    .then(({ error }) => {
+            const botaoSalvar = document.getElementById('btnSalvarAvaliacaoTreino');
+            botaoSalvar.disabled = true;
+            botaoSalvar.textContent = 'Salvando...';
+            const antesDaAvaliacao = {
+                nome_jogo: membroTreinoSelecionado.nome_jogo,
+                discord_id: membroTreinoSelecionado.discord_id,
+                graduacao: membroTreinoSelecionado.graduacao,
+                cargo_especial: membroTreinoSelecionado.cargo_especial,
+                trabalho: membroTreinoSelecionado.trabalho,
+                e_admin: membroTreinoSelecionado.e_admin,
+                e_comprador_recursos: membroTreinoSelecionado.e_comprador_recursos,
+                e_avaliador_treino: membroTreinoSelecionado.e_avaliador_treino,
+                treino_taijutsu: membroTreinoSelecionado.treino_taijutsu,
+                treino_ninjutsu: membroTreinoSelecionado.treino_ninjutsu,
+                treino_defesa: membroTreinoSelecionado.treino_defesa,
+                treino_movimentacao: membroTreinoSelecionado.treino_movimentacao,
+                treino_grupo: membroTreinoSelecionado.treino_grupo
+            };
+            supabaseClient.from('membros').update(atualizacao).eq('id', membroTreinoSelecionado.id)
+                    .then(async ({ error }) => {
                         if (error) {
                             console.error('Erro ao salvar avaliação de treino:', error);
                             mostrarAviso('Não foi possível salvar. Confira se as colunas de treino já foram criadas no Supabase.', 'erro');
                             return;
                         }
+
+                        await chamarFuncaoMercado('registrar_atividade_membro', {
+                            operacao: 'membro_atualizado',
+                            member_id: membroTreinoSelecionado.id,
+                            before: antesDaAvaliacao
+                        });
 
                         Object.assign(membroTreinoSelecionado, atualizacao);
                         const indice = listaMembrosCache.findIndex(m => String(m.id) === String(membroTreinoSelecionado.id));
@@ -3831,7 +3852,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         membrosFiltradosCache = listaMembrosCache.filter(m => membrosFiltradosCache.some(f => String(f.id) === String(m.id)));
                         renderizarAvaliacaoTreino(membroTreinoSelecionado);
                         carregarMembros();
+                        if (window.carregarAtividadesSenju) window.carregarAtividadesSenju();
                         mostrarAviso('Avaliação de treino atualizada.');
+                    })
+                    .catch(error => {
+                        console.error('Erro ao registrar a avaliação no histórico:', error);
+                        mostrarAviso(error?.message || 'A avaliação foi salva, mas não foi possível registrar a atividade no histórico.', 'erro');
                     })
                     .finally(() => {
                         botaoSalvar.disabled = false;
@@ -4169,6 +4195,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 ? listaMembrosCache.find(m => String(m.id) === String(idEdicao))
                 : null;
             let membroId = idEdicao ? Number(idEdicao) : null;
+            let cadastroGravadoNoBanco = false;
+            let atividadeRegistrada = false;
 
             try {
                 if (!idEdicao) {
@@ -4179,13 +4207,22 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         .single();
                     if (error || !data) throw new Error('Erro ao cadastrar membro: ' + (error?.message || 'sem confirmação do banco'));
                     membroId = Number(data.id);
+                    cadastroGravadoNoBanco = true;
                 } else {
                     const { error } = await supabaseClient
                         .from('membros')
                         .update(dadosPublicos)
                         .eq('id', idEdicao);
                     if (error) throw new Error('Erro ao atualizar membro: ' + error.message);
+                    cadastroGravadoNoBanco = true;
                 }
+
+                await chamarFuncaoMercado('registrar_atividade_membro', {
+                    operacao: idEdicao ? 'membro_atualizado' : 'membro_adicionado',
+                    member_id: membroId,
+                    before: membroAnterior || null
+                });
+                atividadeRegistrada = true;
 
                 const adminAnterior = membroAnterior?.e_admin === true;
                 const precisaAtualizarAdmin = !idEdicao ? e_admin : (!membroAnterior || adminAnterior !== e_admin);
@@ -4206,10 +4243,23 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
                 mostrarAviso(`Membro ${nome_jogo} ${idEdicao ? 'atualizado' : 'cadastrado'} com sucesso!`);
                 carregarMembros();
+                if (window.carregarAtividadesSenju) window.carregarAtividadesSenju();
                 fecharModalMembro();
                 verificarPermissaoAdmin();
             } catch (error) {
                 console.error('Erro ao salvar membro:', error);
+                if (cadastroGravadoNoBanco && !atividadeRegistrada) {
+                    try {
+                        await chamarFuncaoMercado('registrar_atividade_membro', {
+                            operacao: idEdicao ? 'membro_atualizado' : 'membro_adicionado',
+                            member_id: membroId,
+                            before: membroAnterior || null
+                        });
+                        atividadeRegistrada = true;
+                    } catch (erroAtividade) {
+                        console.error('Falha ao preservar a atividade após salvamento parcial:', erroAtividade);
+                    }
+                }
                 mostrarAviso(error?.message || 'Não foi possível salvar o membro.', 'erro');
             } finally {
                 salvandoMembroEmAndamento = false;
@@ -4225,21 +4275,36 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     mostrarAviso('Acesso negado!', 'erro');
                     return;
                 }
+                const membroAntesDaRemocao = listaMembrosCache.find(m => String(m.id) === String(id));
+                if (!membroAntesDaRemocao) {
+                    mostrarAviso('Não foi possível carregar os dados do membro para registrar a remoção.', 'erro');
+                    return;
+                }
 
                 solicitarConfirmacao({
                     titulo: 'Remover membro?',
                     mensagem: 'Tem certeza de que deseja remover este membro do clã? Esta ação não pode ser desfeita.',
                     botao: 'Remover membro',
                     tipo: 'perigo',
-                    aoConfirmar: () => {
-                        supabaseClient.from('membros').delete().eq('id', id).then(({ error }) => {
+                    aoConfirmar: async () => {
+                        try {
+                            const { error } = await supabaseClient.from('membros').delete().eq('id', id);
                             if (error) {
                                 mostrarAviso('Erro ao excluir: ' + error.message, 'erro');
                                 return;
                             }
+                            await chamarFuncaoMercado('registrar_atividade_membro', {
+                                operacao: 'membro_removido',
+                                member_id: id,
+                                before: membroAntesDaRemocao
+                            });
                             carregarMembros();
+                            if (window.carregarAtividadesSenju) window.carregarAtividadesSenju();
                             mostrarAviso('Membro removido com sucesso!');
-                        });
+                        } catch (errorRemocao) {
+                            console.error('Erro ao remover ou registrar atividade do membro:', errorRemocao);
+                            mostrarAviso(errorRemocao?.message || 'O membro foi removido, mas não foi possível registrar essa atividade.', 'erro');
+                        }
                     }
                 });
             });
@@ -5302,6 +5367,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 #painel-inicial .senju-activity-item { display:grid; grid-template-columns:28px minmax(0,1fr) auto; align-items:center; gap:9px; min-width:0; padding:10px 0; border-bottom:1px solid rgba(194,145,40,.16); }
 #painel-inicial .senju-activity-avatar { width:27px; height:27px; display:grid; place-items:center; border:1px solid #9c7530; border-radius:50%; color:#dfbf70; background:#25190e; font-size:12px; }
 #painel-inicial .senju-activity-item p { margin:0; color:#d4c9b8; font-size:11px; line-height:1.4; overflow-wrap:anywhere; }
+#painel-inicial .senju-activity-item p small { display:block; margin-top:3px; color:#9d907e; font-size:10px; }
 #painel-inicial .senju-activity-item time { color:#8d8376; font-size:10px; white-space:nowrap; }
 #painel-inicial .senju-activity-footer { padding:4px 12px 10px; margin:0; color:#9d7a30; font:10px Georgia,serif; text-transform:uppercase; letter-spacing:.04em; }
 #painel-inicial .senju-panel-loading, #painel-inicial .senju-panel-empty { grid-column:1/-1; margin:0; padding:20px 12px; color:#a79b8a; text-align:center; font-size:12px; }
@@ -5335,11 +5401,38 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         if(!client){el.innerHTML='<p class="senju-panel-empty senju-panel-error">Conexão com o Supabase indisponível.</p>';return;}
         el.innerHTML='<p class="senju-panel-loading">Atualizando atividades…</p>';
         try{
-            const {data,error}=await client.from('solicitacoes_recompensa').select('discord_id,nome_jogo,qtd_missoes,status,created_at,data_pagamento').eq('status','Pago').order('created_at',{ascending:false}).limit(8);
-            if(error) throw error;
-            if(!data || !data.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há missões aprovadas para exibir.</p>';return;}
-            el.innerHTML=data.map(r=>`<div class="senju-activity-item"><span class="senju-activity-avatar">✦</span><p><strong>${esc(r.nome_jogo || 'Membro Senju')}</strong> concluiu ${Number(r.qtd_missoes||0)} missões.</p><time>${esc(tempoRelativo(r.data_pagamento || r.created_at))}</time></div>`).join('');
-        }catch(e){console.error('Falha ao carregar atividades do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar as atividades. Confira as políticas de leitura da tabela solicitacoes_recompensa no Supabase.</p>';}
+            const [recompensas, atividadesMembros]=await Promise.all([
+                client.from('solicitacoes_recompensa').select('discord_id,nome_jogo,qtd_missoes,status,created_at,data_pagamento').eq('status','Pago').order('created_at',{ascending:false}).limit(12),
+                client.from('atividades_membros').select('tipo,nome_membro,descricao,autor_nome,origem,criado_em').order('criado_em',{ascending:false}).limit(12)
+            ]);
+            if(recompensas.error) throw recompensas.error;
+            if(atividadesMembros.error) throw atividadesMembros.error;
+
+            const atividades=[
+                ...(recompensas.data||[]).map(r=>({
+                    tipo:'missao_paga', nome:r.nome_jogo||'Membro Senju',
+                    descricao:`concluiu ${Number(r.qtd_missoes||0)} missões.`,
+                    data:r.data_pagamento||r.created_at, autor:'', origem:'clã'
+                })),
+                ...(atividadesMembros.data||[]).map(a=>({
+                    tipo:a.tipo, nome:a.nome_membro||'Membro Senju',
+                    descricao:a.descricao||'Cadastro de membro atualizado.',
+                    data:a.criado_em, autor:a.autor_nome||'', origem:a.origem||'site'
+                }))
+            ].sort((a,b)=>new Date(b.data||0).getTime()-new Date(a.data||0).getTime()).slice(0,8);
+
+            if(!atividades.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há atividades para exibir.</p>';return;}
+            const icones={
+                membro_adicionado:'＋', membro_removido:'−', membro_atualizado:'✎',
+                treino_atualizado:'◆', missao_paga:'✦'
+            };
+            el.innerHTML=atividades.map(a=>{
+                const fonte=a.origem==='discord_sync'?'sincronização Discord (!sincronizar)':a.tipo==='missao_paga'?'atividade do clã':'site';
+                const autor=a.autor?`Por ${esc(a.autor)} · ${fonte}`:fonte;
+                const textoAtividade=a.tipo==='missao_paga'?`<strong>${esc(a.nome)}</strong> ${esc(a.descricao)}`:esc(a.descricao);
+                return `<div class="senju-activity-item"><span class="senju-activity-avatar">${icones[a.tipo]||'•'}</span><p>${textoAtividade}${a.autor?`<small>${autor}</small>`:''}</p><time>${esc(tempoRelativo(a.data))}</time></div>`;
+            }).join('');
+        }catch(e){console.error('Falha ao carregar atividades do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar as atividades. Confira as políticas de leitura das tabelas e se a migração 004_atividades_membros.sql já foi aplicada.</p>';}
     };
     async function carregarRankingSenju(){
         const el=document.getElementById('senju-ranking-list'); if(!el) return;
