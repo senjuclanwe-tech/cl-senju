@@ -2450,15 +2450,39 @@
 
     <!-- MODAL DE SORTEIO DO CLÃ -->
     <div class="modal-overlay" id="modalSorteio">
-        <div class="modal-content" style="text-align: center;">
+        <div class="modal-content sorteio-modal">
             <div class="modal-header">
                 <h2>Roleta de Sorteio do Clã</h2>
                 <button class="close-btn" onclick="fecharSorteio()">&times;</button>
             </div>
             
-            <p style="color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
-                Apenas membros elegíveis participam (Líder e Braço Direito ficam de fora da disputa).
+            <p class="sorteio-help">
+                Todos os membros elegíveis podem participar, ou você pode escolher nomes específicos. Defina também quantos ganhadores serão sorteados.
             </p>
+
+            <section class="sorteio-config" aria-label="Configurações do sorteio">
+                <fieldset class="sorteio-mode-fieldset">
+                    <legend>Quem participa?</legend>
+                    <label class="sorteio-mode-option"><input type="radio" name="sorteioModo" value="todos" checked onchange="alternarModoParticipantesSorteio()"><span>Todos os membros elegíveis</span></label>
+                    <label class="sorteio-mode-option"><input type="radio" name="sorteioModo" value="selecionar" onchange="alternarModoParticipantesSorteio()"><span>Escolher membros específicos</span></label>
+                </fieldset>
+
+                <div id="sorteioSelecaoParticipantes" class="sorteio-selection-panel" hidden>
+                    <input type="search" id="sorteioBuscaMembro" placeholder="Buscar membro pelo nome..." aria-label="Buscar membro participante" oninput="renderizarParticipantesSorteio()">
+                    <div class="sorteio-selection-actions">
+                        <button type="button" onclick="selecionarTodosParticipantesSorteio()">Selecionar todos</button>
+                        <button type="button" onclick="limparParticipantesSorteio()">Limpar seleção</button>
+                    </div>
+                    <p id="sorteioParticipantesResumo" class="sorteio-participant-count" aria-live="polite">Carregando membros elegíveis…</p>
+                    <div id="sorteioParticipantesLista" class="sorteio-participant-list" aria-label="Membros elegíveis"></div>
+                </div>
+
+                <div class="sorteio-winners-setting">
+                    <label for="sorteioQuantidadeGanhadores">Quantidade de ganhadores</label>
+                    <input type="number" id="sorteioQuantidadeGanhadores" min="1" value="1" step="1" inputmode="numeric">
+                    <small>Uma pessoa não pode ganhar mais de uma vez no mesmo sorteio.</small>
+                </div>
+            </section>
 
             <div id="boxRoleta" style="background: rgba(0,0,0,0.5); border: 2px dashed var(--senju-gold); border-radius: 8px; padding: 30px; margin-bottom: 20px;">
                 <div id="textoRoleta" style="font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--senju-gold); min-height: 50px; display: flex; align-items: center; justify-content: center;">
@@ -4678,87 +4702,269 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         const modalSorteio = document.getElementById('modalSorteio');
+        const sorteioEstado = { membrosElegiveis: [], selecionados: new Set() };
 
-        function abrirSorteio() {
+        function membroElegivelSorteio(membro) {
+            const cargo = String(membro?.cargo_especial || '').toLowerCase();
+            const nome = String(membro?.nome_jogo || '').toLowerCase();
+            if (cargo.includes('líder') || cargo.includes('braço direito') || cargo.includes('sub')) return false;
+            if (nome.includes('tobirama') || nome.includes('hayai')) return false;
+            return true;
+        }
+
+        function modoSorteioAtual() {
+            return document.querySelector('input[name="sorteioModo"]:checked')?.value || 'todos';
+        }
+
+        function atualizarResumoParticipantesSorteio() {
+            const resumo = document.getElementById('sorteioParticipantesResumo');
+            const quantidadeInput = document.getElementById('sorteioQuantidadeGanhadores');
+            const modoTodos = modoSorteioAtual() === 'todos';
+            const quantidade = modoTodos ? sorteioEstado.membrosElegiveis.length : sorteioEstado.selecionados.size;
+            if (resumo) {
+                resumo.textContent = modoTodos
+                    ? `${quantidade} membro(s) elegível(is) participarão.`
+                    : `${quantidade} membro(s) selecionado(s) para participar.`;
+            }
+            if (quantidadeInput) quantidadeInput.max = String(Math.max(1, quantidade));
+        }
+
+        function renderizarParticipantesSorteio() {
+            const container = document.getElementById('sorteioParticipantesLista');
+            if (!container) return;
+            container.replaceChildren();
+            const query = String(document.getElementById('sorteioBuscaMembro')?.value || '').trim().toLocaleLowerCase('pt-BR');
+            const membrosVisiveis = sorteioEstado.membrosElegiveis.filter(membro =>
+                String(membro.nome_jogo || 'Membro').toLocaleLowerCase('pt-BR').includes(query)
+            );
+            if (!membrosVisiveis.length) {
+                container.textContent = sorteioEstado.membrosElegiveis.length
+                    ? 'Nenhum membro corresponde à busca.'
+                    : 'Nenhum membro elegível encontrado.';
+                atualizarResumoParticipantesSorteio();
+                return;
+            }
+
+            for (const membro of membrosVisiveis) {
+                const membroId = String(membro.id);
+                const option = document.createElement('label');
+                option.className = 'sorteio-member-option';
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = membroId;
+                checkbox.checked = sorteioEstado.selecionados.has(membroId);
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) sorteioEstado.selecionados.add(membroId);
+                    else sorteioEstado.selecionados.delete(membroId);
+                    atualizarResumoParticipantesSorteio();
+                });
+                const nome = document.createElement('span');
+                nome.textContent = String(membro.nome_jogo || 'Membro');
+                option.append(checkbox, nome);
+                container.appendChild(option);
+            }
+            atualizarResumoParticipantesSorteio();
+        }
+
+        function alternarModoParticipantesSorteio() {
+            const painel = document.getElementById('sorteioSelecaoParticipantes');
+            if (painel) painel.hidden = modoSorteioAtual() !== 'selecionar';
+            atualizarResumoParticipantesSorteio();
+        }
+
+        function selecionarTodosParticipantesSorteio() {
+            sorteioEstado.selecionados = new Set(sorteioEstado.membrosElegiveis.map(membro => String(membro.id)));
+            renderizarParticipantesSorteio();
+        }
+
+        function limparParticipantesSorteio() {
+            sorteioEstado.selecionados.clear();
+            renderizarParticipantesSorteio();
+        }
+
+        async function carregarParticipantesSorteio() {
+            const container = document.getElementById('sorteioParticipantesLista');
+            if (container) container.textContent = 'Carregando membros elegíveis…';
+            const { data: membros, error } = await supabaseClient.from('membros')
+                .select('id, discord_id, nome_jogo, cargo_especial')
+                .order('nome_jogo', { ascending: true });
+            if (error) throw error;
+            sorteioEstado.membrosElegiveis = (membros || []).filter(membroElegivelSorteio);
+            renderizarParticipantesSorteio();
+            atualizarResumoParticipantesSorteio();
+        }
+
+        async function abrirSorteio() {
             const userId = localStorage.getItem('discord_user_id');
-            obterAdminsAutorizados().then(adminsAtuais => {
-                if (!userId || !adminsAtuais.includes(userId)) {
-                    mostrarAviso('Acesso negado! Apenas administradores podem acessar o sorteio.', 'erro');
-                    return;
-                }
+            let adminsAtuais;
+            try {
+                adminsAtuais = await obterAdminsAutorizados();
+            } catch (error) {
+                console.error('Erro ao verificar acesso ao sorteio:', error);
+                mostrarAviso('Não foi possível confirmar sua permissão para abrir o sorteio.', 'erro');
+                return;
+            }
+            if (!userId || !adminsAtuais.includes(userId)) {
+                mostrarAviso('Acesso negado! Apenas administradores podem acessar o sorteio.', 'erro');
+                return;
+            }
 
-                modalSorteio.style.display = 'flex';
-                document.getElementById('textoRoleta').innerText = "Pronto para sortear?";
-                document.getElementById('btnGirar').disabled = false;
-                carregarWebhookNoPopup('sorteio');
-            });
+            modalSorteio.style.display = 'flex';
+            document.querySelector('input[name="sorteioModo"][value="todos"]').checked = true;
+            document.getElementById('sorteioBuscaMembro').value = '';
+            document.getElementById('sorteioQuantidadeGanhadores').value = '1';
+            sorteioEstado.selecionados.clear();
+            alternarModoParticipantesSorteio();
+            const btnGirar = document.getElementById('btnGirar');
+            const textoRoleta = document.getElementById('textoRoleta');
+            btnGirar.disabled = true;
+            textoRoleta.textContent = 'Carregando participantes…';
+            try {
+                await carregarParticipantesSorteio();
+                textoRoleta.textContent = 'Pronto para sortear?';
+            } catch (error) {
+                console.error('Erro ao carregar participantes do sorteio:', error);
+                textoRoleta.textContent = 'Não foi possível carregar os participantes.';
+                mostrarAviso('Não foi possível carregar a lista de membros para o sorteio.', 'erro');
+            } finally {
+                btnGirar.disabled = false;
+            }
+            carregarWebhookNoPopup('sorteio');
         }
 
         function fecharSorteio() { modalSorteio.style.display = 'none'; }
 
-        function iniciarSorteio() {
-            const btnGirar = document.getElementById('btnGirar');
-            const textoRoleta = document.getElementById('textoRoleta');
-            btnGirar.disabled = true;
-
-            supabaseClient.from('membros').select('*').then(({ data: membros, error }) => {
-                if (error || !membros || membros.length === 0) {
-                    mostrarAviso("Erro ao carregar membros para o sorteio.", 'erro');
-                    btnGirar.disabled = false;
-                    return;
-                }
-
-                const elegiveis = membros.filter(m => {
-                    const cargo = (m.cargo_especial || "").toLowerCase();
-                    if (cargo.includes('líder') || cargo.includes('braço direito') || cargo.includes('sub')) return false;
-                    if (m.nome_jogo.toLowerCase().includes('tobirama') || m.nome_jogo.toLowerCase().includes('hayai')) return false;
-                    return true;
-                });
-
-                if (elegiveis.length === 0) {
-                    textoRoleta.innerText = "Nenhum membro elegível encontrado!";
-                    btnGirar.disabled = false;
-                    return;
-                }
-
-                let contador = 0;
-                let maxRodadas = 25;
-                let intervalo = setInterval(() => {
-                    let aleatorioTemp = elegiveis[Math.floor(Math.random() * elegiveis.length)];
-                    textoRoleta.innerText = aleatorioTemp.nome_jogo;
-                    contador++;
-
-                    if (contador >= maxRodadas) {
-                        clearInterval(intervalo);
-                        let vencedor = elegiveis[Math.floor(Math.random() * elegiveis.length)];
-                        textoRoleta.innerHTML = `🏆 GANHADOR: <span style="color: #fff; text-shadow: 0 0 10px var(--senju-red);">${vencedor.nome_jogo}</span>! 🏆`;
-                        enviarResultadoSorteioDiscord(vencedor);
-                        btnGirar.disabled = false;
-                    }
-                }, 100);
-            });
+        function sortearGanhadores(participantes, quantidade) {
+            const embaralhados = [...participantes];
+            for (let index = embaralhados.length - 1; index > 0; index--) {
+                const aleatorio = Math.floor(Math.random() * (index + 1));
+                [embaralhados[index], embaralhados[aleatorio]] = [embaralhados[aleatorio], embaralhados[index]];
+            }
+            return embaralhados.slice(0, quantidade);
         }
 
-        function enviarResultadoSorteioDiscord(vencedor) {
-            let mencaoDiscord = vencedor.discord_id ? `<@${vencedor.discord_id}>` : vencedor.nome_jogo;
-            const payload = {
-                content: "@everyone",
-                embeds: [
-                    {
-                        title: "🎲 SORTEIO DO CLÃ SENJU REALIZADO! 🎲",
-                        description: "A roleta girou e o destino escolheu o grande vencedor desta rodada!",
-                        color: 12713992,
-                        fields: [
-                            { name: "🏆 Vencedor da Rodada", value: `**${vencedor.nome_jogo}** (${mencaoDiscord})`, inline: false },
-                            { name: "📜 Próximo Passo", value: "Parabéns pela vitória! Entre em contato com o comando para resgatar o seu prêmio.", inline: false }
-                        ],
-                        footer: { text: "Clã Senju • A Vontade do Fogo" },
-                        timestamp: new Date().toISOString()
-                    }
-                ]
-            };
+        function mostrarGanhadoresSorteio(ganhadores) {
+            const textoRoleta = document.getElementById('textoRoleta');
+            const titulo = document.createElement('div');
+            titulo.className = 'sorteio-result-title';
+            titulo.textContent = ganhadores.length === 1 ? '🏆 GANHADOR 🏆' : `🏆 ${ganhadores.length} GANHADORES 🏆`;
+            const lista = document.createElement('ol');
+            lista.className = 'sorteio-winner-list';
+            for (const ganhador of ganhadores) {
+                const item = document.createElement('li');
+                item.textContent = String(ganhador.nome_jogo || 'Membro');
+                lista.appendChild(item);
+            }
+            textoRoleta.replaceChildren(titulo, lista);
+        }
 
-            enviarWebhookSeguro('sorteio', payload).catch(err => console.error(err));
+        async function iniciarSorteio() {
+            const btnGirar = document.getElementById('btnGirar');
+            const textoRoleta = document.getElementById('textoRoleta');
+            if (btnGirar.disabled) return;
+            btnGirar.disabled = true;
+            textoRoleta.textContent = 'Carregando participantes…';
+
+            try {
+                const { data: membros, error } = await supabaseClient.from('membros')
+                    .select('id, discord_id, nome_jogo, cargo_especial')
+                    .order('nome_jogo', { ascending: true });
+                if (error) throw error;
+                const elegiveis = (membros || []).filter(membroElegivelSorteio);
+                sorteioEstado.membrosElegiveis = elegiveis;
+                const modoTodos = modoSorteioAtual() === 'todos';
+                const participantes = modoTodos
+                    ? elegiveis
+                    : elegiveis.filter(membro => sorteioEstado.selecionados.has(String(membro.id)));
+                const quantidadeGanhadores = Number(document.getElementById('sorteioQuantidadeGanhadores').value);
+
+                if (!participantes.length) {
+                    mostrarAviso(modoTodos ? 'Nenhum membro elegível encontrado.' : 'Selecione pelo menos um membro para participar.', 'erro');
+                    textoRoleta.textContent = 'Aguardando seleção de participantes.';
+                    atualizarResumoParticipantesSorteio();
+                    btnGirar.disabled = false;
+                    return;
+                }
+                if (!Number.isSafeInteger(quantidadeGanhadores) || quantidadeGanhadores < 1 || quantidadeGanhadores > participantes.length) {
+                    mostrarAviso(`Escolha entre 1 e ${participantes.length} ganhador(es), conforme a quantidade de participantes.`, 'erro');
+                    textoRoleta.textContent = 'Ajuste a quantidade de ganhadores para continuar.';
+                    atualizarResumoParticipantesSorteio();
+                    btnGirar.disabled = false;
+                    return;
+                }
+
+                atualizarResumoParticipantesSorteio();
+                let contador = 0;
+                const maxRodadas = 25;
+                const intervalo = setInterval(() => {
+                    const temporario = participantes[Math.floor(Math.random() * participantes.length)];
+                    textoRoleta.textContent = temporario.nome_jogo || 'Membro';
+                    contador++;
+                    if (contador < maxRodadas) return;
+
+                    clearInterval(intervalo);
+                    const ganhadores = sortearGanhadores(participantes, quantidadeGanhadores);
+                    mostrarGanhadoresSorteio(ganhadores);
+                    void enviarResultadoSorteioDiscord(ganhadores, participantes.length, modoTodos)
+                        .then(() => mostrarAviso('Resultado do sorteio enviado ao Discord.', 'sucesso'))
+                        .catch(error => {
+                            console.error('Erro ao enviar resultado do sorteio ao Discord:', error);
+                            mostrarAviso(error?.message || 'O sorteio aconteceu, mas não foi possível publicar o resultado no Discord.', 'erro');
+                        })
+                        .finally(() => { btnGirar.disabled = false; });
+                }, 100);
+            } catch (error) {
+                console.error('Erro ao sortear membros:', error);
+                mostrarAviso('Não foi possível carregar os membros para o sorteio.', 'erro');
+                textoRoleta.textContent = 'Não foi possível iniciar o sorteio.';
+                btnGirar.disabled = false;
+            }
+        }
+
+        async function enviarResultadoSorteioDiscord(ganhadores, totalParticipantes, todosParticipam) {
+            const linhas = ganhadores.map((ganhador, index) => {
+                const nome = String(ganhador.nome_jogo || 'Membro').replace(/@/g, '@\u200b').replace(/[\r\n]+/g, ' ').slice(0, 100);
+                const discordId = String(ganhador.discord_id || '');
+                const mencao = /^\d{5,22}$/.test(discordId) ? ` — <@${discordId}>` : '';
+                return `**${index + 1}. ${nome}**${mencao}`;
+            });
+            const blocos = [];
+            let blocoAtual = '';
+            for (const linha of linhas) {
+                if (blocoAtual && blocoAtual.length + linha.length + 1 > 3500) {
+                    blocos.push(blocoAtual);
+                    blocoAtual = '';
+                }
+                blocoAtual += `${blocoAtual ? '\n' : ''}${linha}`;
+            }
+            if (blocoAtual) blocos.push(blocoAtual);
+
+            const modoParticipacao = todosParticipam
+                ? `Todos os membros elegíveis (${totalParticipantes})`
+                : `${totalParticipantes} membro(s) selecionado(s) pelo Administrador`;
+            const timestamp = new Date().toISOString();
+            for (let offset = 0; offset < blocos.length; offset += 10) {
+                const grupo = blocos.slice(offset, offset + 10);
+                const embeds = grupo.map((bloco, indexNoGrupo) => {
+                    const indiceGlobal = offset + indexNoGrupo;
+                    const primeiro = indiceGlobal === 0;
+                    const description = primeiro
+                        ? `A roleta foi realizada sem repetir ganhadores.\n**Participantes:** ${modoParticipacao}\n**Quantidade sorteada:** ${ganhadores.length}\n\n**Resultado:**\n${bloco}`
+                        : `**Continuação — ganhadores do sorteio:**\n${bloco}`;
+                    return {
+                        title: primeiro ? '🎲 SORTEIO DO CLÃ SENJU REALIZADO! 🎲' : '🏆 Ganhadores do Sorteio — Continuação',
+                        description,
+                        color: 12713992,
+                        ...(primeiro ? { fields: [{ name: '📜 Próximo Passo', value: 'Parabéns aos ganhadores! Entrem em contato com o comando para resgatar os prêmios.', inline: false }] } : {}),
+                        footer: { text: 'Clã Senju • A Vontade do Fogo' },
+                        timestamp
+                    };
+                });
+                await enviarWebhookSeguro('sorteio', {
+                    content: offset === 0 ? '@everyone' : '',
+                    embeds
+                });
+            }
         }
 
         const modalRecompensa = document.getElementById('modalRecompensa');
@@ -6911,6 +7117,81 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             border-color: rgba(224,189,99,.65);
             box-shadow: 0 0 0 3px rgba(194,155,56,.07);
             outline: none;
+        }
+
+        .sorteio-modal {
+            width: min(640px, calc(100vw - 28px));
+            max-height: 90vh;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .sorteio-modal .modal-header { margin-bottom: 12px; }
+        .sorteio-help { color: var(--text-muted); margin: 0 0 16px; font-size: .9rem; line-height: 1.55; }
+        .sorteio-config {
+            display: grid;
+            gap: 14px;
+            margin: 0 0 18px;
+            padding: 15px;
+            border: 1px solid rgba(194,155,56,.22);
+            border-radius: 10px;
+            background: linear-gradient(145deg, rgba(194,155,56,.055), rgba(0,0,0,.16));
+        }
+        .sorteio-mode-fieldset { display: grid; gap: 9px; margin: 0; padding: 0; border: 0; }
+        .sorteio-mode-fieldset legend,
+        .sorteio-winners-setting label { margin-bottom: 4px; color: #e3c77f; font-weight: 700; }
+        .sorteio-mode-option {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+        .sorteio-modal .sorteio-mode-option input { width: auto; margin: 0; accent-color: var(--senju-gold); }
+        .sorteio-selection-panel { display: grid; gap: 9px; }
+        .sorteio-selection-panel[hidden] { display: none; }
+        .sorteio-modal #sorteioBuscaMembro { width: 100%; padding: 10px 12px; }
+        .sorteio-selection-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sorteio-selection-actions button {
+            padding: 7px 10px;
+            border: 1px solid rgba(194,155,56,.35);
+            border-radius: 7px;
+            background: rgba(194,155,56,.07);
+            color: #ead8ad;
+            cursor: pointer;
+        }
+        .sorteio-selection-actions button:hover { background: rgba(194,155,56,.16); }
+        .sorteio-participant-count { margin: 0; color: var(--text-muted); font-size: .82rem; }
+        .sorteio-participant-list {
+            display: grid;
+            gap: 4px;
+            max-height: 230px;
+            overflow-y: auto;
+            padding: 7px;
+            border: 1px solid rgba(194,155,56,.16);
+            border-radius: 8px;
+            background: rgba(0,0,0,.28);
+        }
+        .sorteio-member-option {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 7px 8px;
+            border-radius: 6px;
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+        }
+        .sorteio-member-option:hover { background: rgba(194,155,56,.08); }
+        .sorteio-modal .sorteio-member-option input { flex: 0 0 auto; width: auto; margin: 0; accent-color: var(--senju-gold); }
+        .sorteio-winners-setting { display: grid; gap: 6px; max-width: 290px; }
+        .sorteio-modal #sorteioQuantidadeGanhadores { width: 120px; padding: 9px 10px; }
+        .sorteio-winners-setting small { color: var(--text-muted); line-height: 1.4; }
+        .sorteio-modal #textoRoleta { flex-direction: column; gap: 10px; text-align: center; font-size: 1.35rem !important; }
+        .sorteio-result-title { color: #e3c77f; font-weight: 800; }
+        .sorteio-winner-list { margin: 0; padding-left: 1.5em; text-align: left; font-size: 1rem; line-height: 1.55; }
+        @media (max-width: 520px) {
+            .sorteio-config { padding: 12px; }
+            .sorteio-modal { padding: 18px; }
         }
 
         .modal-zoom-content {
