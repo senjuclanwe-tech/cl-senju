@@ -2457,7 +2457,7 @@
             </div>
             
             <p class="sorteio-help">
-                Todos os membros elegíveis podem participar, ou você pode escolher nomes específicos. Defina também quantos ganhadores serão sorteados.
+                No modo automático participam os membros elegíveis. Na seleção manual, você pode escolher qualquer membro cadastrado no site. Defina também quantos ganhadores serão sorteados.
             </p>
 
             <section class="sorteio-config" aria-label="Configurações do sorteio">
@@ -2473,8 +2473,8 @@
                         <button type="button" onclick="selecionarTodosParticipantesSorteio()">Selecionar todos</button>
                         <button type="button" onclick="limparParticipantesSorteio()">Limpar seleção</button>
                     </div>
-                    <p id="sorteioParticipantesResumo" class="sorteio-participant-count" aria-live="polite">Carregando membros elegíveis…</p>
-                    <div id="sorteioParticipantesLista" class="sorteio-participant-list" aria-label="Membros elegíveis"></div>
+                    <p id="sorteioParticipantesResumo" class="sorteio-participant-count" aria-live="polite">Carregando membros do site…</p>
+                    <div id="sorteioParticipantesLista" class="sorteio-participant-list" aria-label="Todos os membros cadastrados"></div>
                 </div>
 
                 <div class="sorteio-winners-setting">
@@ -4702,7 +4702,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         const modalSorteio = document.getElementById('modalSorteio');
-        const sorteioEstado = { membrosElegiveis: [], selecionados: new Set() };
+        const sorteioEstado = { membrosTodos: [], membrosElegiveis: [], selecionados: new Set() };
 
         function membroElegivelSorteio(membro) {
             const cargo = String(membro?.cargo_especial || '').toLowerCase();
@@ -4724,7 +4724,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (resumo) {
                 resumo.textContent = modoTodos
                     ? `${quantidade} membro(s) elegível(is) participarão.`
-                    : `${quantidade} membro(s) selecionado(s) para participar.`;
+                    : `${quantidade} membro(s) cadastrado(s) selecionado(s) para participar.`;
             }
             if (quantidadeInput) quantidadeInput.max = String(Math.max(1, quantidade));
         }
@@ -4734,13 +4734,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (!container) return;
             container.replaceChildren();
             const query = String(document.getElementById('sorteioBuscaMembro')?.value || '').trim().toLocaleLowerCase('pt-BR');
-            const membrosVisiveis = sorteioEstado.membrosElegiveis.filter(membro =>
+            const membrosVisiveis = sorteioEstado.membrosTodos.filter(membro =>
                 String(membro.nome_jogo || 'Membro').toLocaleLowerCase('pt-BR').includes(query)
             );
             if (!membrosVisiveis.length) {
-                container.textContent = sorteioEstado.membrosElegiveis.length
+                container.textContent = sorteioEstado.membrosTodos.length
                     ? 'Nenhum membro corresponde à busca.'
-                    : 'Nenhum membro elegível encontrado.';
+                    : 'Nenhum membro cadastrado no site foi encontrado.';
                 atualizarResumoParticipantesSorteio();
                 return;
             }
@@ -4773,7 +4773,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         function selecionarTodosParticipantesSorteio() {
-            sorteioEstado.selecionados = new Set(sorteioEstado.membrosElegiveis.map(membro => String(membro.id)));
+            sorteioEstado.selecionados = new Set(sorteioEstado.membrosTodos.map(membro => String(membro.id)));
             renderizarParticipantesSorteio();
         }
 
@@ -4784,12 +4784,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         async function carregarParticipantesSorteio() {
             const container = document.getElementById('sorteioParticipantesLista');
-            if (container) container.textContent = 'Carregando membros elegíveis…';
+            if (container) container.textContent = 'Carregando membros do site…';
             const { data: membros, error } = await supabaseClient.from('membros')
                 .select('id, discord_id, nome_jogo, cargo_especial')
                 .order('nome_jogo', { ascending: true });
             if (error) throw error;
-            sorteioEstado.membrosElegiveis = (membros || []).filter(membroElegivelSorteio);
+            sorteioEstado.membrosTodos = membros || [];
+            sorteioEstado.membrosElegiveis = sorteioEstado.membrosTodos.filter(membroElegivelSorteio);
             renderizarParticipantesSorteio();
             atualizarResumoParticipantesSorteio();
         }
@@ -4870,12 +4871,14 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     .select('id, discord_id, nome_jogo, cargo_especial')
                     .order('nome_jogo', { ascending: true });
                 if (error) throw error;
-                const elegiveis = (membros || []).filter(membroElegivelSorteio);
+                const todosMembros = membros || [];
+                const elegiveis = todosMembros.filter(membroElegivelSorteio);
+                sorteioEstado.membrosTodos = todosMembros;
                 sorteioEstado.membrosElegiveis = elegiveis;
                 const modoTodos = modoSorteioAtual() === 'todos';
                 const participantes = modoTodos
                     ? elegiveis
-                    : elegiveis.filter(membro => sorteioEstado.selecionados.has(String(membro.id)));
+                    : todosMembros.filter(membro => sorteioEstado.selecionados.has(String(membro.id)));
                 const quantidadeGanhadores = Number(document.getElementById('sorteioQuantidadeGanhadores').value);
 
                 if (!participantes.length) {
