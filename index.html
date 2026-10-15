@@ -1790,6 +1790,7 @@
         #marketModal .market-badge { display:inline-flex; padding:4px 8px; border:1px solid rgba(194,155,56,.35); border-radius:999px; color:#e4c568; font-size:.7rem; font-weight:700; }
         #marketModal .market-badge.aprovada, #marketModal .market-badge.concluída { border-color:rgba(90,174,118,.35); color:#8bd6a2; }
         #marketModal .market-badge.recusada { border-color:rgba(217,80,70,.38); color:#ff9a91; }
+        #marketModal .market-badge.cancelada { border-color:rgba(217,80,70,.38); color:#ff9a91; }
         #marketModal .market-admin-panel { margin-top:24px; padding:16px; border:1px solid rgba(194,155,56,.34); border-radius:14px; background:linear-gradient(145deg,rgba(83,54,22,.18),rgba(12,8,5,.4)); }
         #marketModal .market-admin-note { margin:-3px 0 13px; color:#b8aa94; line-height:1.5; font-size:.8rem; }
         #marketModal .market-admin-list { display:grid; gap:8px; }
@@ -2844,7 +2845,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 </div>
                 <button type="button" class="market-close" aria-label="Fechar Mercado" onclick="fecharMercado()">×</button>
             </div>
-            <p class="market-intro">Escolha os recursos e quantidades para enviar um pedido de venda ao responsável do clã. Os valores abaixo são pagos pelo clã. A aprovação, a recusa e a confirmação da compra acontecem no Discord; você acompanha o andamento aqui.</p>
+            <p class="market-intro">Escolha os recursos e quantidades para enviar um pedido de venda ao responsável do clã. Os valores abaixo são pagos pelo clã. A aprovação, a recusa, o cancelamento e a confirmação da compra acontecem no Discord; você acompanha o andamento aqui.</p>
             <div id="marketStatus" class="market-status" role="status" aria-live="polite"></div>
             <div id="marketLoginBox" class="market-login-box" style="display:none">
                 <p id="marketLoginMessage">Entre novamente com o Discord para acessar o Mercado.</p>
@@ -2871,7 +2872,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                             <button id="marketSubmitOrder" class="market-btn primary" type="submit">Enviar pedido</button>
                         </div>
                     </form>
-                    <p class="market-footnote">O responsável ainda precisa aprovar o pedido. O valor registrado no envio fica preservado para esse pedido, mesmo que o catálogo seja alterado depois.</p>
+                    <p class="market-footnote">Cada membro pode enviar uma solicitação por dia. O limite se renova à meia-noite, no horário de Brasília — não 24 horas após o envio. O responsável ainda precisa aprovar o pedido; os valores registrados ficam preservados mesmo que o catálogo seja alterado depois.</p>
                     <div class="market-divider"></div>
                     <h3 class="market-section-title">Meus pedidos</h3>
                     <div id="marketOrderHistory" class="market-order-list"></div>
