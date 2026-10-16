@@ -5397,7 +5397,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 
         /* MERCADO DO CLÃ — catálogo e pedidos autenticados pelo Discord */
-        const mercadoEstado = { catalogo: [], pedidos: [], isAdmin: false, canManageMarket: false, aba: 'pedidos' };
+        const mercadoEstado = { catalogo: [], pedidos: [], membro: null, pedidoEmEdicao: null, isAdmin: false, canManageMarket: false, aba: 'pedidos' };
 
         function tokenDiscordMercado() {
             const token = sessionStorage.getItem('discord_access_token');
@@ -5505,6 +5505,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const dados = await chamarFuncaoMercado('inicializar');
                 mercadoEstado.catalogo = Array.isArray(dados.catalogo) ? dados.catalogo : [];
                 mercadoEstado.pedidos = Array.isArray(dados.pedidos) ? dados.pedidos : [];
+                mercadoEstado.membro = dados.membro || null;
                 mercadoEstado.isAdmin = dados.membro?.e_admin === true;
                 mercadoEstado.canManageMarket = mercadoEstado.isAdmin || dados.membro?.e_comprador_recursos === true;
                 document.getElementById('marketMemberGreeting').textContent =
@@ -5834,6 +5835,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         function atualizarTotalMercado() {
+            const totalRow = document.getElementById('marketTotalRow');
+            if (mercadoEstado.pedidoEmEdicao !== null) {
+                if (totalRow) totalRow.style.display = 'none';
+                const button = document.getElementById('marketSubmitOrder');
+                if (button) button.disabled = obterItensSelecionadosMercado().length === 0;
+                return;
+            }
             const itens = obterItensSelecionadosMercado();
             const precos = new Map(mercadoEstado.catalogo.map(produto => [Number(produto.id), Number(produto.preco_cla)]));
             const total = itens.reduce((soma, item) => soma + (precos.get(item.id) || 0) * item.quantidade, 0);
@@ -5853,18 +5861,79 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const button = document.getElementById('marketSubmitOrder');
             const original = button.textContent;
             button.disabled = true;
-            button.textContent = 'Enviando...';
+            const editando = mercadoEstado.pedidoEmEdicao !== null;
+            button.textContent = editando ? 'Salvando...' : 'Enviando...';
             try {
-                const resposta = await chamarFuncaoMercado('criar_pedido', { itens });
-                mostrarAviso(`Pedido #${resposta.pedido?.id || ''} enviado para análise.`);
+                const resposta = editando
+                    ? await chamarFuncaoMercado('editar_pedido', { id: mercadoEstado.pedidoEmEdicao, itens })
+                    : await chamarFuncaoMercado('criar_pedido', { itens });
+                mostrarAviso(editando
+                    ? 'Pedido atualizado. O Mercado recalculou os valores.'
+                    : `Pedido #${resposta.pedido?.id || ''} enviado para análise.`);
                 document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => input.value = '0');
+                if (editando) cancelarEdicaoPedidoMercado(false);
                 await carregarMercado();
             } catch (error) {
                 mostrarAviso(error?.message || 'Não foi possível enviar o pedido.', 'erro');
             } finally {
-                button.textContent = original;
+                button.textContent = mercadoEstado.pedidoEmEdicao !== null ? 'Salvar alterações' : 'Enviar pedido';
                 atualizarTotalMercado();
             }
+        }
+
+        function pedidoPertenceAoMembroMercado(pedido) {
+            const membro = mercadoEstado.membro || {};
+            const discordDoPedido = pedido.discord_id || pedido.membro_discord_id || pedido.membro?.discord_id;
+            const discordDoMembro = membro.discord_id || localStorage.getItem('discord_user_id');
+            if (discordDoPedido && discordDoMembro) return String(discordDoPedido) === String(discordDoMembro);
+            const idMembroPedido = pedido.membro_id ?? pedido.id_membro ?? pedido.member_id;
+            if (idMembroPedido !== undefined && membro.id !== undefined) return String(idMembroPedido) === String(membro.id);
+            // A função inicializar já retorna somente os pedidos do membro autenticado.
+            return true;
+        }
+
+        function iniciarEdicaoPedidoMercado(id) {
+            const pedido = mercadoEstado.pedidos.find(item => String(item.id) === String(id));
+            if (!pedido || pedido.status !== 'Pendente' || !pedidoPertenceAoMembroMercado(pedido)) return;
+            mercadoEstado.pedidoEmEdicao = pedido.id;
+            document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => { input.value = '0'; });
+            const inputsPorId = new Map([...document.querySelectorAll('#marketProductList [data-market-qty]')]
+                .map(input => [String(input.dataset.marketQty), input]));
+            for (const item of (Array.isArray(pedido.itens) ? pedido.itens : [])) {
+                const nome = String(item.recurso || item.nome || '').trim().toLocaleLowerCase('pt-BR');
+                const idRecurso = item.recurso_id ?? item.produto_id ?? item.id_recurso ?? item.id;
+                let input = idRecurso !== undefined ? inputsPorId.get(String(idRecurso)) : null;
+                if (!input && nome) {
+                    const produto = mercadoEstado.catalogo.find(row => String(row.nome || '').trim().toLocaleLowerCase('pt-BR') === nome);
+                    if (produto) input = inputsPorId.get(String(produto.id));
+                }
+                if (input) input.value = String(Math.max(0, Math.floor(Number(item.quantidade) || 0)));
+            }
+            const button = document.getElementById('marketSubmitOrder');
+            if (button) button.textContent = 'Salvar alterações';
+            const actions = document.querySelector('#marketOrderForm .market-actions');
+            if (actions && !document.getElementById('marketCancelEdit')) {
+                const cancel = document.createElement('button');
+                cancel.id = 'marketCancelEdit';
+                cancel.type = 'button';
+                cancel.className = 'market-btn quiet';
+                cancel.textContent = 'Cancelar edição';
+                cancel.addEventListener('click', () => cancelarEdicaoPedidoMercado());
+                actions.appendChild(cancel);
+            }
+            atualizarTotalMercado();
+            mostrarAviso(`Editando o pedido #${Number(pedido.id)}. Os valores serão recalculados ao salvar.`);
+        }
+
+        function cancelarEdicaoPedidoMercado(limparCampos = true) {
+            mercadoEstado.pedidoEmEdicao = null;
+            if (limparCampos) document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => { input.value = '0'; });
+            document.getElementById('marketCancelEdit')?.remove();
+            const button = document.getElementById('marketSubmitOrder');
+            if (button) button.textContent = 'Enviar pedido';
+            const totalRow = document.getElementById('marketTotalRow');
+            if (totalRow) totalRow.style.display = 'flex';
+            atualizarTotalMercado();
         }
 
         function desenharHistoricoMercado() {
@@ -5879,10 +5948,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const resumo = itens.map(item => `${escaparMercado(item.recurso)} × ${Number(item.quantidade) || 0}`).join(' · ');
                 const statusClass = String(pedido.status || '').toLowerCase();
                 const data = pedido.criado_em ? new Date(pedido.criado_em).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '';
+                const editar = pedido.status === 'Pendente' && pedidoPertenceAoMembroMercado(pedido)
+                    ? `<div class="market-actions" style="justify-content:flex-start;margin-top:8px"><button class="market-btn quiet" type="button" onclick="iniciarEdicaoPedidoMercado(${Number(pedido.id)})">Editar</button></div>`
+                    : '';
                 return `<article class="market-order">
                     <div class="market-order-head"><strong>Pedido #${Number(pedido.id)}</strong><span>${escaparMercado(data)}</span><span class="market-badge ${escaparMercado(statusClass)}">${escaparMercado(pedido.status)}</span></div>
                     <div class="market-order-items">${resumo || 'Itens não informados'}${pedido.motivo_recusa ? `<br><span>Motivo: ${escaparMercado(pedido.motivo_recusa)}</span>` : ''}</div>
-                    <div class="market-order-total">Total registrado: ${ryosMercado(pedido.total_ryos)}</div>
+                    <div class="market-order-total">Total registrado: ${ryosMercado(pedido.total_ryos)}</div>${editar}
                 </article>`;
             }).join('');
         }
