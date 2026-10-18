@@ -1793,6 +1793,14 @@
         #marketModal .market-badge.cancelada { border-color:rgba(217,80,70,.38); color:#ff9a91; }
         #marketModal .market-admin-panel { margin-top:24px; padding:16px; border:1px solid rgba(194,155,56,.34); border-radius:14px; background:linear-gradient(145deg,rgba(83,54,22,.18),rgba(12,8,5,.4)); }
         #marketModal .market-admin-note { margin:-3px 0 13px; color:#b8aa94; line-height:1.5; font-size:.8rem; }
+
+        #marketModal .market-paused-notice { display:flex; flex-direction:column; gap:6px; margin:0 0 16px; padding:13px 15px; border:1px solid rgba(225,173,89,.42); border-radius:12px; background:rgba(133,91,34,.14); color:#f0d7a7; line-height:1.5; }
+        #marketModal .market-paused-notice[hidden], #marketModal #marketLockControl[hidden], #marketModal #marketLockDivider[hidden] { display:none !important; }
+        #marketModal .market-paused-notice span { font-size:.88rem; }
+        #marketModal .market-lock-control { margin-bottom:15px; padding:14px; border:1px solid rgba(200,180,140,.22); border-radius:12px; background:rgba(0,0,0,.12); }
+        #marketModal .market-lock-state { margin:0 0 10px; font-size:.88rem; color:#cbbd9e; }
+        #marketModal .market-lock-state.is-locked { color:#ffb9a9; }
+        #marketModal .market-lock-state.is-open { color:#a9ddb5; }
         #marketModal .market-admin-list { display:grid; gap:8px; }
         #marketModal .market-admin-price { display:grid; grid-template-columns:minmax(0,1fr) 150px; gap:12px; align-items:center; padding:10px 12px; border:1px solid rgba(194,155,56,.15); border-radius:10px; background:rgba(0,0,0,.17); }
         #marketModal .market-admin-price strong { color:#eadfc9; font-size:.88rem; }
@@ -2862,6 +2870,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     </button>
                 </div>
                 <section id="marketOrdersPanel" class="market-tab-panel" role="tabpanel" aria-labelledby="marketTabOrders">
+                    <div id="marketPausedNotice" class="market-paused-notice" role="status" aria-live="polite" hidden>
+                        <strong>🪙 Mercado temporariamente suspenso</strong>
+                        <span>O caixa do clã está sem saldo disponível. Novas solicitações de venda estão pausadas por enquanto. Seus pedidos anteriores continuam registrados.</span>
+                    </div>
                     <h3 class="market-section-title">Catálogo de recursos</h3>
                     <form id="marketOrderForm">
                         <div id="marketProductList" class="market-products"></div>
@@ -2878,6 +2890,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <div id="marketOrderHistory" class="market-order-list"></div>
                 </section>
                 <section id="marketAdminPanel" class="market-tab-panel market-admin-panel" hidden role="tabpanel" aria-labelledby="marketTabPrices">
+                    <div id="marketLockControl" class="market-lock-control" hidden>
+                        <h3 class="market-section-title" style="margin-top:0">Controle do Mercado</h3>
+                        <p class="market-admin-note">Pause novas solicitações quando o caixa do clã estiver sem saldo. Isso não apaga nem cancela pedidos existentes.</p>
+                        <p id="marketLockStateText" class="market-lock-state">Status: carregando...</p>
+                        <button id="marketLockButton" class="market-btn primary" type="button" onclick="alternarTravaMercado()">Carregando...</button>
+                    </div>
+                    <div class="market-divider" id="marketLockDivider" hidden></div>
                     <h3 id="marketAdminTitle" class="market-section-title" style="margin-top:0">Preços do Mercado</h3>
                     <p class="market-admin-note">Defina quanto o clã pagará por unidade. A alteração vale para novos pedidos; pedidos já enviados mantêm o preço registrado.</p>
                     <div id="marketAdminPriceList" class="market-admin-list"></div>
@@ -5397,7 +5416,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 
         /* MERCADO DO CLÃ — catálogo e pedidos autenticados pelo Discord */
-        const mercadoEstado = { catalogo: [], pedidos: [], membro: null, pedidoEmEdicao: null, isAdmin: false, canManageMarket: false, aba: 'pedidos' };
+        const mercadoEstado = { catalogo: [], pedidos: [], membro: null, pedidoEmEdicao: null, isAdmin: false, canManageMarket: false, mercadoBloqueado: false, aba: 'pedidos' };
 
         function tokenDiscordMercado() {
             const token = sessionStorage.getItem('discord_access_token');
@@ -5506,6 +5525,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 mercadoEstado.catalogo = Array.isArray(dados.catalogo) ? dados.catalogo : [];
                 mercadoEstado.pedidos = Array.isArray(dados.pedidos) ? dados.pedidos : [];
                 mercadoEstado.membro = dados.membro || null;
+                mercadoEstado.mercadoBloqueado = dados.mercado_bloqueado === true;
                 mercadoEstado.isAdmin = dados.membro?.e_admin === true;
                 mercadoEstado.canManageMarket = mercadoEstado.isAdmin || dados.membro?.e_comprador_recursos === true;
                 document.getElementById('marketMemberGreeting').textContent =
@@ -5805,6 +5825,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const container = document.getElementById('marketProductList');
             const form = document.getElementById('marketOrderForm');
             const totalRow = document.getElementById('marketTotalRow');
+            const pausedNotice = document.getElementById('marketPausedNotice');
+            if (pausedNotice) pausedNotice.hidden = !mercadoEstado.mercadoBloqueado;
             if (!container) return;
             if (!mercadoEstado.catalogo.length) {
                 container.innerHTML = '<div class="market-empty" style="grid-column:1/-1">Não há recursos ativos no catálogo. Peça a um administrador para conferir os produtos no Supabase.</div>';
@@ -5822,7 +5844,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                                data-market-qty="${Number(produto.id)}" aria-label="Quantidade de ${escaparMercado(produto.nome)}">
                     </span>
                 </label>`).join('');
-            container.querySelectorAll('[data-market-qty]').forEach(input => input.addEventListener('input', atualizarTotalMercado));
+            container.querySelectorAll('[data-market-qty]').forEach(input => {
+                input.disabled = mercadoEstado.mercadoBloqueado && mercadoEstado.pedidoEmEdicao === null;
+                input.addEventListener('input', atualizarTotalMercado);
+            });
             if (form) form.style.display = 'block';
             if (totalRow) totalRow.style.display = 'flex';
             atualizarTotalMercado();
@@ -5848,11 +5873,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const label = document.getElementById('marketOrderTotal');
             if (label) label.textContent = ryosMercado(total);
             const button = document.getElementById('marketSubmitOrder');
-            if (button) button.disabled = itens.length === 0;
+            if (button) button.disabled = itens.length === 0 || (mercadoEstado.mercadoBloqueado && mercadoEstado.pedidoEmEdicao === null);
         }
 
         async function enviarPedidoMercado(event) {
             event.preventDefault();
+            if (mercadoEstado.mercadoBloqueado && mercadoEstado.pedidoEmEdicao === null) {
+                mostrarAviso('O Mercado está temporariamente suspenso. Novas solicitações estão pausadas.', 'erro');
+                return;
+            }
             const itens = obterItensSelecionadosMercado();
             if (!itens.length) {
                 mostrarAviso('Escolha pelo menos um recurso e informe a quantidade.', 'erro');
@@ -5896,7 +5925,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const pedido = mercadoEstado.pedidos.find(item => String(item.id) === String(id));
             if (!pedido || pedido.status !== 'Pendente' || !pedidoPertenceAoMembroMercado(pedido)) return;
             mercadoEstado.pedidoEmEdicao = pedido.id;
-            document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => { input.value = '0'; });
+            document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => { input.disabled = false; input.value = '0'; });
             const inputsPorId = new Map([...document.querySelectorAll('#marketProductList [data-market-qty]')]
                 .map(input => [String(input.dataset.marketQty), input]));
             for (const item of (Array.isArray(pedido.itens) ? pedido.itens : [])) {
@@ -5928,6 +5957,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function cancelarEdicaoPedidoMercado(limparCampos = true) {
             mercadoEstado.pedidoEmEdicao = null;
             if (limparCampos) document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => { input.value = '0'; });
+            document.querySelectorAll('#marketProductList [data-market-qty]').forEach(input => { input.disabled = mercadoEstado.mercadoBloqueado; });
             document.getElementById('marketCancelEdit')?.remove();
             const button = document.getElementById('marketSubmitOrder');
             if (button) button.textContent = 'Enviar pedido';
@@ -5981,6 +6011,22 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (!panel || !container || !tabs || !priceTab) return;
             tabs.hidden = !mercadoEstado.canManageMarket;
             priceTab.hidden = !mercadoEstado.canManageMarket;
+            const lockControl = document.getElementById('marketLockControl');
+            const lockDivider = document.getElementById('marketLockDivider');
+            const lockButton = document.getElementById('marketLockButton');
+            const lockText = document.getElementById('marketLockStateText');
+            if (lockControl) lockControl.hidden = !mercadoEstado.isAdmin;
+            if (lockDivider) lockDivider.hidden = !mercadoEstado.isAdmin;
+            if (lockText) {
+                lockText.textContent = mercadoEstado.mercadoBloqueado ? 'Status: novas solicitações bloqueadas' : 'Status: recebendo novas solicitações';
+                lockText.classList.toggle('is-locked', mercadoEstado.mercadoBloqueado);
+                lockText.classList.toggle('is-open', !mercadoEstado.mercadoBloqueado);
+            }
+            if (lockButton) {
+                lockButton.textContent = mercadoEstado.mercadoBloqueado ? 'Reabrir Mercado' : 'Suspender novas solicitações';
+                lockButton.disabled = !mercadoEstado.isAdmin;
+                lockButton.classList.toggle('danger', !mercadoEstado.mercadoBloqueado);
+            }
             if (!mercadoEstado.canManageMarket) {
                 selecionarAbaMercado('pedidos');
                 return;
@@ -5995,6 +6041,28 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     </label>
                 </div>`).join('') || '<div class="market-empty">Nenhum produto no catálogo.</div>';
             selecionarAbaMercado(mercadoEstado.aba || 'pedidos');
+        }
+
+        async function alternarTravaMercado() {
+            if (!mercadoEstado.isAdmin) {
+                mostrarAviso('Somente um Administrador do clã pode pausar ou reabrir o Mercado.', 'erro');
+                return;
+            }
+            const bloquear = !mercadoEstado.mercadoBloqueado;
+            const botao = document.getElementById('marketLockButton');
+            if (botao) { botao.disabled = true; botao.textContent = bloquear ? 'Suspendendo...' : 'Reabrindo...'; }
+            try {
+                await chamarFuncaoMercado('alterar_trava_mercado', { bloqueado: bloquear });
+                mercadoEstado.mercadoBloqueado = bloquear;
+                mostrarAviso(bloquear
+                    ? 'Mercado suspenso. Novas solicitações estão bloqueadas.'
+                    : 'Mercado reaberto. Os membros já podem enviar novas solicitações.');
+                await carregarMercado();
+            } catch (error) {
+                mostrarAviso(error?.message || 'Não foi possível alterar o estado do Mercado.', 'erro');
+            } finally {
+                if (botao) botao.disabled = false;
+            }
         }
 
         async function salvarPrecosMercado() {
