@@ -2860,7 +2860,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 </div>
                 <button type="button" class="training-close" aria-label="Fechar treinamento" onclick="fecharTreinamento()">×</button>
             </div>
-            <p class="training-intro">Sorteie os membros cadastrados em duplas, confira quem ficou sem parceiro e complete a dupla com um membro novo ou participante externo.</p>
+            <p class="training-intro">Sorteie os membros cadastrados em trios, confira os grupos incompletos e complete as vagas com membros cadastrados ou participantes externos.</p>
             <div id="trainingStatus" class="training-status" role="status" aria-live="polite"></div>
             <div id="trainingLoginBox" class="training-login" style="display:none">
                 <p id="trainingLoginMessage">Entre com o Discord para acessar a Central de Treinamento.</p>
@@ -2871,15 +2871,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <div><span class="training-eyebrow">SORTEIO ATUAL</span><strong id="trainingSummary">Nenhum sorteio realizado.</strong></div>
                     <div class="training-toolbar-actions">
                         <button class="training-btn secondary" type="button" onclick="carregarTreinamento()">↻ Atualizar</button>
-                        <button class="training-btn secondary" type="button" id="trainingEditToggle" onclick="alternarEdicaoTreinamento(true)">✏️ Editar duplas</button>
-                        <button class="training-btn primary" type="button" onclick="sortearDuplasTreinamento()">🎲 Sortear duplas</button>
+                        <button class="training-btn secondary" type="button" id="trainingEditToggle" onclick="alternarEdicaoTreinamento(true)">✏️ Editar trios</button>
+                        <button class="training-btn primary" type="button" onclick="sortearDuplasTreinamento()">🎲 Sortear trios</button>
                     </div>
                 </div>
                 <div id="trainingOddNotice" class="training-odd-notice" style="display:none"></div>
-                <div id="trainingPairs" class="training-pairs"><p class="training-empty">Carregando duplas...</p></div>
+                <div id="trainingPairs" class="training-pairs"><p class="training-empty">Carregando trios...</p></div>
                 <section id="trainingEditPanel" class="training-complete-panel" style="display:none; margin-top:16px;">
-                    <h3>Editar duplas do sorteio</h3>
-                    <p>Escolha quem fica em cada vaga. Para sorteio ímpar, deixe apenas a vaga do lado 2 da última dupla vazia. As alterações só serão aplicadas depois de salvar.</p>
+                    <h3>Editar trios do sorteio</h3>
+                    <p>Escolha quem fica em cada vaga. As vagas vazias devem ficar apenas no último trio. As alterações só serão aplicadas depois de salvar.</p>
                     <div id="trainingEditSlots" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;"></div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
                         <button class="training-btn primary" type="button" onclick="salvarEdicaoTreinamento()">💾 Salvar alterações</button>
@@ -2887,7 +2887,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     </div>
                 </section>
                 <div id="trainingCompletePanel" class="training-complete-panel" style="display:none">
-                    <h3>Completar dupla incompleta</h3>
+                    <h3>Completar trio incompleto</h3>
                     <p id="trainingCompleteHint">Escolha como preencher a vaga restante.</p>
                     <div class="training-complete-grid">
                         <label class="training-field">
@@ -5484,7 +5484,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
 
-        /* CENTRAL DE TREINAMENTO — sorteio e gerenciamento de duplas */
+        /* CENTRAL DE TREINAMENTO — sorteio e gerenciamento de trios */
         const treinamentoEstado = { membros: [], sorteio: null, duplas: [], carregando: false };
 
         function escaparTreinamento(value) {
@@ -5540,7 +5540,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         async function carregarTreinamento() {
             if (treinamentoEstado.carregando) return;
             treinamentoEstado.carregando = true;
-            statusTreinamento('Carregando membros e duplas...');
+            statusTreinamento('Carregando membros e trios...');
             try {
                 const data = await chamarFuncaoTreinamento('inicializar');
                 treinamentoEstado.membros = Array.isArray(data.membros) ? data.membros : [];
@@ -5551,7 +5551,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             } catch (error) {
                 statusTreinamento(error?.message || 'Não foi possível carregar o treinamento.', true);
                 document.getElementById('trainingContent').style.display = 'block';
-                document.getElementById('trainingPairs').innerHTML = '<p class="training-empty">Não foi possível carregar as duplas. Confira se a Edge Function treinamento foi publicada.</p>';
+                document.getElementById('trainingPairs').innerHTML = '<p class="training-empty">Não foi possível carregar os trios. Confira se a Edge Function treinamento foi publicada.</p>';
             } finally {
                 treinamentoEstado.carregando = false;
             }
@@ -5568,7 +5568,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
             if (!sorteio) {
                 summary.textContent = 'Nenhum sorteio realizado.';
-                pairsBox.innerHTML = '<p class="training-empty">Ainda não há duplas. Clique em “Sortear duplas” para começar.</p>';
+                pairsBox.innerHTML = '<p class="training-empty">Ainda não há trios. Clique em “Sortear trios” para começar.</p>';
                 oddNotice.style.display = 'none';
                 completePanel.style.display = 'none';
                 return;
@@ -5581,31 +5581,32 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 groups.get(number).push(person);
             }
             const sorted = [...groups.entries()].sort((a,b) => a[0]-b[0]);
-            const incomplete = sorted.find(([, people]) => !people.some(person => Number(person.lado) === 2));
+            const incomplete = sorted.find(([, people]) => people.length < 3);
             const participantCount = duplas.length;
-            const pairCount = sorted.length;
-            summary.textContent = `${pairCount} dupla${pairCount === 1 ? '' : 's'} · ${participantCount} participante${participantCount === 1 ? '' : 's'} · criado por ${sorteio.criado_por_nome || 'Administrador'}`;
+            const trioCount = sorted.length;
+            summary.textContent = `${trioCount} trio${trioCount === 1 ? '' : 's'} · ${participantCount} participante${participantCount === 1 ? '' : 's'} · criado por ${sorteio.criado_por_nome || 'Administrador'}`;
 
             if (incomplete) {
-                const first = incomplete[1].find(person => Number(person.lado) === 1);
+                const missing = 3 - incomplete[1].length;
+                const waitingNames = incomplete[1].map(person => escaparTreinamento(person.nome_participante)).join(', ');
                 oddNotice.style.display = 'block';
-                oddNotice.innerHTML = `⚠️ <strong>Quantidade ímpar de participantes.</strong> ${first ? escaparTreinamento(first.nome_participante) : 'Um participante'} está aguardando parceiro na Dupla ${incomplete[0]}. Você pode completar a dupla abaixo.`;
+                oddNotice.innerHTML = `⚠️ <strong>Trio incompleto.</strong> Trio ${incomplete[0]} tem ${incomplete[1].length}/3 participantes${waitingNames ? ` (${waitingNames})` : ''} e ${missing} vaga${missing === 1 ? '' : 's'} aberta${missing === 1 ? '' : 's'}. O administrador pode completar o grupo abaixo.`;
                 completePanel.style.display = 'block';
-                document.getElementById('trainingCompleteHint').textContent = `A vaga aberta é na Dupla ${incomplete[0]}. Escolha um membro ainda não sorteado ou informe um participante externo.`;
+                document.getElementById('trainingCompleteHint').textContent = `Há ${missing} vaga${missing === 1 ? '' : 's'} no Trio ${incomplete[0]}. Adicione um membro ainda não sorteado ou um participante externo. Se houver mais de uma vaga, repita a ação até completar o trio.`;
             } else {
                 oddNotice.style.display = 'none';
                 completePanel.style.display = 'none';
             }
 
             pairsBox.innerHTML = sorted.map(([number, people]) => {
-                const first = people.find(person => Number(person.lado) === 1);
-                const second = people.find(person => Number(person.lado) === 2);
-                const personHtml = (person, empty = false) => {
-                    if (empty) return '<div class="training-person missing"><span class="training-person-icon">⚠</span><span>Aguardando parceiro</span></div>';
+                const bySide = [1,2,3].map(side => people.find(person => Number(person.lado) === side));
+                const personHtml = (person, empty = false, side = 1) => {
+                    if (empty) return `<div class="training-person missing"><span class="training-person-icon">⚠</span><span>Vaga ${side} aguardando participante</span></div>`;
                     const external = person.origem === 'externo';
                     return `<div class="training-person ${external ? 'external' : ''}"><span class="training-person-icon">${external ? '✦' : '忍'}</span><span>${escaparTreinamento(person.nome_participante)}${external ? ' <small>(externo)</small>' : ''}</span></div>`;
                 };
-                return `<article class="training-pair-card"><div class="training-pair-title"><span>Dupla ${number}</span><small>${second ? 'COMPLETA' : 'INCOMPLETA'}</small></div>${personHtml(first || null, !first)}${personHtml(second || null, !second)}</article>`;
+                const count = people.length;
+                return `<article class="training-pair-card"><div class="training-pair-title"><span>Trio ${number}</span><small>${count === 3 ? 'COMPLETO' : `${count}/3 PARTICIPANTES`}</small></div>${bySide.map((person, i) => personHtml(person || null, !person, i+1)).join('')}</article>`;
             }).join('');
 
             const usedIds = new Set(duplas.map(person => Number(person.membro_id)).filter(Number.isFinite));
@@ -5626,7 +5627,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
             if (!treinamentoEstado.sorteio || !treinamentoEstado.duplas.length) {
-                statusTreinamento('Faça um sorteio antes de editar as duplas.', true);
+                statusTreinamento('Faça um sorteio antes de editar os trios.', true);
                 return;
             }
             const grupos = new Map();
@@ -5645,13 +5646,11 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return `<option value="${Number(p.id)}" ${Number(p.id) === Number(selecionado) ? 'selected' : ''}>${nome}${tipo}</option>`;
             }).join('');
             slotsBox.innerHTML = ordenados.map(([numero, pessoas]) => {
-                const lado1 = pessoas.find(p => Number(p.lado) === 1);
-                const lado2 = pessoas.find(p => Number(p.lado) === 2);
-                return `<div style="border:1px solid var(--border-color, #d5d9e0);border-radius:10px;padding:12px;">
-                    <strong style="display:block;margin-bottom:10px;">Dupla ${numero}</strong>
-                    <label class="training-field" style="display:block;margin-bottom:10px;"><span>Lado 1</span><select data-training-slot="1" data-training-pair="${numero}" style="width:100%;">${options(lado1?.id)}</select></label>
-                    <label class="training-field" style="display:block;"><span>Lado 2</span><select data-training-slot="2" data-training-pair="${numero}" style="width:100%;">${options(lado2?.id)}</select></label>
-                </div>`;
+                const slotHtml = [1,2,3].map(lado => {
+                    const pessoa = pessoas.find(p => Number(p.lado) === lado);
+                    return `<label class="training-field" style="display:block;margin-bottom:10px;"><span>Participante ${lado}</span><select data-training-slot="${lado}" data-training-pair="${numero}" style="width:100%;">${options(pessoa?.id)}</select></label>`;
+                }).join('');
+                return `<div style="border:1px solid var(--border-color, #d5d9e0);border-radius:10px;padding:12px;"><strong style="display:block;margin-bottom:10px;">Trio ${numero}</strong>${slotHtml}</div>`;
             }).join('');
             panel.style.display = 'block';
             if (toggle) toggle.style.display = 'none';
@@ -5671,44 +5670,43 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return;
             }
             if (ocupados.length !== treinamentoEstado.duplas.length) {
-                statusTreinamento('Não remova participantes do sorteio. Para sorteio ímpar, deixe somente uma vaga vazia.', true);
+                statusTreinamento('Não remova participantes do sorteio. As vagas vazias só podem ficar no último trio.', true);
                 return;
             }
-            const numeroMaximo = Math.max(...slots.map(s => Number(s.dataset.trainingPair)));
-            const lado1Final = slots.find(s => Number(s.dataset.trainingPair) === numeroMaximo && Number(s.dataset.trainingSlot) === 1);
-            const lado2Final = slots.find(s => Number(s.dataset.trainingPair) === numeroMaximo && Number(s.dataset.trainingSlot) === 2);
-            const temVaga = slots.some(s => !s.value);
-            if (temVaga) {
-                if (ocupados.length % 2 !== 1 || !lado1Final?.value || lado2Final?.value) {
-                    statusTreinamento('A única vaga vazia deve ser o Lado 2 da última dupla, e somente quando houver número ímpar de participantes.', true);
-                    return;
-                }
-            } else if (ocupados.length % 2 !== 0) {
-                statusTreinamento('Com número ímpar de participantes, deixe o Lado 2 da última dupla vazio.', true);
+            const maxGroup = Math.max(...slots.map(s => Number(s.dataset.trainingPair)));
+            const groupNumbers = [...new Set(slots.map(s => Number(s.dataset.trainingPair)))].sort((a,b)=>a-b);
+            const counts = new Map(groupNumbers.map(n => [n, slots.filter(s => Number(s.dataset.trainingPair) === n && s.value).length]));
+            const incompleteGroups = groupNumbers.filter(n => counts.get(n) < 3);
+            if (incompleteGroups.some(n => n !== maxGroup) || (incompleteGroups.length > 1)) {
+                statusTreinamento('Só o último trio pode ficar incompleto. Preencha os trios anteriores antes de salvar.', true);
                 return;
             }
-            if (!confirm('Salvar a nova organização das duplas?')) return;
-            statusTreinamento('Salvando alterações das duplas...');
+            if (incompleteGroups.length && counts.get(maxGroup) < 1) {
+                statusTreinamento('O último trio precisa ter pelo menos um participante.', true);
+                return;
+            }
+            if (!confirm('Salvar a nova organização dos trios?')) return;
+            statusTreinamento('Salvando alterações dos trios...');
             try {
                 const data = await chamarFuncaoTreinamento('salvar_edicao', { slots: ocupados });
                 treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : treinamentoEstado.duplas;
                 desenharTreinamento();
                 alternarEdicaoTreinamento(false);
-                statusTreinamento('Duplas atualizadas com sucesso.');
+                statusTreinamento('Trios atualizados com sucesso.');
             } catch (error) {
                 statusTreinamento(error?.message || 'Não foi possível salvar as alterações. Confira se a Edge Function treinamento já foi atualizada.', true);
             }
         }
 
         async function sortearDuplasTreinamento() {
-            if (!confirm('Criar um novo sorteio? O resultado atual continuará salvo no histórico, mas o novo sorteio passará a ser o ativo.')) return;
-            statusTreinamento('Sorteando participantes e salvando as duplas...');
+            if (!confirm('Criar um novo sorteio de trios? O resultado atual continuará salvo no histórico, mas o novo sorteio passará a ser o ativo.')) return;
+            statusTreinamento('Sorteando participantes e salvando os trios...');
             try {
                 const data = await chamarFuncaoTreinamento('sortear');
                 treinamentoEstado.sorteio = data.sorteio || null;
                 treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
                 desenharTreinamento();
-                statusTreinamento(data.ficou_sem_par ? 'Sorteio concluído. Atenção: um membro ficou sem parceiro.' : 'Sorteio concluído! Todas as duplas foram formadas.');
+                statusTreinamento(data.ficou_sem_trio || data.ficou_sem_par ? 'Sorteio concluído. Atenção: o último trio ficou incompleto e precisa ser completado.' : 'Sorteio concluído! Todos os trios foram formados.');
             } catch (error) { statusTreinamento(error?.message || 'Não foi possível realizar o sorteio.', true); }
         }
 
@@ -5716,13 +5714,13 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const select = document.getElementById('trainingMemberSelect');
             const memberId = Number(select.value);
             if (!Number.isSafeInteger(memberId) || memberId < 1) { statusTreinamento('Selecione um membro disponível.', true); return; }
-            statusTreinamento('Adicionando o membro à dupla...');
+            statusTreinamento('Adicionando o membro ao trio...');
             try {
                 const data = await chamarFuncaoTreinamento('completar_membro', { member_id: memberId });
                 treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
                 desenharTreinamento();
-                statusTreinamento('Dupla completada com o membro cadastrado.');
-            } catch (error) { statusTreinamento(error?.message || 'Não foi possível completar a dupla.', true); }
+                statusTreinamento('Trio atualizado com o membro cadastrado.');
+            } catch (error) { statusTreinamento(error?.message || 'Não foi possível completar o trio.', true); }
         }
 
         async function completarDuplaComExterno() {
@@ -5735,12 +5733,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
                 input.value = '';
                 desenharTreinamento();
-                statusTreinamento('Dupla completada com o participante externo.');
-            } catch (error) { statusTreinamento(error?.message || 'Não foi possível completar a dupla.', true); }
+                statusTreinamento('Trio atualizado com o participante externo.');
+            } catch (error) { statusTreinamento(error?.message || 'Não foi possível completar o trio.', true); }
         }
 
         async function publicarDuplasTreinamento() {
-            if (!confirm('Enviar as duplas do sorteio atual para o Discord?')) return;
+            if (!confirm('Enviar os trios do sorteio atual para o Discord?')) return;
             statusTreinamento('Publicando o resultado no Discord...');
             try {
                 await chamarFuncaoTreinamento('enviar_discord');
@@ -6530,7 +6528,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         #trainingModal .training-btn.secondary { background:#24170f; color:#e6d5b2; }
         #trainingModal .training-btn.publish { background:linear-gradient(135deg,#365b3b,#203d28); border-color:#557d54; color:#e3f1dc; }
         #trainingModal .training-odd-notice { margin:12px 0; padding:12px 14px; border:1px solid rgba(219,165,59,.55); border-radius:11px; color:#f1d99d; background:rgba(121,77,15,.18); font-size:13px; line-height:1.5; }
-        #trainingModal .training-pairs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:14px; }
+        #trainingModal .training-pairs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:14px; }
         #trainingModal .training-pair-card { min-width:0; padding:13px; border:1px solid rgba(194,155,56,.2); border-radius:12px; background:rgba(0,0,0,.16); }
         #trainingModal .training-pair-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; color:#d7b86b; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
         #trainingModal .training-pair-title small { color:#94846b; font-size:10px; }
