@@ -2871,11 +2871,21 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     <div><span class="training-eyebrow">SORTEIO ATUAL</span><strong id="trainingSummary">Nenhum sorteio realizado.</strong></div>
                     <div class="training-toolbar-actions">
                         <button class="training-btn secondary" type="button" onclick="carregarTreinamento()">↻ Atualizar</button>
+                        <button class="training-btn secondary" type="button" id="trainingEditToggle" onclick="alternarEdicaoTreinamento(true)">✏️ Editar duplas</button>
                         <button class="training-btn primary" type="button" onclick="sortearDuplasTreinamento()">🎲 Sortear duplas</button>
                     </div>
                 </div>
                 <div id="trainingOddNotice" class="training-odd-notice" style="display:none"></div>
                 <div id="trainingPairs" class="training-pairs"><p class="training-empty">Carregando duplas...</p></div>
+                <section id="trainingEditPanel" class="training-complete-panel" style="display:none; margin-top:16px;">
+                    <h3>Editar duplas do sorteio</h3>
+                    <p>Escolha quem fica em cada vaga. Para sorteio ímpar, deixe apenas a vaga do lado 2 da última dupla vazia. As alterações só serão aplicadas depois de salvar.</p>
+                    <div id="trainingEditSlots" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px;"></div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+                        <button class="training-btn primary" type="button" onclick="salvarEdicaoTreinamento()">💾 Salvar alterações</button>
+                        <button class="training-btn secondary" type="button" onclick="alternarEdicaoTreinamento(false)">Cancelar</button>
+                    </div>
+                </section>
                 <div id="trainingCompletePanel" class="training-complete-panel" style="display:none">
                     <h3>Completar dupla incompleta</h3>
                     <p id="trainingCompleteHint">Escolha como preencher a vaga restante.</p>
@@ -5602,6 +5612,92 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const available = membros.filter(person => !usedIds.has(Number(person.id)));
             select.innerHTML = '<option value="">Selecione um membro</option>' + available.map(person => `<option value="${Number(person.id)}">${escaparTreinamento(person.nome_jogo || 'Membro')}</option>`).join('');
             if (!available.length) select.innerHTML = '<option value="">Nenhum membro disponível</option>';
+        }
+
+        function alternarEdicaoTreinamento(ativar) {
+            const panel = document.getElementById('trainingEditPanel');
+            const toggle = document.getElementById('trainingEditToggle');
+            const slotsBox = document.getElementById('trainingEditSlots');
+            if (!panel || !slotsBox) return;
+            if (!ativar) {
+                panel.style.display = 'none';
+                if (toggle) toggle.style.display = '';
+                slotsBox.innerHTML = '';
+                return;
+            }
+            if (!treinamentoEstado.sorteio || !treinamentoEstado.duplas.length) {
+                statusTreinamento('Faça um sorteio antes de editar as duplas.', true);
+                return;
+            }
+            const grupos = new Map();
+            for (const pessoa of treinamentoEstado.duplas) {
+                const numero = Number(pessoa.numero_dupla);
+                if (!grupos.has(numero)) grupos.set(numero, []);
+                grupos.get(numero).push(pessoa);
+            }
+            const ordenados = [...grupos.entries()].sort((a, b) => a[0] - b[0]);
+            const participantes = [...treinamentoEstado.duplas].sort((a, b) =>
+                Number(a.numero_dupla) - Number(b.numero_dupla) || Number(a.lado) - Number(b.lado)
+            );
+            const options = (selecionado) => '<option value="">— Vaga vazia —</option>' + participantes.map(p => {
+                const nome = escaparTreinamento(p.nome_participante || 'Participante');
+                const tipo = p.origem === 'externo' ? ' (externo)' : '';
+                return `<option value="${Number(p.id)}" ${Number(p.id) === Number(selecionado) ? 'selected' : ''}>${nome}${tipo}</option>`;
+            }).join('');
+            slotsBox.innerHTML = ordenados.map(([numero, pessoas]) => {
+                const lado1 = pessoas.find(p => Number(p.lado) === 1);
+                const lado2 = pessoas.find(p => Number(p.lado) === 2);
+                return `<div style="border:1px solid var(--border-color, #d5d9e0);border-radius:10px;padding:12px;">
+                    <strong style="display:block;margin-bottom:10px;">Dupla ${numero}</strong>
+                    <label class="training-field" style="display:block;margin-bottom:10px;"><span>Lado 1</span><select data-training-slot="1" data-training-pair="${numero}" style="width:100%;">${options(lado1?.id)}</select></label>
+                    <label class="training-field" style="display:block;"><span>Lado 2</span><select data-training-slot="2" data-training-pair="${numero}" style="width:100%;">${options(lado2?.id)}</select></label>
+                </div>`;
+            }).join('');
+            panel.style.display = 'block';
+            if (toggle) toggle.style.display = 'none';
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        async function salvarEdicaoTreinamento() {
+            const slots = [...document.querySelectorAll('#trainingEditSlots select')];
+            const ocupados = slots.map(select => ({
+                id: Number(select.value),
+                numero_dupla: Number(select.dataset.trainingPair),
+                lado: Number(select.dataset.trainingSlot)
+            })).filter(item => Number.isSafeInteger(item.id) && item.id > 0);
+            const ids = ocupados.map(item => item.id);
+            if (new Set(ids).size !== ids.length) {
+                statusTreinamento('Cada participante só pode aparecer uma vez. Confira as vagas selecionadas.', true);
+                return;
+            }
+            if (ocupados.length !== treinamentoEstado.duplas.length) {
+                statusTreinamento('Não remova participantes do sorteio. Para sorteio ímpar, deixe somente uma vaga vazia.', true);
+                return;
+            }
+            const numeroMaximo = Math.max(...slots.map(s => Number(s.dataset.trainingPair)));
+            const lado1Final = slots.find(s => Number(s.dataset.trainingPair) === numeroMaximo && Number(s.dataset.trainingSlot) === 1);
+            const lado2Final = slots.find(s => Number(s.dataset.trainingPair) === numeroMaximo && Number(s.dataset.trainingSlot) === 2);
+            const temVaga = slots.some(s => !s.value);
+            if (temVaga) {
+                if (ocupados.length % 2 !== 1 || !lado1Final?.value || lado2Final?.value) {
+                    statusTreinamento('A única vaga vazia deve ser o Lado 2 da última dupla, e somente quando houver número ímpar de participantes.', true);
+                    return;
+                }
+            } else if (ocupados.length % 2 !== 0) {
+                statusTreinamento('Com número ímpar de participantes, deixe o Lado 2 da última dupla vazio.', true);
+                return;
+            }
+            if (!confirm('Salvar a nova organização das duplas?')) return;
+            statusTreinamento('Salvando alterações das duplas...');
+            try {
+                const data = await chamarFuncaoTreinamento('salvar_edicao', { slots: ocupados });
+                treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : treinamentoEstado.duplas;
+                desenharTreinamento();
+                alternarEdicaoTreinamento(false);
+                statusTreinamento('Duplas atualizadas com sucesso.');
+            } catch (error) {
+                statusTreinamento(error?.message || 'Não foi possível salvar as alterações. Confira se a Edge Function treinamento já foi atualizada.', true);
+            }
         }
 
         async function sortearDuplasTreinamento() {
