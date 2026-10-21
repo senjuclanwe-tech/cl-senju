@@ -1993,6 +1993,13 @@
             </li>
 
             <li>
+                <a onclick="fecharSenjuMenu(); abrirTreinamento(); return false;"
+                   class="sidebar-link action-sorteio" href="#treinamento" id="navBtnTreinamento">
+                    <span class="sidebar-icon">🥋</span><span>Treinamento · Duplas</span>
+                </a>
+            </li>
+
+            <li>
                 <a onclick="enviarRelatorioSemanalWebhook(); fecharSenjuMenu()"
                    class="sidebar-link action-resumo"
                    id="navBtnSemanal"
@@ -2837,6 +2844,58 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             <div class="modal-footer confirmacao-acoes">
                 <button type="button" id="btnCancelarAcao" class="btn-cancelar" onclick="fecharModalConfirmacao(false)">Cancelar</button>
                 <button type="button" id="btnConfirmarAcao" class="btn-confirmar-acao" onclick="fecharModalConfirmacao(true)">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DO SISTEMA DE TREINAMENTO -->
+    <div class="modal-overlay" id="trainingModal" role="dialog" aria-modal="true" aria-labelledby="trainingTitle"
+         onclick="if (event.target === this) fecharTreinamento()">
+        <div class="modal-content training-modal">
+            <div class="training-heading">
+                <div class="training-mark" aria-hidden="true">🥋</div>
+                <div>
+                    <p class="training-kicker">Clã Senju · organização de treinos</p>
+                    <h2 id="trainingTitle">Central de Treinamento</h2>
+                </div>
+                <button type="button" class="training-close" aria-label="Fechar treinamento" onclick="fecharTreinamento()">×</button>
+            </div>
+            <p class="training-intro">Sorteie os membros cadastrados em duplas, confira quem ficou sem parceiro e complete a dupla com um membro novo ou participante externo.</p>
+            <div id="trainingStatus" class="training-status" role="status" aria-live="polite"></div>
+            <div id="trainingLoginBox" class="training-login" style="display:none">
+                <p id="trainingLoginMessage">Entre com o Discord para acessar a Central de Treinamento.</p>
+                <button class="training-btn primary" type="button" onclick="logarComDiscord()">Entrar com Discord</button>
+            </div>
+            <div id="trainingContent" style="display:none">
+                <div class="training-toolbar">
+                    <div><span class="training-eyebrow">SORTEIO ATUAL</span><strong id="trainingSummary">Nenhum sorteio realizado.</strong></div>
+                    <div class="training-toolbar-actions">
+                        <button class="training-btn secondary" type="button" onclick="carregarTreinamento()">↻ Atualizar</button>
+                        <button class="training-btn primary" type="button" onclick="sortearDuplasTreinamento()">🎲 Sortear duplas</button>
+                    </div>
+                </div>
+                <div id="trainingOddNotice" class="training-odd-notice" style="display:none"></div>
+                <div id="trainingPairs" class="training-pairs"><p class="training-empty">Carregando duplas...</p></div>
+                <div id="trainingCompletePanel" class="training-complete-panel" style="display:none">
+                    <h3>Completar dupla incompleta</h3>
+                    <p id="trainingCompleteHint">Escolha como preencher a vaga restante.</p>
+                    <div class="training-complete-grid">
+                        <label class="training-field">
+                            <span>Membro cadastrado</span>
+                            <select id="trainingMemberSelect"><option value="">Selecione um membro</option></select>
+                        </label>
+                        <button class="training-btn secondary" type="button" onclick="completarDuplaComMembro()">Adicionar membro</button>
+                        <label class="training-field">
+                            <span>Participante externo</span>
+                            <input id="trainingExternalName" type="text" maxlength="100" placeholder="Nome no jogo">
+                        </label>
+                        <button class="training-btn secondary" type="button" onclick="completarDuplaComExterno()">Adicionar externo</button>
+                    </div>
+                </div>
+                <div class="training-footer-actions">
+                    <span>O resultado será enviado ao Discord pelo webhook privado “sorteio”.</span>
+                    <button class="training-btn publish" type="button" onclick="publicarDuplasTreinamento()">📣 Publicar no Discord</button>
+                </div>
             </div>
         </div>
     </div>
@@ -5415,6 +5474,184 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
 
+        /* CENTRAL DE TREINAMENTO — sorteio e gerenciamento de duplas */
+        const treinamentoEstado = { membros: [], sorteio: null, duplas: [], carregando: false };
+
+        function escaparTreinamento(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]));
+        }
+
+        function statusTreinamento(texto, erro = false) {
+            const el = document.getElementById('trainingStatus');
+            if (!el) return;
+            el.textContent = texto || '';
+            el.classList.toggle('show', !!texto);
+            el.classList.toggle('error', !!erro);
+        }
+
+        async function chamarFuncaoTreinamento(action, payload = {}) {
+            const token = tokenDiscordMercado();
+            if (!token) throw new Error('Sua sessão do Discord expirou. Entre novamente no site.');
+            const { data, error } = await supabaseClient.functions.invoke('treinamento', {
+                body: { action, ...payload },
+                headers: { 'x-discord-access-token': token },
+            });
+            if (error) {
+                let mensagem = error.message || 'Falha ao consultar o sistema de treinamento.';
+                try { const resposta = await error.context?.json(); if (resposta?.error) mensagem = resposta.error; } catch (_) {}
+                throw new Error(mensagem);
+            }
+            if (data?.error) throw new Error(data.error);
+            return data;
+        }
+
+        function abrirTreinamento() {
+            const modal = document.getElementById('trainingModal');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            const token = tokenDiscordMercado();
+            document.getElementById('trainingContent').style.display = token ? 'block' : 'none';
+            document.getElementById('trainingLoginBox').style.display = token ? 'none' : 'block';
+            if (!token) {
+                document.getElementById('trainingLoginMessage').textContent = 'Entre com o Discord para acessar a Central de Treinamento.';
+                statusTreinamento('');
+                return;
+            }
+            carregarTreinamento();
+        }
+
+        function fecharTreinamento() {
+            const modal = document.getElementById('trainingModal');
+            if (modal) modal.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        async function carregarTreinamento() {
+            if (treinamentoEstado.carregando) return;
+            treinamentoEstado.carregando = true;
+            statusTreinamento('Carregando membros e duplas...');
+            try {
+                const data = await chamarFuncaoTreinamento('inicializar');
+                treinamentoEstado.membros = Array.isArray(data.membros) ? data.membros : [];
+                treinamentoEstado.sorteio = data.sorteio || null;
+                treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
+                desenharTreinamento();
+                statusTreinamento('');
+            } catch (error) {
+                statusTreinamento(error?.message || 'Não foi possível carregar o treinamento.', true);
+                document.getElementById('trainingContent').style.display = 'block';
+                document.getElementById('trainingPairs').innerHTML = '<p class="training-empty">Não foi possível carregar as duplas. Confira se a Edge Function treinamento foi publicada.</p>';
+            } finally {
+                treinamentoEstado.carregando = false;
+            }
+        }
+
+        function desenharTreinamento() {
+            const { membros, sorteio, duplas } = treinamentoEstado;
+            const summary = document.getElementById('trainingSummary');
+            const pairsBox = document.getElementById('trainingPairs');
+            const oddNotice = document.getElementById('trainingOddNotice');
+            const completePanel = document.getElementById('trainingCompletePanel');
+            const select = document.getElementById('trainingMemberSelect');
+            document.getElementById('trainingContent').style.display = 'block';
+
+            if (!sorteio) {
+                summary.textContent = 'Nenhum sorteio realizado.';
+                pairsBox.innerHTML = '<p class="training-empty">Ainda não há duplas. Clique em “Sortear duplas” para começar.</p>';
+                oddNotice.style.display = 'none';
+                completePanel.style.display = 'none';
+                return;
+            }
+
+            const groups = new Map();
+            for (const person of duplas) {
+                const number = Number(person.numero_dupla);
+                if (!groups.has(number)) groups.set(number, []);
+                groups.get(number).push(person);
+            }
+            const sorted = [...groups.entries()].sort((a,b) => a[0]-b[0]);
+            const incomplete = sorted.find(([, people]) => !people.some(person => Number(person.lado) === 2));
+            const participantCount = duplas.length;
+            const pairCount = sorted.length;
+            summary.textContent = `${pairCount} dupla${pairCount === 1 ? '' : 's'} · ${participantCount} participante${participantCount === 1 ? '' : 's'} · criado por ${sorteio.criado_por_nome || 'Administrador'}`;
+
+            if (incomplete) {
+                const first = incomplete[1].find(person => Number(person.lado) === 1);
+                oddNotice.style.display = 'block';
+                oddNotice.innerHTML = `⚠️ <strong>Quantidade ímpar de participantes.</strong> ${first ? escaparTreinamento(first.nome_participante) : 'Um participante'} está aguardando parceiro na Dupla ${incomplete[0]}. Você pode completar a dupla abaixo.`;
+                completePanel.style.display = 'block';
+                document.getElementById('trainingCompleteHint').textContent = `A vaga aberta é na Dupla ${incomplete[0]}. Escolha um membro ainda não sorteado ou informe um participante externo.`;
+            } else {
+                oddNotice.style.display = 'none';
+                completePanel.style.display = 'none';
+            }
+
+            pairsBox.innerHTML = sorted.map(([number, people]) => {
+                const first = people.find(person => Number(person.lado) === 1);
+                const second = people.find(person => Number(person.lado) === 2);
+                const personHtml = (person, empty = false) => {
+                    if (empty) return '<div class="training-person missing"><span class="training-person-icon">⚠</span><span>Aguardando parceiro</span></div>';
+                    const external = person.origem === 'externo';
+                    return `<div class="training-person ${external ? 'external' : ''}"><span class="training-person-icon">${external ? '✦' : '忍'}</span><span>${escaparTreinamento(person.nome_participante)}${external ? ' <small>(externo)</small>' : ''}</span></div>`;
+                };
+                return `<article class="training-pair-card"><div class="training-pair-title"><span>Dupla ${number}</span><small>${second ? 'COMPLETA' : 'INCOMPLETA'}</small></div>${personHtml(first || null, !first)}${personHtml(second || null, !second)}</article>`;
+            }).join('');
+
+            const usedIds = new Set(duplas.map(person => Number(person.membro_id)).filter(Number.isFinite));
+            const available = membros.filter(person => !usedIds.has(Number(person.id)));
+            select.innerHTML = '<option value="">Selecione um membro</option>' + available.map(person => `<option value="${Number(person.id)}">${escaparTreinamento(person.nome_jogo || 'Membro')}</option>`).join('');
+            if (!available.length) select.innerHTML = '<option value="">Nenhum membro disponível</option>';
+        }
+
+        async function sortearDuplasTreinamento() {
+            if (!confirm('Criar um novo sorteio? O resultado atual continuará salvo no histórico, mas o novo sorteio passará a ser o ativo.')) return;
+            statusTreinamento('Sorteando participantes e salvando as duplas...');
+            try {
+                const data = await chamarFuncaoTreinamento('sortear');
+                treinamentoEstado.sorteio = data.sorteio || null;
+                treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
+                desenharTreinamento();
+                statusTreinamento(data.ficou_sem_par ? 'Sorteio concluído. Atenção: um membro ficou sem parceiro.' : 'Sorteio concluído! Todas as duplas foram formadas.');
+            } catch (error) { statusTreinamento(error?.message || 'Não foi possível realizar o sorteio.', true); }
+        }
+
+        async function completarDuplaComMembro() {
+            const select = document.getElementById('trainingMemberSelect');
+            const memberId = Number(select.value);
+            if (!Number.isSafeInteger(memberId) || memberId < 1) { statusTreinamento('Selecione um membro disponível.', true); return; }
+            statusTreinamento('Adicionando o membro à dupla...');
+            try {
+                const data = await chamarFuncaoTreinamento('completar_membro', { member_id: memberId });
+                treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
+                desenharTreinamento();
+                statusTreinamento('Dupla completada com o membro cadastrado.');
+            } catch (error) { statusTreinamento(error?.message || 'Não foi possível completar a dupla.', true); }
+        }
+
+        async function completarDuplaComExterno() {
+            const input = document.getElementById('trainingExternalName');
+            const nome = input.value.trim();
+            if (nome.length < 2) { statusTreinamento('Informe o nome do participante externo.', true); input.focus(); return; }
+            statusTreinamento('Adicionando participante externo...');
+            try {
+                const data = await chamarFuncaoTreinamento('completar_externo', { nome });
+                treinamentoEstado.duplas = Array.isArray(data.duplas) ? data.duplas : [];
+                input.value = '';
+                desenharTreinamento();
+                statusTreinamento('Dupla completada com o participante externo.');
+            } catch (error) { statusTreinamento(error?.message || 'Não foi possível completar a dupla.', true); }
+        }
+
+        async function publicarDuplasTreinamento() {
+            if (!confirm('Enviar as duplas do sorteio atual para o Discord?')) return;
+            statusTreinamento('Publicando o resultado no Discord...');
+            try {
+                await chamarFuncaoTreinamento('enviar_discord');
+                statusTreinamento('Resultado publicado no Discord com sucesso.');
+            } catch (error) { statusTreinamento(error?.message || 'Não foi possível publicar no Discord.', true); }
+        }
+
         /* MERCADO DO CLÃ — catálogo e pedidos autenticados pelo Discord */
         const mercadoEstado = { catalogo: [], pedidos: [], membro: null, pedidoEmEdicao: null, isAdmin: false, canManageMarket: false, mercadoBloqueado: false, aba: 'pedidos' };
 
@@ -6165,6 +6402,58 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 @media (max-width:1050px) { #painel-inicial .senju-dashboard-top, #painel-inicial .senju-dashboard-bottom { grid-template-columns:minmax(0,1fr) minmax(270px,.8fr); gap:10px; } #painel-inicial .senju-highlights-content { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-feature-card { min-height:200px; } #painel-inicial .senju-feature-art { height:95px; } #painel-inicial .senju-quick-card { min-height:70px; } #painel-inicial .senju-ranking-list { grid-template-columns:1fr; } }
 @media (max-width:760px) { #painel-inicial { width:calc(100% - 20px); margin-top:10px; } #painel-inicial .senju-dashboard-top, #painel-inicial .senju-dashboard-bottom { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-highlights-content { grid-template-columns:repeat(2,minmax(0,1fr)); } #painel-inicial .senju-feature-card { min-height:250px; } #painel-inicial .senju-feature-art { height:110px; } #painel-inicial .senju-ranking-list { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:520px) { #painel-inicial .senju-highlights-content { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-feature-card { min-height:0; padding-bottom:14px; } #painel-inicial .senju-feature-art { height:130px; } #painel-inicial .senju-ranking-list { grid-template-columns:minmax(0,1fr); } #painel-inicial .senju-rank-card { grid-template-columns:28px 44px minmax(0,1fr); } #painel-inicial .senju-panel-heading { padding:9px 10px; gap:7px; } #painel-inicial .senju-panel-heading h2 { font-size:12px; } #painel-inicial .senju-mini-action { font-size:10px; padding:5px 6px; } #painel-inicial .senju-activity-item { grid-template-columns:27px minmax(0,1fr); } #painel-inicial .senju-activity-item time { grid-column:2; } }
+
+
+        /* CENTRAL DE TREINAMENTO SENJU */
+        #trainingModal { z-index: 4400; padding: 18px; }
+        #trainingModal .training-modal {
+            width: min(1000px, 100%); max-width: 1000px; max-height: 92vh; overflow: auto;
+            padding: clamp(18px, 3vw, 30px); border: 1px solid rgba(194,155,56,.58); border-radius: 18px;
+            background: radial-gradient(ellipse at 90% 0%, rgba(117,70,25,.22), transparent 36%),
+                        linear-gradient(145deg, rgba(31,17,11,.99), rgba(15,9,6,.99));
+            box-shadow: 0 28px 90px rgba(0,0,0,.72), 0 0 0 1px rgba(194,155,56,.08) inset;
+        }
+        #trainingModal .training-heading { display:flex; align-items:center; gap:13px; min-width:0; }
+        #trainingModal .training-mark { width:48px; height:48px; flex:0 0 48px; display:grid; place-items:center; border:1px solid rgba(194,155,56,.55); border-radius:14px; background:rgba(194,155,56,.12); font-size:23px; }
+        #trainingModal .training-kicker { margin:0 0 4px; color:#c7a85b; font-size:10px; letter-spacing:.12em; text-transform:uppercase; }
+        #trainingModal .training-heading h2 { margin:0; color:#f1dfb9; font-family:Georgia,serif; font-size:clamp(22px,3vw,30px); }
+        #trainingModal .training-close { margin-left:auto; border:1px solid rgba(194,155,56,.3); border-radius:10px; background:#21150e; color:#e8d8b7; width:38px; height:38px; font-size:25px; cursor:pointer; }
+        #trainingModal .training-intro { color:#bdb09b; font-size:13px; line-height:1.6; margin:15px 0; }
+        #trainingModal .training-status { display:none; padding:10px 12px; margin:10px 0 15px; border:1px solid rgba(194,155,56,.25); border-radius:10px; background:rgba(194,155,56,.07); color:#e6d3a7; font-size:12px; line-height:1.5; }
+        #trainingModal .training-status.show { display:block; }
+        #trainingModal .training-status.error { border-color:rgba(202,95,75,.5); color:#ffc1b2; background:rgba(120,35,25,.16); }
+        #trainingModal .training-login { padding:18px; border:1px solid rgba(194,155,56,.2); border-radius:12px; color:#cdbf9f; }
+        #trainingModal .training-toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:14px; border:1px solid rgba(194,155,56,.22); border-radius:13px; background:rgba(0,0,0,.18); }
+        #trainingModal .training-toolbar > div:first-child { display:flex; flex-direction:column; gap:5px; min-width:180px; }
+        #trainingModal .training-eyebrow { color:#b99a4e; font-size:10px; letter-spacing:.12em; }
+        #trainingModal #trainingSummary { color:#e8dcc4; font-size:13px; }
+        #trainingModal .training-toolbar-actions, #trainingModal .training-footer-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        #trainingModal .training-btn { border:1px solid rgba(194,155,56,.38); border-radius:9px; padding:10px 13px; font:inherit; font-weight:600; font-size:12px; cursor:pointer; transition:filter .15s, transform .15s; }
+        #trainingModal .training-btn:hover { filter:brightness(1.12); transform:translateY(-1px); }
+        #trainingModal .training-btn.primary { background:linear-gradient(135deg,#b68b2e,#77501c); color:#fff2cf; }
+        #trainingModal .training-btn.secondary { background:#24170f; color:#e6d5b2; }
+        #trainingModal .training-btn.publish { background:linear-gradient(135deg,#365b3b,#203d28); border-color:#557d54; color:#e3f1dc; }
+        #trainingModal .training-odd-notice { margin:12px 0; padding:12px 14px; border:1px solid rgba(219,165,59,.55); border-radius:11px; color:#f1d99d; background:rgba(121,77,15,.18); font-size:13px; line-height:1.5; }
+        #trainingModal .training-pairs { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:14px; }
+        #trainingModal .training-pair-card { min-width:0; padding:13px; border:1px solid rgba(194,155,56,.2); border-radius:12px; background:rgba(0,0,0,.16); }
+        #trainingModal .training-pair-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; color:#d7b86b; font-size:11px; letter-spacing:.06em; text-transform:uppercase; }
+        #trainingModal .training-pair-title small { color:#94846b; font-size:10px; }
+        #trainingModal .training-person { display:flex; align-items:center; gap:9px; padding:9px 10px; border-radius:8px; background:rgba(255,255,255,.035); color:#e8decc; font-size:13px; overflow-wrap:anywhere; }
+        #trainingModal .training-person + .training-person { margin-top:6px; }
+        #trainingModal .training-person .training-person-icon { color:#c8a450; }
+        #trainingModal .training-person.missing { border:1px dashed rgba(218,167,66,.55); color:#e9c778; background:rgba(116,74,12,.12); }
+        #trainingModal .training-person.external { color:#b8d8b4; }
+        #trainingModal .training-empty { grid-column:1/-1; padding:22px; text-align:center; color:#9e907a; font-size:13px; border:1px dashed rgba(194,155,56,.2); border-radius:12px; }
+        #trainingModal .training-complete-panel { margin-top:16px; padding:15px; border:1px solid rgba(194,155,56,.28); border-radius:13px; background:rgba(194,155,56,.045); }
+        #trainingModal .training-complete-panel h3 { margin:0 0 5px; color:#ead6a5; font:600 17px Georgia,serif; }
+        #trainingModal .training-complete-panel p { margin:0 0 12px; color:#a99a81; font-size:12px; line-height:1.5; }
+        #trainingModal .training-complete-grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:11px; align-items:end; }
+        #trainingModal .training-field { display:flex; flex-direction:column; gap:6px; min-width:0; color:#b8a98e; font-size:11px; }
+        #trainingModal .training-field input, #trainingModal .training-field select { width:100%; min-height:40px; border:1px solid rgba(194,155,56,.28); border-radius:8px; padding:9px 10px; background:#130d09; color:#eee0c5; font:inherit; font-size:12px; }
+        #trainingModal .training-footer-actions { justify-content:space-between; margin-top:15px; padding-top:14px; border-top:1px solid rgba(194,155,56,.15); }
+        #trainingModal .training-footer-actions span { max-width:500px; color:#8f826e; font-size:10px; line-height:1.5; }
+        @media (max-width:650px) { #trainingModal .training-pairs { grid-template-columns:minmax(0,1fr); } #trainingModal .training-complete-grid { grid-template-columns:minmax(0,1fr); } #trainingModal .training-complete-grid .training-btn { width:100%; } #trainingModal .training-toolbar-actions { width:100%; } #trainingModal .training-toolbar-actions .training-btn { flex:1; } #trainingModal .training-footer-actions { align-items:stretch; flex-direction:column; } #trainingModal .training-footer-actions .training-btn { width:100%; } }
+
 </style>
 
 <script id="senju-dashboard-data">
