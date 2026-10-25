@@ -2506,6 +2506,11 @@
                 </div>
             </div>
 
+            <div id="sorteioPublicacaoPainel" role="status" aria-live="polite" hidden style="margin: 0 0 18px; padding: 15px; border: 1px solid rgba(212,175,55,.5); border-radius: 10px; background: rgba(0,0,0,.48); color: #fff;">
+                <div id="sorteioPublicacaoMensagem" style="white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5;"></div>
+                <button type="button" id="sorteioTentarPublicar" onclick="tentarReenviarSorteio()" hidden style="margin-top: 12px; padding: 10px 16px; border-radius: 8px; background: #227b52; color: white; border: 1px solid #75c79d; cursor: pointer;">↻ Tentar publicar o mesmo resultado</button>
+            </div>
+
             <div class="modal-footer" style="justify-content: center;">
                 <button type="button" class="btn-cancelar" onclick="fecharSorteio()">Fechar</button>
                 <button type="button" class="btn-discord-login" id="btnGirar" onclick="iniciarSorteio()" style="padding: 12px 25px; background-color: #8a2be2;">Girar Roleta 🎲</button>
@@ -4948,10 +4953,59 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             textoRoleta.replaceChildren(titulo, lista);
         }
 
+        // Guarda o último resultado nesta aba para permitir reenviar sem sortear outros ganhadores.
+        let sorteioPublicacaoPendente = null;
+        let sorteioPublicacaoEmAndamento = false;
+
+        function atualizarStatusPublicacaoSorteio(mensagem, podeReenviar = false) {
+            const painel = document.getElementById('sorteioPublicacaoPainel');
+            const texto = document.getElementById('sorteioPublicacaoMensagem');
+            const botao = document.getElementById('sorteioTentarPublicar');
+            if (!painel || !texto || !botao) return;
+            painel.hidden = !mensagem;
+            texto.textContent = mensagem || '';
+            botao.hidden = !podeReenviar;
+            botao.disabled = sorteioPublicacaoEmAndamento;
+        }
+
+        async function tentarReenviarSorteio() {
+            if (!sorteioPublicacaoPendente || sorteioPublicacaoEmAndamento) return;
+            const resultado = sorteioPublicacaoPendente;
+            sorteioPublicacaoEmAndamento = true;
+            const btnGirar = document.getElementById('btnGirar');
+            if (btnGirar) btnGirar.disabled = true;
+            atualizarStatusPublicacaoSorteio('📡 Publicando o resultado no Discord. Aguarde...');
+            try {
+                await enviarResultadoSorteioDiscord(resultado.ganhadores, resultado.totalParticipantes, resultado.todosParticipam);
+                sorteioPublicacaoPendente = null;
+                atualizarStatusPublicacaoSorteio('✅ Resultado confirmado pelo Discord. Publicação concluída.');
+                mostrarAviso('Resultado do sorteio enviado ao Discord.', 'sucesso');
+            } catch (error) {
+                const motivo = error?.message || 'Falha desconhecida na publicação.';
+                console.error('Erro ao publicar sorteio no Discord:', error);
+                atualizarStatusPublicacaoSorteio('❌ Os ganhadores foram sorteados, mas a publicação não foi confirmada.\nMotivo: ' + motivo + '\n\nVocê pode tentar publicar o MESMO resultado novamente, sem girar a roleta.', true);
+                mostrarAviso('Sorteio realizado, mas o Discord não confirmou o envio.', 'erro');
+            } finally {
+                sorteioPublicacaoEmAndamento = false;
+                if (btnGirar) btnGirar.disabled = false;
+                const botao = document.getElementById('sorteioTentarPublicar');
+                if (botao) botao.disabled = false;
+            }
+        }
+
         async function iniciarSorteio() {
             const btnGirar = document.getElementById('btnGirar');
             const textoRoleta = document.getElementById('textoRoleta');
-            if (btnGirar.disabled) return;
+            if (btnGirar.disabled || sorteioPublicacaoEmAndamento) return;
+            if (sorteioPublicacaoPendente && !confirm('O último sorteio ainda não foi publicado no Discord. Fazer outro sorteio descartará a opção de reenviar os mesmos ganhadores. Deseja continuar?')) return;
+            const token = tokenDiscordMercado();
+            if (!token) {
+                atualizarStatusPublicacaoSorteio('❌ Sua sessão do Discord expirou. Saia e entre novamente no site antes de sortear.');
+                mostrarAviso('Entre novamente com o Discord antes de sortear.', 'erro');
+                return;
+            }
+            sorteioPublicacaoPendente = null;
+            atualizarStatusPublicacaoSorteio('');
             btnGirar.disabled = true;
             textoRoleta.textContent = 'Carregando participantes…';
 
@@ -4997,13 +5051,12 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     clearInterval(intervalo);
                     const ganhadores = sortearGanhadores(participantes, quantidadeGanhadores);
                     mostrarGanhadoresSorteio(ganhadores);
-                    void enviarResultadoSorteioDiscord(ganhadores, participantes.length, modoTodos)
-                        .then(() => mostrarAviso('Resultado do sorteio enviado ao Discord.', 'sucesso'))
-                        .catch(error => {
-                            console.error('Erro ao enviar resultado do sorteio ao Discord:', error);
-                            mostrarAviso(error?.message || 'O sorteio aconteceu, mas não foi possível publicar o resultado no Discord.', 'erro');
-                        })
-                        .finally(() => { btnGirar.disabled = false; });
+                    sorteioPublicacaoPendente = {
+                        ganhadores,
+                        totalParticipantes: participantes.length,
+                        todosParticipam: modoTodos
+                    };
+                    void tentarReenviarSorteio();
                 }, 100);
             } catch (error) {
                 console.error('Erro ao sortear membros:', error);
