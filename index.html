@@ -1880,6 +1880,14 @@
         @media(max-width:650px) { #caixaModal { align-items:flex-end;padding:8px; } #caixaModal .caixa-modal { width:100%;max-height:94dvh;padding:17px 13px calc(18px + env(safe-area-inset-bottom));border-radius:16px 16px 10px 10px; } #caixaModal .caixa-summary { grid-template-columns:1fr 1fr; } #caixaModal .caixa-summary .caixa-card:first-child { grid-column:1/-1; } #caixaModal .caixa-form-grid, #caixaModal .caixa-resources { grid-template-columns:1fr; } #caixaModal .caixa-field.full { grid-column:auto; } }
         @media(prefers-reduced-motion:reduce) { #caixaModal *,#caixaModal *::before,#caixaModal *::after { animation-duration:.01ms!important;transition-duration:.01ms!important; } }
 
+
+        /* Aliança: navegação e identificação por clã */
+        .alianca-filtros { display:flex; flex-wrap:wrap; gap:9px; margin: 0 0 22px; }
+        .alianca-filtro { border:1px solid rgba(194,155,56,.4); border-radius:8px; background:rgba(26,14,8,.9); color:#e7d8c2; padding:10px 16px; cursor:pointer; font-weight:700; }
+        .alianca-filtro:hover, .alianca-filtro.ativo { background:rgba(194,155,56,.2); border-color:#c29b38; color:#fff; }
+        .alianca-titulo-cla { grid-column:1/-1; margin: 14px 0 2px; padding: 12px 16px; border-left:4px solid #c29b38; border-bottom:1px solid rgba(194,155,56,.35); color:#e9ca75; font-family:'Cinzel',serif; font-size:1.25rem; }
+        .alianca-identidade { color:#e9ca75; font-size:.78rem; font-weight:700; margin:6px 0 12px; }
+
     </style>
 
 <style id="pacto-das-sombras-theme">
@@ -2139,17 +2147,23 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
 
     <!-- SEÇÃO DE MEMBROS -->
     <div class="container" id="membros">
-        <h2 class="section-title">Membros do Clã <span id="contador-membros" class="section-counter">0</span></h2>
+        <h2 class="section-title">Membros da Aliança <span id="contador-membros" class="section-counter">0</span></h2>
         
         <!-- Barra de Busca e Botão Adicionar -->
         <div class="members-controls-wrapper">
             <div class="search-box-container">
                 <span class="search-icon">🔍</span>
-                <input type="text" id="inputBuscaMembro" oninput="filtrarMembros()" placeholder="Pesquisar membro por nome...">
+                <input type="text" id="inputBuscaMembro" oninput="filtrarMembros()" placeholder="Pesquisar por nome, clã ou graduação...">
             </div>
             <button id="btn-adicionar-membro" class="btn-admin" onclick="abrirModalMembro()">+ Adicionar Membro</button>
         </div>
 
+        <div class="alianca-filtros" id="alianca-filtros" aria-label="Filtrar membros por clã">
+            <button class="alianca-filtro ativo" type="button" data-cla="Todos" onclick="selecionarFiltroCla('Todos')">Todos</button>
+            <button class="alianca-filtro" type="button" data-cla="Kaguya" onclick="selecionarFiltroCla('Kaguya')">Kaguya</button>
+            <button class="alianca-filtro" type="button" data-cla="Shimura" onclick="selecionarFiltroCla('Shimura')">Shimura</button>
+            <button class="alianca-filtro" type="button" data-cla="Senju" onclick="selecionarFiltroCla('Senju')">Senju</button>
+        </div>
         <!-- Grade de Membros -->
         <div id="lista-membros" class="members-grid">
             <p style="color:var(--text-muted); text-align:center; grid-column:1/-1;">Carregando membros...</p>
@@ -3193,6 +3207,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         const TIPOS_WEBHOOK = ['sorteio', 'recompensa', 'relatorio', 'notificacao', 'aprovado', 'negado'];
 
+        let filtroClaAtual = "Todos";
         let listaMembrosCache = [];
         let membrosFiltradosCache = [];
         let paginaAtual = 1;
@@ -3764,48 +3779,70 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        function carregarMembros() {
-            supabaseClient.from('membros').select('*').then(({ data: membros, error }) => {
-                if (error || !membros) {
-                    listaMembrosCache = [];
-                } else {
-                    listaMembrosCache = membros;
-                }
+        const ORDEM_CLAS_ALIANCA = ['Kaguya', 'Shimura', 'Senju'];
+        function pesoGraduacaoMembro(m) {
+            if (m.lider_alianca === true) return 0;
+            const cargo = String(m.cargo_especial || '').toLowerCase();
+            const grad = String(m.graduacao || '').toLowerCase();
+            if (cargo.includes('líder') || cargo.includes('leader')) return 1;
+            if (cargo.includes('braço direito') || cargo.includes('sub')) return 2;
+            if (grad.includes('jounin')) return 3;
+            if (grad.includes('chunin')) return 4;
+            if (grad.includes('genin')) return 5;
+            if (grad.includes('estudante')) return 6;
+            return 7;
+        }
 
-                listaMembrosCache.sort((a, b) => {
-                    const getPeso = (m) => {
-                        const cargoEsp = (m.cargo_especial || "").toLowerCase();
-                        const graduacao = (m.graduacao || "").toLowerCase();
-
-                        if (cargoEsp.includes('líder') || cargoEsp.includes('leader')) return 1;
-                        if (cargoEsp.includes('braço direito') || cargoEsp.includes('sub')) return 2;
-                        if (graduacao.includes('jounin') || graduacao.includes('じょうにん')) return 3;
-                        if (graduacao.includes('chunin') || graduacao.includes('ちゅうにん')) return 4;
-                        if (graduacao.includes('genin') || graduacao.includes('gennin') || graduacao.includes('元仁')) return 5;
-                        if (graduacao.includes('estudante') || graduacao.includes('学 生')) return 6;
-                        return 7;
-                    };
-
-                    const pA = getPeso(a);
-                    const pB = getPeso(b);
-                    if (pA !== pB) return pA - pB;
-
-                    return a.nome_jogo.localeCompare(b.nome_jogo);
-                });
-
-                membrosFiltradosCache = [...listaMembrosCache];
-                paginaAtual = 1;
-
-                const contadorMembros = document.getElementById('contador-membros');
-                if (contadorMembros) {
-                    contadorMembros.textContent = listaMembrosCache.length;
-                    contadorMembros.title = `${listaMembrosCache.length} membro(s) no clã`;
-                    const dashboardMembros = document.getElementById('dashboard-membros');
-                    if (dashboardMembros) dashboardMembros.textContent = listaMembrosCache.length;
-                }
-
-                renderizarPaginaMembros();
+        function aplicarFiltrosMembros() {
+            const termo = (document.getElementById('inputBuscaMembro')?.value || '').toLocaleLowerCase('pt-BR').trim();
+            membrosFiltradosCache = listaMembrosCache.filter(m => {
+                if (filtroClaAtual !== 'Todos' && m.cla_alianca !== filtroClaAtual) return false;
+                if (!termo) return true;
+                return [m.nome_jogo, m.cla_alianca, m.cargo_especial, m.trabalho, m.graduacao]
+                    .some(valor => String(valor || '').toLocaleLowerCase('pt-BR').includes(termo));
             });
+            paginaAtual = 1;
+            renderizarPaginaMembros();
+        }
+
+        function selecionarFiltroCla(cla) {
+            if (cla !== 'Todos' && !ORDEM_CLAS_ALIANCA.includes(cla)) return;
+            filtroClaAtual = cla;
+            document.querySelectorAll('.alianca-filtro').forEach(botao => {
+                const ativo = botao.dataset.cla === cla;
+                botao.classList.toggle('ativo', ativo);
+                botao.setAttribute('aria-pressed', String(ativo));
+            });
+            aplicarFiltrosMembros();
+        }
+
+        function carregarMembros() {
+            supabaseClient.from('membros').select('*')
+                .eq('alianca_ativo', true)
+                .in('cla_alianca', ORDEM_CLAS_ALIANCA)
+                .then(({ data, error }) => {
+                    if (error) {
+                        console.error('Falha ao carregar membros ativos da aliança:', error);
+                        listaMembrosCache = [];
+                    } else {
+                        listaMembrosCache = (data || []).filter(m => m.alianca_ativo === true && ORDEM_CLAS_ALIANCA.includes(m.cla_alianca));
+                    }
+                    listaMembrosCache.sort((a, b) => {
+                        const cla = ORDEM_CLAS_ALIANCA.indexOf(a.cla_alianca) - ORDEM_CLAS_ALIANCA.indexOf(b.cla_alianca);
+                        if (cla) return cla;
+                        const peso = pesoGraduacaoMembro(a) - pesoGraduacaoMembro(b);
+                        if (peso) return peso;
+                        return String(a.nome_jogo || '').localeCompare(String(b.nome_jogo || ''), 'pt-BR');
+                    });
+                    const contador = document.getElementById('contador-membros');
+                    if (contador) {
+                        contador.textContent = listaMembrosCache.length;
+                        contador.title = `${listaMembrosCache.length} membro(s) ativos na aliança`;
+                    }
+                    const dashboard = document.getElementById('dashboard-membros');
+                    if (dashboard) dashboard.textContent = listaMembrosCache.length;
+                    aplicarFiltrosMembros();
+                });
         }
 
         function renderizarPaginaMembros() {
@@ -3832,7 +3869,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const eAdminLogado = userId && adminsAtuais.includes(userId);
 
                 container.innerHTML = '';
+                let ultimoCla = null;
                 itensPagina.forEach((m) => {
+                    if (m.cla_alianca !== ultimoCla) {
+                        ultimoCla = m.cla_alianca;
+                        const cabecalho = document.createElement('h3');
+                        cabecalho.className = 'alianca-titulo-cla';
+                        cabecalho.textContent = `Clã ${ultimoCla}`;
+                        container.appendChild(cabecalho);
+                    }
                     const card = document.createElement('div');
                     card.className = 'member-card';
                     card.onclick = () => abrirDetalhesMembro(m);
@@ -3874,7 +3919,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         ${botaoEsquerdaHtml}
                         ${botoesAdminHtml}
                         <div class="member-card-content">
-                            <h4>${m.nome_jogo || 'Membro do Clã'}</h4>
+                            <h4>${m.nome_jogo || 'Membro da Aliança'}</h4>
+                            <div class="alianca-identidade">${m.lider_alianca === true ? '👑 Líder' : '🍃 Membro'} • ${m.cla_alianca}</div>
                             <div class="member-card-meta">${informacoesMembroHtml}</div>
                         </div>
                     `;
@@ -3899,19 +3945,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         }
 
         function filtrarMembros() {
-            const termo = document.getElementById('inputBuscaMembro').value.toLowerCase().trim();
-            if (!termo) {
-                membrosFiltradosCache = [...listaMembrosCache];
-            } else {
-                membrosFiltradosCache = listaMembrosCache.filter(m => 
-                    m.nome_jogo.toLowerCase().includes(termo) || 
-                    (m.cargo_especial && m.cargo_especial.toLowerCase().includes(termo)) ||
-                    (m.trabalho && m.trabalho.toLowerCase().includes(termo)) ||
-                    m.graduacao.toLowerCase().includes(termo)
-                );
-            }
-            paginaAtual = 1;
-            renderizarPaginaMembros();
+            aplicarFiltrosMembros();
         }
 
         const modalDetalhesMembro = document.getElementById('modalDetalhesMembro');
