@@ -1964,7 +1964,7 @@
         .alianca-filtro { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
         .alianca-simbolo-aba { width:29px; height:24px; object-fit:contain; flex-shrink:0; }
         .alianca-identidade { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; }
-        .alianca-simbolo-cartao { width:42px; height:29px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 1px 3px rgba(230,50,30,.25)); }
+
         .alianca-cabecalho-cla { display:flex; align-items:center; gap:14px; margin:0 0 16px; padding:8px 14px; border-left:4px solid #c29b38; border-bottom:1px solid rgba(194,155,56,.35); color:#e9ca75; font-family:'Cinzel',serif; font-size:1.2rem; font-weight:700; }
         .alianca-cabecalho-cla[hidden] { display:none; }
         .alianca-cabecalho-cla img { width:90px; height:64px; object-fit:contain; filter:drop-shadow(0 2px 7px rgba(230,40,30,.25)); }
@@ -1972,7 +1972,7 @@
             .alianca-filtro { padding:8px 10px; gap:5px; }
             .alianca-simbolo-aba { width:24px; height:20px; }
             .alianca-cabecalho-cla img { width:64px; height:46px; }
-            .alianca-simbolo-cartao { width:35px; height:25px; }
+
         }
 
     </style>
@@ -4041,7 +4041,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         ${botoesAdminHtml}
                         <div class="member-card-content">
                             <h4>${m.nome_jogo || 'Membro da Aliança'}${m.e_admin === true ? '<span class="alianca-admin-escudo" title="Administrador do site" aria-label="Administrador do site">🛡️</span>' : ''}</h4>
-                            <div class="alianca-identidade"><img class="alianca-simbolo-cartao" src="assets/${String(m.cla_alianca || '').toLowerCase()}.png" alt="Símbolo ${m.cla_alianca}" loading="lazy">${m.lider_alianca === true ? '👑 Líder' : '🍃 Membro'} • ${m.cla_alianca}</div>
+                            <div class="alianca-identidade">${m.lider_alianca === true ? '👑 Líder' : '🍃 Membro'} • ${m.cla_alianca}</div>
                             <div class="member-card-meta">${informacoesMembroHtml}</div>
                         </div>
                     `;
