@@ -2250,6 +2250,8 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
             <button class="alianca-filtro" type="button" data-cla="Kaguya" onclick="selecionarFiltroCla('Kaguya')"><img class="alianca-simbolo-aba" src="assets/kaguya.png" alt="" loading="lazy">Kaguya</button>
             <button class="alianca-filtro" type="button" data-cla="Shimura" onclick="selecionarFiltroCla('Shimura')"><img class="alianca-simbolo-aba" src="assets/shimura.png" alt="" loading="lazy">Shimura</button>
             <button class="alianca-filtro" type="button" data-cla="Senju" onclick="selecionarFiltroCla('Senju')"><img class="alianca-simbolo-aba" src="assets/senju.png" alt="" loading="lazy">Senju</button>
+            <button class="alianca-filtro" type="button" data-cla="Kurotsuki" onclick="selecionarFiltroCla('Kurotsuki')"><img class="alianca-simbolo-aba" src="assets/kurotsuki.png" alt="" loading="lazy">Kurotsuki</button>
+            <button class="alianca-filtro" type="button" data-cla="Atreides" onclick="selecionarFiltroCla('Atreides')"><img class="alianca-simbolo-aba" src="assets/atreides.png" alt="" loading="lazy">Atreides</button>
         </div>
         <div id="alianca-cabecalho-cla" class="alianca-cabecalho-cla" hidden aria-live="polite">
             <img id="alianca-cabecalho-simbolo" src="" alt="">
@@ -3870,7 +3872,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        const ORDEM_CLAS_ALIANCA = ['Kaguya', 'Shimura', 'Senju'];
+        const ORDEM_CLAS_ALIANCA = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Atreides'];
         function pesoGraduacaoMembro(m) {
             if (m.lider_alianca === true) return 0;
             const cargo = String(m.cargo_especial || '').toLowerCase();
