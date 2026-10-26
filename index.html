@@ -1959,6 +1959,22 @@
             filter: drop-shadow(0 0 3px rgba(194,155,56,.35));
         }
 
+    
+        /* Símbolos oficiais dos clãs, mantidos como arquivos externos em assets/ */
+        .alianca-filtro { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+        .alianca-simbolo-aba { width:29px; height:24px; object-fit:contain; flex-shrink:0; }
+        .alianca-identidade { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; }
+        .alianca-simbolo-cartao { width:42px; height:29px; object-fit:contain; flex-shrink:0; filter:drop-shadow(0 1px 3px rgba(230,50,30,.25)); }
+        .alianca-cabecalho-cla { display:flex; align-items:center; gap:14px; margin:0 0 16px; padding:8px 14px; border-left:4px solid #c29b38; border-bottom:1px solid rgba(194,155,56,.35); color:#e9ca75; font-family:'Cinzel',serif; font-size:1.2rem; font-weight:700; }
+        .alianca-cabecalho-cla[hidden] { display:none; }
+        .alianca-cabecalho-cla img { width:90px; height:64px; object-fit:contain; filter:drop-shadow(0 2px 7px rgba(230,40,30,.25)); }
+        @media (max-width:600px) {
+            .alianca-filtro { padding:8px 10px; gap:5px; }
+            .alianca-simbolo-aba { width:24px; height:20px; }
+            .alianca-cabecalho-cla img { width:64px; height:46px; }
+            .alianca-simbolo-cartao { width:35px; height:25px; }
+        }
+
     </style>
 
 <style id="pacto-das-sombras-theme">
@@ -2231,9 +2247,13 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
 
         <div class="alianca-filtros" id="alianca-filtros" aria-label="Filtrar membros por clã">
             <button class="alianca-filtro ativo" type="button" data-cla="Todos" onclick="selecionarFiltroCla('Todos')">Todos</button>
-            <button class="alianca-filtro" type="button" data-cla="Kaguya" onclick="selecionarFiltroCla('Kaguya')">Kaguya</button>
-            <button class="alianca-filtro" type="button" data-cla="Shimura" onclick="selecionarFiltroCla('Shimura')">Shimura</button>
-            <button class="alianca-filtro" type="button" data-cla="Senju" onclick="selecionarFiltroCla('Senju')">Senju</button>
+            <button class="alianca-filtro" type="button" data-cla="Kaguya" onclick="selecionarFiltroCla('Kaguya')"><img class="alianca-simbolo-aba" src="assets/kaguya.png" alt="" loading="lazy">Kaguya</button>
+            <button class="alianca-filtro" type="button" data-cla="Shimura" onclick="selecionarFiltroCla('Shimura')"><img class="alianca-simbolo-aba" src="assets/shimura.png" alt="" loading="lazy">Shimura</button>
+            <button class="alianca-filtro" type="button" data-cla="Senju" onclick="selecionarFiltroCla('Senju')"><img class="alianca-simbolo-aba" src="assets/senju.png" alt="" loading="lazy">Senju</button>
+        </div>
+        <div id="alianca-cabecalho-cla" class="alianca-cabecalho-cla" hidden aria-live="polite">
+            <img id="alianca-cabecalho-simbolo" src="" alt="">
+            <span id="alianca-cabecalho-nome"></span>
         </div>
         <!-- Grade de Membros -->
         <div id="lista-membros" class="members-grid">
@@ -3903,6 +3923,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         function selecionarFiltroCla(cla) {
             if (cla !== 'Todos' && !ORDEM_CLAS_ALIANCA.includes(cla)) return;
             filtroClaAtual = cla;
+            const cabecalho = document.getElementById('alianca-cabecalho-cla');
+            if (cabecalho) {
+                cabecalho.hidden = cla === 'Todos';
+                if (cla !== 'Todos') {
+                    document.getElementById('alianca-cabecalho-simbolo').src = `assets/${cla.toLowerCase()}.png`;
+                    document.getElementById('alianca-cabecalho-simbolo').alt = `Símbolo do clã ${cla}`;
+                    document.getElementById('alianca-cabecalho-nome').textContent = `Clã ${cla}`;
+                }
+            }
             document.querySelectorAll('.alianca-filtro').forEach(botao => {
                 const ativo = botao.dataset.cla === cla;
                 botao.classList.toggle('ativo', ativo);
@@ -4012,7 +4041,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         ${botoesAdminHtml}
                         <div class="member-card-content">
                             <h4>${m.nome_jogo || 'Membro da Aliança'}${m.e_admin === true ? '<span class="alianca-admin-escudo" title="Administrador do site" aria-label="Administrador do site">🛡️</span>' : ''}</h4>
-                            <div class="alianca-identidade">${m.lider_alianca === true ? '👑 Líder' : '🍃 Membro'} • ${m.cla_alianca}</div>
+                            <div class="alianca-identidade"><img class="alianca-simbolo-cartao" src="assets/${String(m.cla_alianca || '').toLowerCase()}.png" alt="Símbolo ${m.cla_alianca}" loading="lazy">${m.lider_alianca === true ? '👑 Líder' : '🍃 Membro'} • ${m.cla_alianca}</div>
                             <div class="member-card-meta">${informacoesMembroHtml}</div>
                         </div>
                     `;
