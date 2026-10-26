@@ -1948,6 +1948,17 @@
             .member-meta-value { font-size: .69rem; }
         }
 
+    
+        /* Selo discreto de administrador ao lado do nome, sem ocupar um bloco de cargo. */
+        .alianca-admin-escudo {
+            display: inline-block;
+            margin-left: 7px;
+            font-size: .85em;
+            vertical-align: baseline;
+            cursor: help;
+            filter: drop-shadow(0 0 3px rgba(194,155,56,.35));
+        }
+
     </style>
 
 <style id="pacto-das-sombras-theme">
@@ -3853,6 +3864,29 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             return 7;
         }
 
+        function prioridadeTodosMembro(m) {
+            const cargo = String(m.cargo_especial || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+            const lider = m.lider_alianca === true || /\blider\b|leader/.test(cargo);
+            const bracoDireito = /braco\s*direito|sub.?lider|vice.?lider/.test(cargo);
+            // A liderança Senju e seu braço direito têm prioridade máxima na aba Todos.
+            if (m.cla_alianca === 'Senju' && lider) return 0;
+            if (m.cla_alianca === 'Senju' && bracoDireito) return 1;
+            if (lider) return 2;
+            if (bracoDireito) return 3;
+            return 4;
+        }
+
+        function compararMembrosAlianca(a, b) {
+            if (filtroClaAtual === 'Todos') {
+                const prioridade = prioridadeTodosMembro(a) - prioridadeTodosMembro(b);
+                if (prioridade) return prioridade;
+            } else {
+                const peso = pesoGraduacaoMembro(a) - pesoGraduacaoMembro(b);
+                if (peso) return peso;
+            }
+            return String(a.nome_jogo || '').localeCompare(String(b.nome_jogo || ''), 'pt-BR');
+        }
+
         function aplicarFiltrosMembros() {
             const termo = (document.getElementById('inputBuscaMembro')?.value || '').toLocaleLowerCase('pt-BR').trim();
             membrosFiltradosCache = listaMembrosCache.filter(m => {
@@ -3861,6 +3895,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 return [m.nome_jogo, m.cla_alianca, m.cargo_especial, m.trabalho, m.graduacao]
                     .some(valor => String(valor || '').toLocaleLowerCase('pt-BR').includes(termo));
             });
+            membrosFiltradosCache.sort(compararMembrosAlianca);
             paginaAtual = 1;
             renderizarPaginaMembros();
         }
@@ -3929,15 +3964,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 const eAdminLogado = userId && adminsAtuais.includes(userId);
 
                 container.innerHTML = '';
-                let ultimoCla = null;
                 itensPagina.forEach((m) => {
-                    if (m.cla_alianca !== ultimoCla) {
-                        ultimoCla = m.cla_alianca;
-                        const cabecalho = document.createElement('h3');
-                        cabecalho.className = 'alianca-titulo-cla';
-                        cabecalho.textContent = `Clã ${ultimoCla}`;
-                        container.appendChild(cabecalho);
-                    }
+                    // Na aba Todos, não inserir separadores de clã.
                     const card = document.createElement('div');
                     card.className = 'member-card';
                     card.onclick = () => abrirDetalhesMembro(m);
@@ -3970,7 +3998,6 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         ? `<div class="member-meta-item member-meta-item--rank"><span class="member-meta-label">GRADUAÇÃO</span><strong class="member-meta-value">${m.graduacao}</strong></div>`
                         : '';
                     const permissoes = [
-                        m.e_admin === true ? '🛡 Administrador' : null,
                         m.e_comprador_recursos === true ? '💰 Comprador de Recursos' : null,
                         m.e_avaliador_treino === true ? '⚔ Avaliador de Treino' : null
                     ].filter(Boolean);
@@ -3984,7 +4011,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         ${botaoEsquerdaHtml}
                         ${botoesAdminHtml}
                         <div class="member-card-content">
-                            <h4>${m.nome_jogo || 'Membro da Aliança'}</h4>
+                            <h4>${m.nome_jogo || 'Membro da Aliança'}${m.e_admin === true ? '<span class="alianca-admin-escudo" title="Administrador do site" aria-label="Administrador do site">🛡️</span>' : ''}</h4>
                             <div class="alianca-identidade">${m.lider_alianca === true ? '👑 Líder' : '🍃 Membro'} • ${m.cla_alianca}</div>
                             <div class="member-card-meta">${informacoesMembroHtml}</div>
                         </div>
