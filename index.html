@@ -3129,13 +3129,16 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 status.style.color = missaoKageBloqueada ? '#ff8f8f' : '#7ee2a8';
             }
             if (form) {
+                const usuario = localStorage.getItem('discord_user_id');
+                const adminNoPainel = Array.isArray(window.__kageAdminsAtuais) && window.__kageAdminsAtuais.includes(String(usuario));
+                const bloquearFormulario = missaoKageBloqueada && !adminNoPainel;
                 form.querySelectorAll('input, button[type="submit"]').forEach(el => {
-                    if (el.id !== 'toggle-trava-missao-kage') el.disabled = missaoKageBloqueada;
+                    if (el.id !== 'toggle-trava-missao-kage') el.disabled = bloquearFormulario;
                 });
                 const aviso = document.getElementById('aviso-trava-missao-kage');
-                if (aviso) aviso.style.display = missaoKageBloqueada ? 'block' : 'none';
+                if (aviso) aviso.style.display = missaoKageBloqueada && !adminNoPainel ? 'block' : 'none';
             }
-            if (btnEnviar && missaoKageBloqueada) btnEnviar.innerText = 'Missão Kage bloqueada';
+            if (btnEnviar && missaoKageBloqueada && !(window.__kageAdminsAtuais || []).includes(String(localStorage.getItem('discord_user_id')))) btnEnviar.innerText = 'Missão Kage bloqueada';
             else if (btnEnviar) btnEnviar.innerText = 'Solicitar Recompensa';
         }
 
@@ -3145,6 +3148,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const userId = localStorage.getItem('discord_user_id');
             const admins = await obterAdminsAutorizados();
             const eAdmin = !!userId && admins.includes(String(userId));
+            window.__kageAdminsAtuais = admins;
             box.style.display = eAdmin ? 'block' : 'none';
             try {
                 await obterEstadoTravaMissaoKage();
@@ -4200,7 +4204,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     tipo: 'sucesso',
                     aoConfirmar: () => {
                 supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoId).single().then(({ data: solData }) => {
-                    const dataHoje = new Date().toISOString().split('T')[0];
+                    const dataHoje = dataKageBrasilia();
                     supabaseClient
                         .from('solicitacoes_recompensa')
                         .update({ status: 'Pago', data_pagamento: dataHoje })
@@ -4284,7 +4288,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             btnConfirmar.innerText = "Enviando...";
 
             supabaseClient.from('solicitacoes_recompensa').select('*').eq('id', solicitacaoIdParaNegar).single().then(({ data: solData }) => {
-                const dataHoje = new Date().toISOString().split('T')[0];
+                const dataHoje = dataKageBrasilia();
                 supabaseClient
                     .from('solicitacoes_recompensa')
                     .update({ status: 'Negado', data_pagamento: dataHoje })
@@ -5071,73 +5075,56 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         const modalRecompensa = document.getElementById('modalRecompensa');
 
+        // Data civil em Brasília, usada para liberar novas missões à meia-noite.
+        function dataKageBrasilia(valor = new Date()) {
+            const partes = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit'
+            }).formatToParts(new Date(valor));
+            const obter = nome => partes.find(p => p.type === nome)?.value || '';
+            return `${obter('year')}-${obter('month')}-${obter('day')}`;
+        }
+
+        let envioKageEmAndamento = false;
+        async function verificarPermissaoEnvioKage(userId, eAdmin) {
+            if (eAdmin) return; // Administradores podem testar sem limite de envios ou de fotos.
+            const { data, error } = await supabaseClient.from('solicitacoes_recompensa')
+                .select('id,status,created_at,data_envio,data_pagamento')
+                .eq('discord_id', String(userId))
+                .in('status', ['Pendente', 'Pago'])
+                .order('id', { ascending: false }).limit(200);
+            if (error) throw error;
+            const registros = data || [];
+            if (registros.some(r => r.status === 'Pendente')) {
+                throw new Error('Você já possui uma Missão Kage pendente de avaliação. Aguarde a decisão do administrador.');
+            }
+            const hoje = dataKageBrasilia();
+            if (registros.some(r => r.status === 'Pago' &&
+                (r.data_pagamento ? String(r.data_pagamento).slice(0, 10) : dataKageBrasilia(r.created_at || r.data_envio)) === hoje)) {
+                throw new Error('Sua Missão Kage já foi aprovada hoje. Você poderá enviar outra após a meia-noite, no horário de Brasília.');
+            }
+        }
+
         async function tentarAbrirRecompensa() {
             const userId = localStorage.getItem('discord_user_id');
             const username = localStorage.getItem('discord_username');
-
-            if (!userId) {
-                mostrarAviso('Você precisa entrar com o Discord no topo da página!', 'erro');
-                return;
-            }
-
+            if (!userId) { mostrarAviso('Entre com o Discord para enviar uma missão.', 'erro'); return; }
             try {
                 const [bloqueada, adminsAtuais] = await Promise.all([
-                    obterEstadoTravaMissaoKage(),
-                    obterAdminsAutorizados()
+                    obterEstadoTravaMissaoKage(), obterAdminsAutorizados()
                 ]);
                 const eAdmin = adminsAtuais.includes(String(userId));
-
-                // Um admin precisa conseguir abrir o popup para remover a própria trava.
-                // Membros continuam sem acesso enquanto a Missão Kage estiver bloqueada.
+                window.__kageAdminsAtuais = adminsAtuais;
                 if (bloqueada && !eAdmin) {
-                    mostrarAviso('🔒 A Missão Kage está temporariamente bloqueada pela liderança.', 'erro');
-                    return;
+                    mostrarAviso('🔒 A Missão Kage está temporariamente bloqueada pela liderança.', 'erro'); return;
                 }
-
-                // A trava não impede o admin de abrir o painel de controle. Enquanto ela
-                // estiver ativa, o formulário de envio continua desabilitado pela interface
-                // e a função enviarRecompensa também valida a trava no banco.
-                if (!bloqueada) {
-                    const { data: ultimosEnvios, error: erroEnvios } = await supabaseClient
-                        .from('solicitacoes_recompensa')
-                        .select('created_at, data_envio, status')
-                        .eq('discord_id', userId)
-                        .neq('status', 'Negado')
-                        .order('id', { ascending: false })
-                        .limit(1);
-
-                    if (erroEnvios) throw erroEnvios;
-
-                    if (ultimosEnvios && ultimosEnvios.length > 0) {
-                        const ultimoEnvio = ultimosEnvios[0];
-                        const dataEnvioStr = ultimoEnvio.created_at || ultimoEnvio.data_envio;
-                        const ultimaData = new Date(dataEnvioStr);
-                        const agora = new Date();
-                        const diferencaHoras = (agora - ultimaData) / (1000 * 60 * 60);
-
-                        if (diferencaHoras < 24) {
-                            const horasRestantes = Math.ceil(24 - diferencaHoras);
-                            const horarioLiberacao = new Date(ultimaData.getTime() + (24 * 60 * 60 * 1000));
-                            const horarioFormatado = horarioLiberacao.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                            mostrarAviso(`⏳ Calma shinobi! Você já enviou uma Missão Kage recentemente. Poderá enviar outra daqui a cerca de ${horasRestantes}h (às ${horarioFormatado}).`, 'erro');
-                            return;
-                        }
-                    }
-                }
-
-                const { data: membros, error: erroMembros } = await supabaseClient
-                    .from('membros')
-                    .select('*');
-                if (erroMembros) throw erroMembros;
-
-                const membroEncontrado = membros ? membros.find(m => String(m.discord_id) === String(userId)) : null;
-                if (!membroEncontrado && !eAdmin) {
-                    mostrarAviso('Acesso negado! Apenas membros registrados podem solicitar.', 'erro');
-                    return;
-                }
-
+                if (!bloqueada) await verificarPermissaoEnvioKage(userId, eAdmin);
+                const { data: membros, error } = await supabaseClient.from('membros')
+                    .select('discord_id,nome_jogo').eq('discord_id', String(userId)).limit(1);
+                if (error) throw error;
+                const membro = membros?.[0];
+                if (!membro && !eAdmin) throw new Error('Apenas membros cadastrados podem solicitar recompensas.');
                 document.getElementById('nomeDiscordRecompensa').value = username || '';
-                document.getElementById('nomeJogoRecompensa').value = membroEncontrado ? membroEncontrado.nome_jogo : '';
+                document.getElementById('nomeJogoRecompensa').value = membro?.nome_jogo || username || '';
                 modalRecompensa.style.display = 'flex';
                 await carregarControleTravaMissaoKage();
                 carregarWebhookNoPopup('recompensa');
@@ -5145,7 +5132,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 carregarWebhookNoPopup('negado');
             } catch (error) {
                 console.error('Não foi possível abrir a Missão Kage:', error);
-                mostrarAviso('Não foi possível verificar o acesso à Missão Kage. Tente novamente mais tarde.', 'erro');
+                mostrarAviso(error?.message || 'Não foi possível verificar o acesso à Missão Kage.', 'erro');
             }
         }
 
@@ -5182,167 +5169,78 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
         async function enviarRecompensa(event) {
             event.preventDefault();
+            if (envioKageEmAndamento) return;
+            envioKageEmAndamento = true;
+            const btn = document.getElementById('btnEnviarRecompensa');
+            btn.disabled = true;
+            btn.innerText = 'Enviando prints...';
+            let solicitacaoRegistrada = false;
             try {
-                if (await obterEstadoTravaMissaoKage()) {
-                    mostrarAviso('🔒 A Missão Kage está bloqueada. Seus prints não foram enviados.', 'erro');
-                    atualizarInterfaceTravaKage();
-                    return;
+                const userId = localStorage.getItem('discord_user_id');
+                if (!userId) throw new Error('Entre novamente com o Discord.');
+                const admins = await obterAdminsAutorizados();
+                const eAdmin = admins.includes(String(userId));
+                if (await obterEstadoTravaMissaoKage() && !eAdmin) throw new Error('A Missão Kage está bloqueada pela liderança.');
+                await verificarPermissaoEnvioKage(userId, eAdmin);
+                const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
+                const nomeDiscord = document.getElementById('nomeDiscordRecompensa').value.trim();
+                const input = document.getElementById('fotosRecompensa');
+                const total = input.files?.length || 0;
+                if (!total) throw new Error('Selecione pelo menos uma foto.');
+                const qtd = eAdmin ? total : Math.floor(total / 5) * 5;
+                if (!eAdmin && qtd < 5) throw new Error('Selecione pelo menos 5 prints para formar um bloco completo.');
+                const excedentes = total - qtd;
+                const arquivos = Array.from(input.files).slice(0, qtd);
+                const urls = await Promise.all(arquivos.map(async (arquivo, i) => {
+                    const caminho = `${userId}_${Date.now()}_${i}_${Math.random().toString(36).slice(2)}_${arquivo.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+                    const { error } = await supabaseClient.storage.from('recompensas-prints').upload(caminho, arquivo);
+                    if (error) throw error;
+                    return supabaseClient.storage.from('recompensas-prints').getPublicUrl(caminho).data.publicUrl;
+                }));
+                // Revalidação antes de gravar; a garantia contra concorrência fica no trigger SQL.
+                await verificarPermissaoEnvioKage(userId, eAdmin);
+                const { data: pedido, error: erroPedido } = await supabaseClient.from('solicitacoes_recompensa').insert([{
+                    discord_id: String(userId), nome_jogo: nomeJogo, qtd_missoes: qtd,
+                    caminhos_imagens: urls, status: 'Pendente',
+                    data_envio: dataKageBrasilia(), created_at: new Date().toISOString()
+                }]).select().single();
+                if (erroPedido) throw erroPedido;
+                solicitacaoRegistrada = true;
+                const { data: membro } = await supabaseClient.from('membros')
+                    .select('id').eq('discord_id', String(userId)).maybeSingle();
+                const urlPainel = `${window.location.origin}${window.location.pathname}?membroId=${membro?.id || ''}`;
+                const ryos = Math.floor(qtd / 5) * 1000;
+                const payloadDiscord = {
+                    content: `💰 **SOLICITAÇÃO DE MISSÃO KAGE** | Pedido #${pedido.id}`,
+                    embeds: [{
+                        title: eAdmin ? 'Teste de Missão Kage Pendente' : 'Nova Solicitação de Missão Kage Pendente',
+                        color: 12713992,
+                        fields: [
+                            { name: 'Shinobi', value: `${nomeJogo} (<@${userId}>)`, inline: true },
+                            { name: 'Prints enviados', value: `${qtd} prints (${ryos} Ryos calculados)`, inline: true },
+                            ...(excedentes ? [{ name: 'Excedentes descartados', value: `${excedentes} prints`, inline: false }] : []),
+                            { name: 'Fotos para avaliação', value: `[Abrir painel do membro](${urlPainel})`, inline: false }
+                        ],
+                        timestamp: new Date().toISOString()
+                    }]
+                };
+                try {
+                    await enviarWebhookSeguro('recompensa', payloadDiscord);
+                    mostrarAviso(`Solicitação #${pedido.id} registrada e notificada no Discord!`);
+                } catch (erroDiscord) {
+                    console.error('Missão registrada, mas o webhook falhou:', erroDiscord);
+                    mostrarAviso(`⚠️ Solicitação #${pedido.id} salva no Supabase, mas o Discord não recebeu o aviso: ${erroDiscord.message}`, 'erro');
                 }
-            } catch (_) {
-                mostrarAviso('Não foi possível verificar a trava da Missão Kage. O envio foi cancelado por segurança.', 'erro');
-                return;
+                fecharModalRecompensa();
+                document.getElementById('formRecompensa').reset();
+            } catch (erro) {
+                console.error('Erro no envio da Missão Kage:', erro);
+                mostrarAviso((solicitacaoRegistrada ? 'Solicitação registrada. ' : '') + (erro?.message || 'Falha ao enviar a missão.'), 'erro');
+            } finally {
+                envioKageEmAndamento = false;
+                btn.disabled = false;
+                btn.innerText = 'Solicitar Recompensa';
             }
-            const btnEnviar = document.getElementById('btnEnviarRecompensa');
-            btnEnviar.disabled = true;
-            btnEnviar.innerText = "Preparando prints...";
-
-            const nomeJogo = document.getElementById('nomeJogoRecompensa').value.trim();
-            const nomeDiscord = document.getElementById('nomeDiscordRecompensa').value.trim();
-            const arquivoInput = document.getElementById('fotosRecompensa');
-            const userId = localStorage.getItem('discord_user_id');
-
-            if (!arquivoInput.files || arquivoInput.files.length === 0) {
-                mostrarAviso('Selecione pelo menos um print!', 'erro');
-                btnEnviar.disabled = false;
-                btnEnviar.innerText = "Solicitar Recompensa";
-                return;
-            }
-
-            // Somente blocos completos de 5 são aceitos.
-            // Os excedentes são descartados imediatamente e nunca chegam ao Storage,
-            // banco de dados ou webhook. Ex.: 7 selecionados = 5 processados + 2 descartados.
-            const totalSelecionado = arquivoInput.files.length;
-            const qtdMissoes = Math.floor(totalSelecionado / 5) * 5;
-
-            if (qtdMissoes < 5) {
-                mostrarAviso('❌ Você precisa selecionar pelo menos 5 prints para formar um bloco completo de Missão Kage.', 'erro');
-                btnEnviar.disabled = false;
-                btnEnviar.innerText = "Solicitar Recompensa";
-                return;
-            }
-
-            const quantidadeExcedente = totalSelecionado - qtdMissoes;
-            const arquivosValidos = Array.from(arquivoInput.files).slice(0, qtdMissoes);
-
-            if (quantidadeExcedente > 0) {
-                mostrarAviso(`ℹ️ ${totalSelecionado} prints selecionados: ${qtdMissoes} serão processados. ${quantidadeExcedente} print(s) excedente(s) serão descartados e não serão contabilizados nem armazenados.`, 'info');
-            }
-
-            // DUPLA SEGURANÇA NO ENVIO: Impede bypass via F5 / manipulação
-            supabaseClient
-                .from('solicitacoes_recompensa')
-                .select('created_at, data_envio, status')
-                .eq('discord_id', userId)
-                .neq('status', 'Negado')
-                .order('id', { ascending: false })
-                .limit(1)
-                .then(({ data: ultimosEnvios }) => {
-                    if (ultimosEnvios && ultimosEnvios.length > 0) {
-                        const ultimoEnvio = ultimosEnvios[0];
-                        const dataEnvioStr = ultimoEnvio.created_at || ultimoEnvio.data_envio;
-                        const ultimaData = new Date(dataEnvioStr);
-                        const agora = new Date();
-                        const diferencaHoras = (agora - ultimaData) / (1000 * 60 * 60);
-
-                        if (diferencaHoras < 24) {
-                            mostrarAviso('❌ Operação negada! O limite é de 1 envio a cada 24 horas.', 'erro');
-                            btnEnviar.disabled = false;
-                            btnEnviar.innerText = "Solicitar Recompensa";
-                            fecharModalRecompensa();
-                            return;
-                        }
-                    }
-
-                    let urlsImagens = [];
-                    let promessasUpload = [];
-
-                    // IMPORTANTE: apenas os arquivos do bloco completo são enviados.
-                    for (let i = 0; i < arquivosValidos.length; i++) {
-                        const arquivo = arquivosValidos[i];
-                        const nomeArquivoUnico = `${userId}_${Date.now()}_${i}_${arquivo.name}`;
-
-                        let p = supabaseClient.storage
-                            .from('recompensas-prints')
-                            .upload(nomeArquivoUnico, arquivo)
-                            .then(({ data: uploadData, error: uploadError }) => {
-                                if (uploadError) throw uploadError;
-                                const { data: publicUrlData } = supabaseClient.storage
-                                    .from('recompensas-prints')
-                                    .getPublicUrl(nomeArquivoUnico);
-                                if (publicUrlData && publicUrlData.publicUrl) {
-                                    urlsImagens.push(publicUrlData.publicUrl);
-                                }
-                            });
-                        promessasUpload.push(p);
-                    }
-
-                    Promise.all(promessasUpload)
-                        .then(() => {
-                            const dataHoje = new Date().toISOString().split('T')[0];
-                            const timestampCompleto = new Date().toISOString();
-
-                            return supabaseClient.from('solicitacoes_recompensa').insert([{
-                                discord_id: userId,
-                                nome_jogo: nomeJogo,
-                                qtd_missoes: qtdMissoes,
-                                caminhos_imagens: urlsImagens,
-                                status: 'Pendente',
-                                data_envio: dataHoje,
-                                created_at: timestampCompleto
-                            }]).select().single();
-                        })
-                        .then(({ data: novaSolicitacao, error: dbError }) => {
-                            if (dbError) throw dbError;
-
-                            return supabaseClient.from('membros').select('id').eq('discord_id', userId).single().then(({ data: dadosMembro }) => {
-                                const membroIdInterno = dadosMembro ? dadosMembro.id : '';
-                                const urlPainelAdm = `${window.location.origin}${window.location.pathname}?membroId=${membroIdInterno}`;
-
-                                const blocosCompletos = qtdMissoes / 5;
-                                const ryosCalculados = blocosCompletos * 1000;
-                                let mencaoDiscord = userId ? `<@${userId}>` : nomeDiscord;
-
-                                const payloadDiscord = {
-                                    content: `💰 **SOLICITAÇÃO DE MISSÃO KAGE**`,
-                                    embeds: [
-                                        {
-                                            title: "Nova Solicitação de Missão Kage Pendente",
-                                            color: 12713992,
-                                            fields: [
-                                                { name: "Shinobi", value: `${nomeJogo} (${mencaoDiscord})`, inline: true },
-                                                { name: "Prints Processados", value: `${qtdMissoes} prints (${ryosCalculados} Ryos calculados)`, inline: true },
-                                                ...(quantidadeExcedente > 0 ? [{
-                                                    name: "ℹ️ Prints Excedentes",
-                                                    value: `${quantidadeExcedente} print(s) excedente(s) foram descartados e não serão contabilizados.`,
-                                                    inline: false
-                                                }] : []),
-                                                { name: "🔍 Ação do Admin", value: `[Verificar Fotos](${urlPainelAdm})`, inline: false }
-                                            ],
-                                            timestamp: new Date().toISOString()
-                                        }
-                                    ]
-                                };
-
-                                enviarWebhookSeguro('recompensa', payloadDiscord).catch(err => console.error(err));
-
-                                const mensagemSucesso = quantidadeExcedente > 0
-                                    ? `Solicitação enviada com ${qtdMissoes} prints válidos. ${quantidadeExcedente} print(s) excedente(s) foram descartados.`
-                                    : `Solicitação de ${qtdMissoes} prints enviada com sucesso!`;
-
-                                mostrarAviso(mensagemSucesso);
-                                fecharModalRecompensa();
-                                document.getElementById('formRecompensa').reset();
-                                btnEnviar.disabled = false;
-                                btnEnviar.innerText = "Solicitar Recompensa";
-                            });
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            mostrarAviso("Erro ao processar envio de prints.", 'erro');
-                            btnEnviar.disabled = false;
-                            btnEnviar.innerText = "Solicitar Recompensa";
-                        });
-                });
         }
 
         function tentarAbrirRelatorio() {
