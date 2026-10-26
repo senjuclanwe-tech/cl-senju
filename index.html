@@ -1888,6 +1888,66 @@
         .alianca-titulo-cla { grid-column:1/-1; margin: 14px 0 2px; padding: 12px 16px; border-left:4px solid #c29b38; border-bottom:1px solid rgba(194,155,56,.35); color:#e9ca75; font-family:'Cinzel',serif; font-size:1.25rem; }
         .alianca-identidade { color:#e9ca75; font-size:.78rem; font-weight:700; margin:6px 0 12px; }
 
+    
+        /* Cartões da aliança: cargos legíveis, alinhados e sem cortes */
+        .member-card { height: 100%; }
+        .member-card-content { display: flex; flex-direction: column; align-items: stretch; height: 100%; }
+        .member-card-meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            align-content: start;
+            margin-top: 12px;
+        }
+        .member-meta-item {
+            width: 100%;
+            min-width: 0;
+            max-width: none;
+            min-height: 62px;
+            padding: 9px 8px;
+            gap: 6px;
+        }
+        .member-meta-item--cargo,
+        .member-meta-item--evaluator { grid-column: 1 / -1; }
+        .member-meta-item--work,
+        .member-meta-item--rank { grid-column: auto; }
+        .member-meta-label { font-size: .60rem; letter-spacing: .08em; }
+        .member-meta-value {
+            font-size: .73rem;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+            word-break: normal;
+            white-space: normal;
+        }
+        .member-permission-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+        .member-permission-pill {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: rgba(194,155,56,.12);
+            border: 1px solid rgba(194,155,56,.25);
+            color: #f1d994;
+            font-size: .69rem;
+            font-weight: 700;
+            line-height: 1.3;
+            text-align: center;
+            overflow-wrap: anywhere;
+        }
+        @media (max-width: 600px) {
+            .member-card-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+            .member-meta-item { min-height: 58px; padding: 8px 6px; }
+            .member-meta-value { font-size: .69rem; }
+        }
+
     </style>
 
 <style id="pacto-das-sombras-theme">
@@ -3909,10 +3969,15 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                     const graduacaoHtml = m.graduacao
                         ? `<div class="member-meta-item member-meta-item--rank"><span class="member-meta-label">GRADUAÇÃO</span><strong class="member-meta-value">${m.graduacao}</strong></div>`
                         : '';
-                    const avaliadorTreinoHtml = m.e_avaliador_treino
-                        ? `<div class="member-meta-item member-meta-item--evaluator"><span class="member-meta-label">PERMISSÃO</span><strong class="member-meta-value">⚔ Avaliador de Treino</strong></div>`
+                    const permissoes = [
+                        m.e_admin === true ? '🛡 Administrador' : null,
+                        m.e_comprador_recursos === true ? '💰 Comprador de Recursos' : null,
+                        m.e_avaliador_treino === true ? '⚔ Avaliador de Treino' : null
+                    ].filter(Boolean);
+                    const permissoesHtml = permissoes.length
+                        ? `<div class="member-meta-item member-meta-item--evaluator"><span class="member-meta-label">PERMISSÕES DO SITE</span><div class="member-permission-list">${permissoes.map(cargo => `<span class="member-permission-pill">${cargo}</span>`).join('')}</div></div>`
                         : '';
-                    const informacoesMembroHtml = [cargoEspecialHtml, trabalhoHtml, graduacaoHtml, avaliadorTreinoHtml]
+                    const informacoesMembroHtml = [cargoEspecialHtml, trabalhoHtml, graduacaoHtml, permissoesHtml]
                         .filter(Boolean).join('');
 
                     card.innerHTML = `
