@@ -2126,6 +2126,12 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
                     <span class="sidebar-icon">🪙</span><span>Caixa da Aliança</span>
                 </a>
             </li>
+            <li id="itemNavSorteioEvento" style="display:none;">
+                <a onclick="fecharSenjuMenu(); abrirSorteioEvento(); return false;"
+                   class="sidebar-link action-sorteio" href="#sorteio-evento" id="navBtnSorteioEvento">
+                    <span class="sidebar-icon">⚔️</span><span>Sorteio de Evento</span>
+                </a>
+            </li>
         </ul>
 
     </aside>
@@ -2599,6 +2605,23 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
             </div>
         </div>
     </div>
+
+<!-- MODAL: SORTEIO DE EVENTO -->
+<div class="modal-overlay" id="modalSorteioEvento" style="display:none;">
+  <div class="modal-content" style="width:min(100%,900px);max-width:900px;max-height:90vh;overflow:auto;">
+    <div class="modal-header"><h2>⚔️ Sorteio de Evento</h2><button class="close-btn" type="button" onclick="fecharSorteioEvento()" aria-label="Fechar">&times;</button></div>
+    <p style="color:var(--text-muted);line-height:1.7">Sorteie um Cientista, dois capitães entre líderes e Braços Direitos elegíveis, e distribua os demais membros entre Ataque e Defesa. O resultado não é salvo no banco.</p>
+    <div id="sorteioEventoAviso" role="status" style="margin:12px 0"></div>
+    <button type="button" id="btnGerarSorteioEvento" class="btn-primary" onclick="gerarSorteioEvento()">🎲 Gerar sorteio</button>
+    <div id="resultadoSorteioEvento" style="margin-top:22px"></div>
+    <div id="webhook-box-sorteio_evento" class="webhook-admin-box" style="display:none;margin-top:24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px"><span style="font-size:.8rem;color:var(--senju-gold);font-weight:600">⚙ Webhook do Sorteio de Evento</span><div style="display:flex;align-items:center;gap:8px"><label class="switch"><input type="checkbox" id="toggle-edicao-sorteio_evento" onchange="alternarEdicaoPopup('sorteio_evento')"><span class="slider round"></span></label><span id="label-status-sorteio_evento" style="font-size:.75rem;color:var(--text-muted)">🔒 Bloqueado</span></div></div>
+      <div style="display:flex;gap:6px"><input type="password" id="input-webhook-sorteio_evento" autocomplete="new-password" placeholder="Cole um URL novo do Discord para configurar/substituir" disabled style="flex:1;padding:8px;background:#0f0805;color:var(--text-main);border:1px solid rgba(194,155,56,.3);border-radius:4px"><button id="btn-salvar-sorteio_evento" onclick="salvarWebhookPopup('sorteio_evento')" disabled style="padding:0 12px;background:var(--senju-gold);color:#0f0805;border:0;border-radius:4px;font-weight:bold">Salvar</button></div>
+      <span id="msg-status-sorteio_evento" style="display:block;font-size:.75rem;margin-top:4px"></span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:20px"><button type="button" id="btnPublicarSorteioEvento" class="btn-primary" onclick="publicarSorteioEvento()" style="display:none">📢 Publicar no Discord</button><button type="button" class="btn-primary" onclick="fecharSorteioEvento()">Fechar</button></div>
+  </div>
+</div>
 
     <!-- MODAL / POP-UP DE CENTRAL DE RECOMPENSAS -->
     <div class="modal-overlay" id="modalRecompensa">
@@ -3511,6 +3534,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const navBtnSorteio = document.getElementById('navBtnSorteio');
             const navBtnSemanal = document.getElementById('navBtnSemanal');
             const navBtnCaixa = document.getElementById('navBtnCaixa');
+            const navBtnSorteioEvento = document.getElementById('navBtnSorteioEvento');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -3525,6 +3549,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
                         if(navBtnSorteio) navBtnSorteio.style.display = 'inline-block';
                         if(navBtnSemanal) navBtnSemanal.style.display = 'inline-block';
+                        if(navBtnSorteioEvento) navBtnSorteioEvento.style.display = 'inline-block';
                     }
                 });
                 supabaseClient.from('membros').select('e_admin, e_comprador_recursos')
@@ -3599,7 +3624,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const input = document.getElementById(`input-webhook-${tipo}`);
             const novoUrl = input?.value.trim() || '';
             const msgStatus = document.getElementById(`msg-status-${tipo}`);
-            const tiposPermitidos = ['sorteio', 'recompensa', 'relatorio', 'notificacao', 'aprovado', 'negado'];
+            const tiposPermitidos = ['sorteio', 'sorteio_evento', 'recompensa', 'relatorio', 'notificacao', 'aprovado', 'negado'];
             if (!tiposPermitidos.includes(tipo) || !/^https:\/\/(?:discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[A-Za-z0-9._-]+$/.test(novoUrl)) {
                 msgStatus.style.color = 'var(--senju-red)';
                 msgStatus.innerText = '⚠️ Cole um URL válido de webhook do Discord.';
@@ -5005,6 +5030,81 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             sorteioEstado.membrosElegiveis = sorteioEstado.membrosTodos.filter(membroElegivelSorteio);
             renderizarParticipantesSorteio();
             atualizarResumoParticipantesSorteio();
+        }
+
+        // Sorteio de Evento: apenas em memória, sem gravar resultado no banco.
+        let resultadoSorteioEventoAtual = null;
+        const CLAS_SORTEIO_EVENTO = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Hoozuki'];
+        function embaralharSorteioEvento(lista) {
+            const a = [...lista];
+            for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+            return a;
+        }
+        function textoSeguroSorteioEvento(v) {
+            return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+        function normalizarCargoSorteioEvento(m) {
+            return String(m?.cargo_especial || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        }
+        function elegivelCapitaoSorteioEvento(m) {
+            const c = normalizarCargoSorteioEvento(m);
+            return m?.lider_alianca === true || /\blider\b|\bleader\b|braco direito|sub.?lider|vice.?lider/.test(c);
+        }
+        async function autorizarSorteioEvento() {
+            const id = localStorage.getItem('discord_user_id');
+            if (!id || !(await obterAdminsAutorizados()).includes(id)) throw new Error('Apenas administradores podem usar o Sorteio de Evento.');
+        }
+        function abrirSorteioEvento() {
+            autorizarSorteioEvento().then(() => {
+                document.getElementById('modalSorteioEvento').style.display = 'flex';
+                document.getElementById('sorteioEventoAviso').textContent = '';
+                carregarWebhookNoPopup('sorteio_evento').catch(e => console.warn('Configuração do webhook de evento:', e));
+            }).catch(e => mostrarAviso(e.message || 'Acesso negado.', 'erro'));
+        }
+        function fecharSorteioEvento() {
+            const modal = document.getElementById('modalSorteioEvento');
+            if (modal) modal.style.display = 'none';
+        }
+        async function gerarSorteioEvento() {
+            const btn = document.getElementById('btnGerarSorteioEvento');
+            const aviso = document.getElementById('sorteioEventoAviso');
+            const saida = document.getElementById('resultadoSorteioEvento');
+            const publicar = document.getElementById('btnPublicarSorteioEvento');
+            btn.disabled = true; aviso.textContent = 'Buscando membros elegíveis e realizando o sorteio...'; saida.innerHTML = ''; publicar.style.display = 'none';
+            try {
+                await autorizarSorteioEvento();
+                const { data, error } = await supabaseClient.from('membros').select('id,discord_id,nome_jogo,cargo_especial,lider_alianca,alianca_ativo,cla_alianca').eq('alianca_ativo', true).in('cla_alianca', CLAS_SORTEIO_EVENTO);
+                if (error) throw error;
+                const membros = (data || []).filter(m => String(m.nome_jogo || '').trim());
+                if (membros.length < 4) throw new Error('São necessários pelo menos 4 membros ativos da aliança para realizar o sorteio.');
+                const cientista = embaralharSorteioEvento(membros)[0];
+                const elegiveis = embaralharSorteioEvento(membros.filter(m => m.id !== cientista.id && elegivelCapitaoSorteioEvento(m)));
+                if (elegiveis.length < 2) throw new Error('Não há dois líderes/Braços Direitos elegíveis além do Cientista. Confira os cargos cadastrados e tente novamente.');
+                const capitaes = elegiveis.slice(0, 2);
+                const restantes = embaralharSorteioEvento(membros.filter(m => m.id !== cientista.id && !capitaes.some(c => c.id === m.id)));
+                const ataque = [capitaes[0]], defesa = [capitaes[1]];
+                restantes.forEach((m, i) => (i % 2 === 0 ? ataque : defesa).push(m));
+                resultadoSorteioEventoAtual = { cientista, ataque, defesa, total: membros.length, geradoEm: new Date().toISOString() };
+                const lista = (arr) => arr.map(m => `<li style="padding:4px 0">${textoSeguroSorteioEvento(m.nome_jogo)}${m.id === capitaes[0].id && arr === ataque ? ' <strong>(Capitão)</strong>' : ''}${m.id === capitaes[1].id && arr === defesa ? ' <strong>(Capitão)</strong>' : ''}</li>`).join('');
+                saida.innerHTML = `<div style="padding:14px;border:1px solid rgba(194,155,56,.35);border-radius:10px;margin-bottom:12px"><h3>🧪 Cientista (proteger)</h3><strong>${textoSeguroSorteioEvento(cientista.nome_jogo)}</strong></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px"><section style="padding:14px;border:1px solid rgba(194,155,56,.35);border-radius:10px"><h3>⚔️ Ataque (${ataque.length})</h3><ol>${lista(ataque)}</ol></section><section style="padding:14px;border:1px solid rgba(194,155,56,.35);border-radius:10px"><h3>🛡️ Defesa (${defesa.length})</h3><ol>${lista(defesa)}</ol></section></div><p style="color:var(--text-muted);margin-top:12px">${membros.length} membros considerados. O resultado existe apenas nesta sessão e não foi salvo no banco.</p>`;
+                aviso.textContent = 'Sorteio concluído. Confira as equipes antes de publicar.'; publicar.style.display = 'inline-block';
+            } catch (e) { resultadoSorteioEventoAtual = null; aviso.textContent = e?.message || 'Não foi possível gerar o sorteio.'; }
+            finally { btn.disabled = false; }
+        }
+        async function publicarSorteioEvento() {
+            const r = resultadoSorteioEventoAtual;
+            const aviso = document.getElementById('sorteioEventoAviso');
+            if (!r) { aviso.textContent = 'Gere um sorteio antes de publicar.'; return; }
+            try {
+                await autorizarSorteioEvento();
+                if (!tokenDiscordMercado()) throw new Error('Sua sessão do Discord expirou. Entre novamente no site.');
+                const nomes = a => a.map(m => `• ${m.nome_jogo}`).join('\n');
+                const conteudo = `⚔️ **SORTEIO DE EVENTO | ALIANÇA**\n🧪 **CIENTISTA (PROTEGER):** ${r.cientista.nome_jogo}\n\n⚔️ **ATAQUE (${r.ataque.length})**\n${nomes(r.ataque)}\n\n🛡️ **DEFESA (${r.defesa.length})**\n${nomes(r.defesa)}`;
+                if (conteudo.length > 1900) throw new Error('A mensagem ultrapassa o limite seguro do Discord. Reduza a quantidade de participantes ou publique em partes.');
+                await enviarWebhookSeguro('sorteio_evento', { content: conteudo });
+                aviso.textContent = '✅ Resultado enviado ao Discord.';
+                document.getElementById('btnPublicarSorteioEvento').disabled = true;
+            } catch (e) { aviso.textContent = '❌ Não foi possível publicar: ' + (e?.message || 'erro desconhecido'); }
         }
 
         async function abrirSorteio() {
