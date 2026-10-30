@@ -3535,6 +3535,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             const navBtnSemanal = document.getElementById('navBtnSemanal');
             const navBtnCaixa = document.getElementById('navBtnCaixa');
             const navBtnSorteioEvento = document.getElementById('navBtnSorteioEvento');
+            const itemNavSorteioEvento = document.getElementById('itemNavSorteioEvento');
             const btnLogout = document.getElementById('btn-logout');
             const statusUsuario = document.getElementById('status-usuario');
 
@@ -3549,6 +3550,8 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                         if(btnAdicionarMembro) btnAdicionarMembro.style.display = 'inline-block';
                         if(navBtnSorteio) navBtnSorteio.style.display = 'inline-block';
                         if(navBtnSemanal) navBtnSemanal.style.display = 'inline-block';
+                        // O item inteiro (li) começa oculto; mostrar apenas o link não basta.
+                        if(itemNavSorteioEvento) itemNavSorteioEvento.style.display = 'list-item';
                         if(navBtnSorteioEvento) navBtnSorteioEvento.style.display = 'inline-block';
                     }
                 });
