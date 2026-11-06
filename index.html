@@ -5076,7 +5076,17 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             btn.disabled = true; aviso.textContent = 'Buscando membros elegíveis e realizando o sorteio...'; saida.innerHTML = ''; publicar.style.display = 'none';
             try {
                 await autorizarSorteioEvento();
-                const { data, error } = await supabaseClient.from('membros').select('id,discord_id,nome_jogo,cargo_especial,lider_alianca,alianca_ativo,cla_alianca').eq('alianca_ativo', true).in('cla_alianca', CLAS_SORTEIO_EVENTO);
+                const GRADUACOES_ELEGIVEIS_SORTEIO_EVENTO = [
+                    'Genin [ 元仁 ]',
+                    'Chunin [ ちゅうにん ]',
+                    'Jounin [ じょうにん ]'
+                ];
+                const { data, error } = await supabaseClient
+                    .from('membros')
+                    .select('id,discord_id,nome_jogo,cargo_especial,lider_alianca,alianca_ativo,cla_alianca,graduacao')
+                    .eq('alianca_ativo', true)
+                    .in('cla_alianca', CLAS_SORTEIO_EVENTO)
+                    .in('graduacao', GRADUACOES_ELEGIVEIS_SORTEIO_EVENTO);
                 if (error) throw error;
                 const membros = (data || []).filter(m => String(m.nome_jogo || '').trim());
                 if (membros.length < 4) throw new Error('São necessários pelo menos 4 membros ativos da aliança para realizar o sorteio.');
