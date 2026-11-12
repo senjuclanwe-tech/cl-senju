@@ -2212,6 +2212,22 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
             <section class="senju-panel senju-ranking-panel">
                 <div class="senju-panel-heading"><span>🏆</span><h2>RANKING DE MISSÕES</h2><a class="senju-mini-action" href="#membros">Ver membros →</a></div>
                 <div class="senju-ranking-list" id="senju-ranking-list"><p class="senju-panel-loading">Carregando ranking de missões…</p></div>
+                <div class="senju-clan-ranking-heading">
+                    <span>⚔️</span><div><strong>RANKING DOS CLÃS</strong><small>Missões aprovadas e registradas no histórico</small></div>
+                </div>
+                <div class="senju-clan-cards" id="senju-clan-cards" aria-live="polite">
+                    <p class="senju-panel-loading">Carregando os cinco clãs…</p>
+                </div>
+                <div class="senju-clan-ranking-footnote">Selecione um clã para consultar a classificação histórica de seus membros.</div>
+                <div class="senju-clan-modal" id="senju-clan-modal" role="dialog" aria-modal="true" aria-labelledby="senju-clan-modal-title" onclick="if(event.target===this) fecharRankingClaSenju()">
+                    <div class="senju-clan-modal-box">
+                        <div class="senju-clan-modal-header">
+                            <div><small>HISTÓRICO DE MISSÕES</small><h3 id="senju-clan-modal-title">Ranking do clã</h3><p id="senju-clan-modal-total">0 missões registradas</p></div>
+                            <button type="button" onclick="fecharRankingClaSenju()" aria-label="Fechar ranking">×</button>
+                        </div>
+                        <div id="senju-clan-member-ranking" class="senju-clan-member-ranking"><p class="senju-panel-loading">Carregando classificação…</p></div>
+                    </div>
+                </div>
             </section>
             <section class="senju-panel senju-activity-panel">
                 <div class="senju-panel-heading"><span>◷</span><h2>ATIVIDADES RECENTES</h2><button type="button" class="senju-icon-refresh" onclick="carregarAtividadesSenju()" aria-label="Atualizar atividades">↻</button></div>
@@ -6728,6 +6744,42 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 
 </style>
 
+<style id="senju-clan-ranking-css">
+#painel-inicial .senju-clan-ranking-heading{display:flex;align-items:center;gap:11px;padding:16px 14px 8px;border-top:1px solid rgba(194,155,56,.22);margin-top:8px}
+#painel-inicial .senju-clan-ranking-heading>span{font-size:23px;color:#d8b257}
+#painel-inicial .senju-clan-ranking-heading div{display:flex;flex-direction:column;gap:3px}
+#painel-inicial .senju-clan-ranking-heading strong{font:700 13px Cinzel,serif;letter-spacing:1.4px;color:#ead39a}
+#painel-inicial .senju-clan-ranking-heading small,#painel-inicial .senju-clan-ranking-footnote{font-size:10px;color:#a99a86}
+#painel-inicial .senju-clan-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:10px 12px 8px}
+#painel-inicial .senju-clan-card{appearance:none;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 8px 11px;border:1px solid rgba(194,155,56,.30);border-radius:11px;background:linear-gradient(155deg,rgba(45,27,14,.88),rgba(9,6,5,.98));color:#f5ece0;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
+#painel-inicial .senju-clan-card:hover{transform:translateY(-3px);border-color:#d7b45e;box-shadow:0 7px 20px rgba(0,0,0,.3),0 0 16px rgba(194,155,56,.10)}
+#painel-inicial .senju-clan-card-symbol{width:43px;height:43px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.34);border:1px solid rgba(194,155,56,.4);overflow:hidden;color:#e0bd63;font-size:22px}
+#painel-inicial .senju-clan-card-symbol img{width:100%;height:100%;object-fit:contain;padding:5px}
+#painel-inicial .senju-clan-card-name{font:700 11px Cinzel,serif;letter-spacing:.7px;text-align:center}
+#painel-inicial .senju-clan-card>strong{font:700 23px Cinzel,serif;color:#e0bd63;line-height:1.15}
+#painel-inicial .senju-clan-card>small{font-size:9px;color:#b7a991;text-transform:uppercase;letter-spacing:1px}
+#painel-inicial .senju-clan-card-link{font-size:10px;color:#d7c18d;margin-top:3px}
+#painel-inicial .senju-clan-ranking-footnote{text-align:center;padding:0 10px 13px}
+.senju-clan-modal{display:none;position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.82);backdrop-filter:blur(7px);align-items:center;justify-content:center;padding:18px}
+.senju-clan-modal.aberto{display:flex}
+.senju-clan-modal-box{width:min(620px,100%);max-height:min(80vh,760px);overflow:auto;background:linear-gradient(145deg,#1a100b,#090607);border:1px solid rgba(215,173,80,.55);border-radius:15px;box-shadow:0 24px 80px rgba(0,0,0,.7)}
+.senju-clan-modal-header{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:15px;padding:18px 20px;background:rgba(16,9,7,.97);border-bottom:1px solid rgba(194,155,56,.25)}
+.senju-clan-modal-header small{font-size:9px;letter-spacing:2px;color:#c9a85e}
+.senju-clan-modal-header h3{font:700 22px Cinzel,serif;color:#f0d99e;margin:4px 0}
+.senju-clan-modal-header p{font-size:11px;color:#b7a991}
+.senju-clan-modal-header button{width:36px;height:36px;border:1px solid rgba(215,173,80,.4);border-radius:8px;background:#21140e;color:#f2d58c;font-size:25px;cursor:pointer}
+.senju-clan-member-ranking{padding:10px 16px 16px;display:flex;flex-direction:column;gap:7px}
+.senju-clan-member-row{display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:11px;padding:12px;border:1px solid rgba(194,155,56,.18);border-radius:9px;background:rgba(255,255,255,.025)}
+.senju-clan-member-position{font:700 17px Cinzel,serif;color:#d8b257;text-align:center}
+.senju-clan-member-data{display:flex;flex-direction:column;gap:3px;min-width:0}
+.senju-clan-member-data strong{font-size:13px;overflow-wrap:anywhere;color:#f4e8d2}
+.senju-clan-member-data small{font-size:10px;color:#9f9382}
+.senju-clan-member-row>b{font-size:14px;color:#e0bd63;white-space:nowrap}
+.senju-clan-member-row>b small{font-size:9px;color:#b7a991;font-weight:400}
+@media(max-width:760px){#painel-inicial .senju-clan-cards{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:480px){#painel-inicial .senju-clan-cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:8px}#painel-inicial .senju-clan-card{padding:11px 5px}#painel-inicial .senju-clan-card>strong{font-size:20px}.senju-clan-modal{padding:9px}.senju-clan-member-ranking{padding:8px}.senju-clan-member-row{grid-template-columns:29px minmax(0,1fr) auto;gap:7px;padding:10px}.senju-clan-member-row>b{font-size:12px}}
+</style>
+
 <script id="senju-dashboard-data">
 (function(){
     const client = window.supabaseClient || (typeof supabaseClient !== 'undefined' ? supabaseClient : null);
@@ -6752,7 +6804,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
         el.innerHTML='<p class="senju-panel-loading">Atualizando atividades…</p>';
         try{
             const [recompensas, atividadesMembros]=await Promise.all([
-                client.from('solicitacoes_recompensa').select('discord_id,nome_jogo,qtd_missoes,status,created_at,data_pagamento').eq('status','Pago').order('created_at',{ascending:false}).limit(12),
+                client.from('historico_missoes_cla').select('discord_id,nome_jogo,qtd_missoes,data_aprovacao').order('data_aprovacao',{ascending:false}).limit(12),
                 client.from('atividades_membros').select('tipo,nome_membro,descricao,autor_nome,origem,criado_em').order('criado_em',{ascending:false}).limit(12)
             ]);
             if(recompensas.error) throw recompensas.error;
@@ -6762,7 +6814,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 ...(recompensas.data||[]).map(r=>({
                     tipo:'missao_paga', nome:r.nome_jogo||'Membro da Aliança',
                     descricao:`concluiu ${Number(r.qtd_missoes||0)} missões.`,
-                    data:r.data_pagamento||r.created_at, autor:'', origem:'clã'
+                    data:r.data_aprovacao, autor:'', origem:'clã'
                 })),
                 ...(atividadesMembros.data||[]).map(a=>({
                     tipo:a.tipo, nome:a.nome_membro||'Membro da Aliança',
@@ -6784,33 +6836,102 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }).join('');
         }catch(e){console.error('Falha ao carregar atividades do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar as atividades. Confira as políticas de leitura das tabelas e se a migração 004_atividades_membros.sql já foi aplicada.</p>';}
     };
+    const ORDEM_CLAS_RANKING = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Hoozuki'];
+    const SIMBOLOS_CLAS_RANKING = {
+        Kaguya:'assets/kaguya.png', Shimura:'assets/shimura.png',
+        Senju:'assets/senju.png', Kurotsuki:'assets/kurotsuki.png', Hoozuki:'assets/hoozuki.png'
+    };
+    let historicoMissoesCache = null;
+
+    async function buscarHistoricoMissoes(){
+        if(historicoMissoesCache) return historicoMissoesCache;
+        const todos=[];
+        const tamanhoPagina=1000;
+        for(let inicio=0; ; inicio+=tamanhoPagina){
+            const {data,error}=await client.from('historico_missoes_cla')
+                .select('discord_id,nome_jogo,cla_alianca,qtd_missoes,data_aprovacao')
+                .order('data_aprovacao',{ascending:false})
+                .range(inicio,inicio+tamanhoPagina-1);
+            if(error) throw error;
+            todos.push(...(data||[]));
+            if(!data || data.length<tamanhoPagina) break;
+        }
+        historicoMissoesCache=todos;
+        return todos;
+    }
+
+    function agruparMembrosHistorico(registros){
+        const totais=new Map();
+        (registros||[]).forEach(r=>{
+            const id=String(r.discord_id||r.nome_jogo||'desconhecido');
+            const atual=totais.get(id)||{discord_id:r.discord_id||'',name:r.nome_jogo||'Membro',missions:0,lastDate:r.data_aprovacao||null};
+            atual.missions+=Math.max(0,Number(r.qtd_missoes)||0);
+            if(r.nome_jogo) atual.name=r.nome_jogo;
+            if(!atual.lastDate || new Date(r.data_aprovacao||0)>new Date(atual.lastDate)) atual.lastDate=r.data_aprovacao;
+            totais.set(id,atual);
+        });
+        return [...totais.values()].sort((a,b)=>b.missions-a.missions || a.name.localeCompare(b.name,'pt-BR'));
+    }
+
     async function carregarRankingSenju(){
         const el=document.getElementById('senju-ranking-list'); if(!el) return;
         if(!client){el.innerHTML='<p class="senju-panel-empty senju-panel-error">Conexão com o Supabase indisponível.</p>';return;}
         try{
-            // O ranking considera exclusivamente solicitações pagas/aprovadas.
-            // O filtro é aplicado no Supabase e repetido localmente como proteção extra.
-            const {data:sols,error}=await client.from('solicitacoes_recompensa')
-                .select('discord_id,nome_jogo,qtd_missoes,status')
-                .eq('status','Pago')
-                .limit(2000);
-            if(error) throw error;
-            const pagas=(sols || []).filter(r => r.status === 'Pago');
-            if(!pagas.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há missões pagas/aprovadas para montar o ranking.</p>';return;}
-            const totals=new Map();
-            pagas.forEach(r=>{
-                const id=r.discord_id || r.nome_jogo || 'desconhecido';
-                const old=totals.get(id)||{name:r.nome_jogo||'Membro da Aliança',missions:0};
-                old.missions+=Math.max(0,Number(r.qtd_missoes)||0);
-                if(r.nome_jogo)old.name=r.nome_jogo;
-                totals.set(id,old);
-            });
-            const top=[...totals.values()].sort((a,b)=>b.missions-a.missions).slice(0,3);
-            if(!top.length){el.innerHTML='<p class="senju-panel-empty">Ainda não há dados para o ranking.</p>';return;}
+            const historico=await buscarHistoricoMissoes();
+            const top=agruparMembrosHistorico(historico).slice(0,3);
+            if(!top.length){el.innerHTML='<p class="senju-panel-empty">O ranking individual começará a ser formado com as próximas missões aprovadas.</p>';return;}
             el.innerHTML=top.map((m,i)=>`<article class="senju-rank-card"><span class="senju-rank-medal">${i+1}</span><span class="senju-rank-avatar">${['♛','♜','♞'][i]}</span><div class="senju-rank-info"><strong>${esc(m.name)}</strong><small>${i===0?'1º lugar':i===1?'2º lugar':'3º lugar'}</small><b>${m.missions.toLocaleString('pt-BR')} missões</b></div></article>`).join('');
-        }catch(e){console.error('Falha ao carregar ranking do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar o ranking. Confira as políticas de leitura da tabela solicitacoes_recompensa no Supabase.</p>';}
+        }catch(e){console.error('Falha ao carregar ranking histórico:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar o histórico. Confira a permissão de leitura da tabela historico_missoes_cla.</p>';}
     }
-    function iniciar(){ carregarRankingSenju(); window.carregarAtividadesSenju(); }
+
+    async function carregarRankingClasSenju(){
+        const el=document.getElementById('senju-clan-cards'); if(!el) return;
+        if(!client){el.innerHTML='<p class="senju-panel-empty senju-panel-error">Conexão com o Supabase indisponível.</p>';return;}
+        try{
+            const historico=await buscarHistoricoMissoes();
+            const totais=Object.fromEntries(ORDEM_CLAS_RANKING.map(c=>[c,0]));
+            historico.forEach(r=>{ if(Object.prototype.hasOwnProperty.call(totais,r.cla_alianca)) totais[r.cla_alianca]+=Math.max(0,Number(r.qtd_missoes)||0); });
+            el.innerHTML=ORDEM_CLAS_RANKING.map((cla,i)=>{
+                const imagem=SIMBOLOS_CLAS_RANKING[cla];
+                return `<button type="button" class="senju-clan-card" onclick="abrirRankingClaSenju('${cla}')" aria-label="Abrir ranking do clã ${cla}">
+                    <span class="senju-clan-card-symbol"><img src="${imagem}" alt="Símbolo ${cla}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${['卍','志','千','月','水'][i]}'"></span>
+                    <span class="senju-clan-card-name">${cla}</span>
+                    <strong>${totais[cla].toLocaleString('pt-BR')}</strong>
+                    <small>missões</small><span class="senju-clan-card-link">Ver ranking →</span>
+                </button>`;
+            }).join('');
+        }catch(e){console.error('Falha ao carregar ranking dos clãs:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar os clãs. Confira a leitura da tabela historico_missoes_cla.</p>';}
+    }
+
+    window.abrirRankingClaSenju=async function(cla){
+        if(!ORDEM_CLAS_RANKING.includes(cla)) return;
+        const modal=document.getElementById('senju-clan-modal');
+        const titulo=document.getElementById('senju-clan-modal-title');
+        const total=document.getElementById('senju-clan-modal-total');
+        const lista=document.getElementById('senju-clan-member-ranking');
+        if(!modal||!lista) return;
+        titulo.textContent=`Clã ${cla}`;
+        total.textContent='Carregando total de missões…';
+        lista.innerHTML='<p class="senju-panel-loading">Carregando classificação…</p>';
+        modal.classList.add('aberto');
+        document.body.style.overflow='hidden';
+        try{
+            const historico=await buscarHistoricoMissoes();
+            const registros=historico.filter(r=>r.cla_alianca===cla);
+            const membros=agruparMembrosHistorico(registros);
+            const totalMissoes=registros.reduce((s,r)=>s+Math.max(0,Number(r.qtd_missoes)||0),0);
+            total.textContent=`${totalMissoes.toLocaleString('pt-BR')} missões aprovadas · ${membros.length} ${membros.length===1?'membro':'membros'}`;
+            if(!membros.length){lista.innerHTML='<p class="senju-panel-empty">Este clã ainda não possui missões registradas no novo histórico.</p>';return;}
+            lista.innerHTML=membros.map((m,i)=>`<article class="senju-clan-member-row"><span class="senju-clan-member-position">${String(i+1).padStart(2,'0')}</span><div class="senju-clan-member-data"><strong>${esc(m.name)}</strong><small>Participação no histórico do clã</small></div><b>${m.missions.toLocaleString('pt-BR')} <small>missões</small></b></article>`).join('');
+        }catch(e){console.error('Falha ao abrir ranking do clã:',e);lista.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível consultar o histórico deste clã.</p>';}
+    };
+    window.fecharRankingClaSenju=function(){
+        const modal=document.getElementById('senju-clan-modal');
+        if(modal) modal.classList.remove('aberto');
+        document.body.style.overflow='';
+    };
+    document.addEventListener('keydown',e=>{if(e.key==='Escape') window.fecharRankingClaSenju();});
+    function iniciar(){ carregarRankingSenju(); carregarRankingClasSenju(); window.carregarAtividadesSenju(); }
     if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',iniciar); else iniciar();
 })();
 </script>
