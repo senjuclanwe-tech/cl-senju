@@ -1963,6 +1963,7 @@
         /* Símbolos oficiais dos clãs, mantidos como arquivos externos em assets/ */
         .alianca-filtro { display:inline-flex; align-items:center; justify-content:center; gap:8px; }
         .alianca-simbolo-aba { width:29px; height:24px; object-fit:contain; flex-shrink:0; }
+        .alianca-simbolo-texto { width:29px; height:24px; flex:0 0 29px; display:inline-flex; align-items:center; justify-content:center; color:var(--senju-gold); font-family:'Cinzel',serif; font-size:19px; font-weight:800; }
         .alianca-identidade { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; }
 
         .alianca-cabecalho-cla { display:flex; align-items:center; gap:14px; margin:0 0 16px; padding:8px 14px; border-left:4px solid #c29b38; border-bottom:1px solid rgba(194,155,56,.35); color:#e9ca75; font-family:'Cinzel',serif; font-size:1.2rem; font-weight:700; }
@@ -1971,6 +1972,7 @@
         @media (max-width:600px) {
             .alianca-filtro { padding:8px 10px; gap:5px; }
             .alianca-simbolo-aba { width:24px; height:20px; }
+            .alianca-simbolo-texto { width:24px; height:20px; flex-basis:24px; font-size:17px; }
             .alianca-cabecalho-cla img { width:64px; height:46px; }
 
         }
@@ -2274,6 +2276,7 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
             <button class="alianca-filtro" type="button" data-cla="Senju" onclick="selecionarFiltroCla('Senju')"><img class="alianca-simbolo-aba" src="assets/senju.png" alt="" loading="lazy">Senju</button>
             <button class="alianca-filtro" type="button" data-cla="Kurotsuki" onclick="selecionarFiltroCla('Kurotsuki')"><img class="alianca-simbolo-aba" src="assets/kurotsuki.png" alt="" loading="lazy">Kurotsuki</button>
             <button class="alianca-filtro" type="button" data-cla="Hoozuki" onclick="selecionarFiltroCla('Hoozuki')"><img class="alianca-simbolo-aba" src="assets/hoozuki.png" alt="" loading="lazy">Hoozuki</button>
+            <button class="alianca-filtro" type="button" data-cla="Nagashi" onclick="selecionarFiltroCla('Nagashi')"><span class="alianca-simbolo-texto" aria-hidden="true">流</span>Nagashi</button>
         </div>
         <div id="alianca-cabecalho-cla" class="alianca-cabecalho-cla" hidden aria-live="polite">
             <img id="alianca-cabecalho-simbolo" src="" alt="">
@@ -3916,7 +3919,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 });
         }
 
-        const ORDEM_CLAS_ALIANCA = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Hoozuki'];
+        const ORDEM_CLAS_ALIANCA = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Hoozuki', 'Nagashi'];
         function pesoGraduacaoMembro(m) {
             if (m.lider_alianca === true) return 0;
             const cargo = String(m.cargo_especial || '').toLowerCase();
@@ -3973,8 +3976,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             if (cabecalho) {
                 cabecalho.hidden = cla === 'Todos';
                 if (cla !== 'Todos') {
-                    document.getElementById('alianca-cabecalho-simbolo').src = `assets/${cla.toLowerCase()}.png`;
-                    document.getElementById('alianca-cabecalho-simbolo').alt = `Símbolo do clã ${cla}`;
+                    const simbolo = document.getElementById('alianca-cabecalho-simbolo');
+                    simbolo.style.display = cla === 'Nagashi' ? 'none' : '';
+                    if (cla !== 'Nagashi') simbolo.src = `assets/${cla.toLowerCase()}.png`;
+                    simbolo.alt = cla === 'Nagashi' ? '' : `Símbolo do clã ${cla}`;
                     document.getElementById('alianca-cabecalho-nome').textContent = `Clã ${cla}`;
                 }
             }
@@ -6750,7 +6755,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
 #painel-inicial .senju-clan-ranking-heading div{display:flex;flex-direction:column;gap:3px}
 #painel-inicial .senju-clan-ranking-heading strong{font:700 13px Cinzel,serif;letter-spacing:1.4px;color:#ead39a}
 #painel-inicial .senju-clan-ranking-heading small,#painel-inicial .senju-clan-ranking-footnote{font-size:10px;color:#a99a86}
-#painel-inicial .senju-clan-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;padding:10px 12px 8px}
+#painel-inicial .senju-clan-cards{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;padding:10px 12px 8px}
 #painel-inicial .senju-clan-card{appearance:none;min-width:0;display:flex;flex-direction:column;align-items:center;gap:5px;padding:13px 8px 11px;border:1px solid rgba(194,155,56,.30);border-radius:11px;background:linear-gradient(155deg,rgba(45,27,14,.88),rgba(9,6,5,.98));color:#f5ece0;cursor:pointer;transition:transform .18s,border-color .18s,box-shadow .18s}
 #painel-inicial .senju-clan-card:hover{transform:translateY(-3px);border-color:#d7b45e;box-shadow:0 7px 20px rgba(0,0,0,.3),0 0 16px rgba(194,155,56,.10)}
 #painel-inicial .senju-clan-card-symbol{width:43px;height:43px;display:grid;place-items:center;border-radius:50%;background:rgba(0,0,0,.34);border:1px solid rgba(194,155,56,.4);overflow:hidden;color:#e0bd63;font-size:22px}
@@ -6836,10 +6841,10 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             }).join('');
         }catch(e){console.error('Falha ao carregar atividades do painel:',e);el.innerHTML='<p class="senju-panel-empty senju-panel-error">Não foi possível carregar as atividades. Confira as políticas de leitura das tabelas e se a migração 004_atividades_membros.sql já foi aplicada.</p>';}
     };
-    const ORDEM_CLAS_RANKING = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Hoozuki'];
+    const ORDEM_CLAS_RANKING = ['Kaguya', 'Shimura', 'Senju', 'Kurotsuki', 'Hoozuki', 'Nagashi'];
     const SIMBOLOS_CLAS_RANKING = {
         Kaguya:'assets/kaguya.png', Shimura:'assets/shimura.png',
-        Senju:'assets/senju.png', Kurotsuki:'assets/kurotsuki.png', Hoozuki:'assets/hoozuki.png'
+        Senju:'assets/senju.png', Kurotsuki:'assets/kurotsuki.png', Hoozuki:'assets/hoozuki.png', Nagashi:'assets/nagashi.png'
     };
     let historicoMissoesCache = null;
 
@@ -6894,7 +6899,7 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
             el.innerHTML=ORDEM_CLAS_RANKING.map((cla,i)=>{
                 const imagem=SIMBOLOS_CLAS_RANKING[cla];
                 return `<button type="button" class="senju-clan-card" onclick="abrirRankingClaSenju('${cla}')" aria-label="Abrir ranking do clã ${cla}">
-                    <span class="senju-clan-card-symbol"><img src="${imagem}" alt="Símbolo ${cla}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${['卍','志','千','月','水'][i]}'"></span>
+                    <span class="senju-clan-card-symbol"><img src="${imagem}" alt="Símbolo ${cla}" loading="lazy" onerror="this.style.display='none';this.parentElement.textContent='${['卍','志','千','月','水','流'][i]}'"></span>
                     <span class="senju-clan-card-name">${cla}</span>
                     <strong>${totais[cla].toLocaleString('pt-BR')}</strong>
                     <small>missões</small><span class="senju-clan-card-link">Ver ranking →</span>
