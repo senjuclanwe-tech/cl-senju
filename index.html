@@ -2276,7 +2276,7 @@ footer{background:linear-gradient(180deg,#12080e,#090609)!important;border-top:1
             <button class="alianca-filtro" type="button" data-cla="Senju" onclick="selecionarFiltroCla('Senju')"><img class="alianca-simbolo-aba" src="assets/senju.png" alt="" loading="lazy">Senju</button>
             <button class="alianca-filtro" type="button" data-cla="Kurotsuki" onclick="selecionarFiltroCla('Kurotsuki')"><img class="alianca-simbolo-aba" src="assets/kurotsuki.png" alt="" loading="lazy">Kurotsuki</button>
             <button class="alianca-filtro" type="button" data-cla="Hoozuki" onclick="selecionarFiltroCla('Hoozuki')"><img class="alianca-simbolo-aba" src="assets/hoozuki.png" alt="" loading="lazy">Hoozuki</button>
-            <button class="alianca-filtro" type="button" data-cla="Nagashi" onclick="selecionarFiltroCla('Nagashi')"><span class="alianca-simbolo-texto" aria-hidden="true">流</span>Nagashi</button>
+            <button class="alianca-filtro" type="button" data-cla="Nagashi" onclick="selecionarFiltroCla('Nagashi')"><img class="alianca-simbolo-aba" src="assets/nagashi.png" alt="" loading="lazy">Nagashi</button>
         </div>
         <div id="alianca-cabecalho-cla" class="alianca-cabecalho-cla" hidden aria-live="polite">
             <img id="alianca-cabecalho-simbolo" src="" alt="">
@@ -3977,9 +3977,9 @@ Faça suas missões. Registre seu progresso. Resgate sua recompensa.
                 cabecalho.hidden = cla === 'Todos';
                 if (cla !== 'Todos') {
                     const simbolo = document.getElementById('alianca-cabecalho-simbolo');
-                    simbolo.style.display = cla === 'Nagashi' ? 'none' : '';
-                    if (cla !== 'Nagashi') simbolo.src = `assets/${cla.toLowerCase()}.png`;
-                    simbolo.alt = cla === 'Nagashi' ? '' : `Símbolo do clã ${cla}`;
+                    simbolo.style.display = '';
+                    simbolo.src = `assets/${cla.toLowerCase()}.png`;
+                    simbolo.alt = `Símbolo do clã ${cla}`;
                     document.getElementById('alianca-cabecalho-nome').textContent = `Clã ${cla}`;
                 }
             }
